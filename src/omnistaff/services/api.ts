@@ -533,9 +533,30 @@ export const api = {
       const res = await fetchWithTimeout(`${API_URL}/auth/register-company`, {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify(data)
-      }, 3000);
-      return await handleResponse(res);
+        body: JSON.stringify({
+          ...data,
+          id: randomId,
+          name: compName,
+          companyName: compName,
+          email: adminMail,
+          companyEmail: adminMail,
+          adminEmail: adminMail,
+          password: password,
+          adminPassword: password,
+          customPassword: password,
+          ownerName: adminName,
+          adminName: adminName,
+          phone: data.companyPhone || data.phone || '',
+          userSeatLimit: resolvedSeats,
+          maxEmployees: resolvedSeats,
+          storageLimitGb: resolvedStorage
+        })
+      }, 5000);
+      const resData = await handleResponse(res);
+      if (resData?.token) {
+        localStorage.setItem('hrms_jwt_token', resData.token);
+      }
+      return resData;
     } catch {
       return { success: true, message: 'Company registered successfully', tenant: { id: randomId, name: compName } };
     }
