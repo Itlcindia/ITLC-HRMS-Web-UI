@@ -1132,7 +1132,9 @@ export const syncCompanySubscriptionChange = (updateData: {
     // 6.1 Sync directly with backend server database (/api/tenants)
     try {
       if (typeof window !== 'undefined' && window.fetch) {
-        const backendApiBase = (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env.VITE_API_URL) || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? '/api' : 'https://yellowgreen-eagle-410958.hostingersite.com/api');
+        const backendApiBase = (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
+          ? '/api'
+          : ((typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env.VITE_API_URL) || 'https://yellowgreen-eagle-410958.hostingersite.com/api');
         fetch(`${backendApiBase}/tenants`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
