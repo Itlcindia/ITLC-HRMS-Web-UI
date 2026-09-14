@@ -1,4 +1,5 @@
 // Production-Ready Razorpay & UPI Payment Gateway Integration Service
+import { API_URL } from './api';
 
 export interface PaymentOrderParams {
   planId: string;
@@ -197,7 +198,7 @@ export const paymentService = {
   // 3. Verify Payment
   async verifyPayment(data: { orderId: string; paymentId: string; signature?: string }) {
     try {
-      const res = await fetch('/api/payments/verify', {
+      const res = await fetch(`${API_URL}/payments/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

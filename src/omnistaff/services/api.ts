@@ -6,7 +6,7 @@ const isMobileApp = typeof window !== 'undefined' && (
   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 );
 
-const API_URL = (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env.VITE_API_URL) || (typeof window === 'undefined' ? 'http://localhost:5000/api' : '/api');
+export const API_URL = (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env.VITE_API_URL) || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? '/api' : 'https://yellowgreen-eagle-410958.hostingersite.com/api');
 
 // Helper to get request headers with secure token
 const getHeaders = (isMultipart = false) => {

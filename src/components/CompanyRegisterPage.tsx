@@ -41,6 +41,7 @@ import {
 } from '../types/multiTenant';
 import { paymentService } from '../services/paymentService';
 import { downloadPaymentSlip } from '../utils/PaymentSlip';
+import { API_URL } from '../services/api';
 
 interface CompanyRegisterPageProps {
   initialPlanId?: string;
@@ -453,9 +454,9 @@ export const CompanyRegisterPage: React.FC<CompanyRegisterPageProps> = ({
           sessionStorage.setItem('crm_auth_session', 'true');
         } catch (e) {}
 
-        // 6. Backend Persistence Sync (/api/tenants)
+        // 6. Backend Persistence Sync (${API_URL}/tenants)
         try {
-          fetch('/api/tenants', {
+          fetch(`${API_URL}/tenants`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

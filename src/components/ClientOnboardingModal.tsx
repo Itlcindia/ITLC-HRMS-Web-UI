@@ -25,6 +25,7 @@ import {
   type SubscriptionPlanDef 
 } from '../types/multiTenant';
 import { paymentService } from '../services/paymentService';
+import { API_URL } from '../services/api';
 
 interface ClientOnboardingModalProps {
   isOpen: boolean;
@@ -341,7 +342,7 @@ export const ClientOnboardingModal: React.FC<ClientOnboardingModalProps> = ({
     // Backend sync
     try {
       if (typeof window !== 'undefined' && window.fetch) {
-        fetch('/api/tenants', {
+        fetch(`${API_URL}/tenants`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

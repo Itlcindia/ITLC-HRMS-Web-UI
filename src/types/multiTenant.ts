@@ -1132,7 +1132,8 @@ export const syncCompanySubscriptionChange = (updateData: {
     // 6.1 Sync directly with backend server database (/api/tenants)
     try {
       if (typeof window !== 'undefined' && window.fetch) {
-        fetch('/api/tenants', {
+        const backendApiBase = (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env.VITE_API_URL) || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? '/api' : 'https://yellowgreen-eagle-410958.hostingersite.com/api');
+        fetch(`${backendApiBase}/tenants`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

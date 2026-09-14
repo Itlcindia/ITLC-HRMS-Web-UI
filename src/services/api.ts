@@ -1,1 +1,1 @@
-export { api } from '../omnistaff/services/api';
+export { api, API_URL } from '../omnistaff/services/api';
