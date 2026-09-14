@@ -1,0 +1,17 @@
+{
+  "short_name": "ITLC CRM",
+  "name": "ITLC CRM Enterprise Admin Panel",
+  "description": "Next-Gen Enterprise CRM & Sales Pipeline Management",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512"
+    }
+  ]
+}
