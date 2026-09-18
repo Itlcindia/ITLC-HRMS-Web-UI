@@ -789,7 +789,7 @@ export const SettingsTab: React.FC = () => {
                     setTaxConfig(prev => ({ ...prev, supportEmail: e.target.value }));
                     setIsFormDirty(true);
                   }}
-                  placeholder="billing@itlc.in"
+                  placeholder="support@itlcindia.com"
                   className="glass-input h-11 w-full px-3.5 rounded-xl text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500/30"
                 />
               </div>
@@ -805,7 +805,7 @@ export const SettingsTab: React.FC = () => {
                     setTaxConfig(prev => ({ ...prev, supportPhone: e.target.value }));
                     setIsFormDirty(true);
                   }}
-                  placeholder="+91 83688 17744"
+                  placeholder="+91 9532341000"
                   className="glass-input h-11 w-full px-3.5 rounded-xl text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500/30"
                 />
               </div>

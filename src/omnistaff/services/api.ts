@@ -1206,13 +1206,13 @@ export const api = {
         if (storedEmployees) {
           try {
             let empList = JSON.parse(storedEmployees);
-            empList = empList.map((emp: any, idx: number) => {
-              if (
+            empList = empList.map((emp: any) => {
+              const isMatch = Boolean(
                 (emp.email && email && emp.email.toLowerCase() === email) ||
-                (updated.id && String(emp.id) === String(updated.id)) ||
-                (emp.employeeId && updated.employeeId && emp.employeeId === updated.employeeId) ||
-                (idx === 0 && (updated.role === 'Company Admin' || updated.role === 'Admin'))
-              ) {
+                (updated.id && emp.id && String(emp.id) === String(updated.id)) ||
+                (emp.employeeId && updated.employeeId && emp.employeeId === updated.employeeId)
+              );
+              if (isMatch) {
                 return {
                   ...emp,
                   name: updated.name || emp.name,
@@ -1235,9 +1235,9 @@ export const api = {
       if (companyId) updateEmpInList(`hrms_employees_${companyId}`);
       updateEmpInList('hrms_employees');
 
-      // 2. Update CRM current user
+      // 2. Update CRM current user only if this user is the CRM current user
       const crmUser = JSON.parse(localStorage.getItem('crm_current_user') || '{}');
-      if (crmUser) {
+      if (crmUser && crmUser.email && email && crmUser.email.toLowerCase() === email) {
         crmUser.name = updated.name || crmUser.name;
         crmUser.email = updated.email || crmUser.email;
         if (updated.avatar) {
@@ -1257,7 +1257,7 @@ export const api = {
           if (Array.isArray(cUsers)) {
             let matchedInCrm = false;
             cUsers = cUsers.map((u: any) => {
-              if ((u.email && email && u.email.toLowerCase() === email) || (crmUser.id && u.id === crmUser.id)) {
+              if (u.email && email && u.email.toLowerCase() === email) {
                 matchedInCrm = true;
                 return {
                   ...u,
@@ -1270,7 +1270,7 @@ export const api = {
               }
               return u;
             });
-            if (!matchedInCrm && updated.name) {
+            if (!matchedInCrm && updated.name && (updated.role === 'Company Admin' || updated.role === 'Admin' || updated.role === 'Manager')) {
               cUsers.push({
                 id: updated.id || Date.now(),
                 name: updated.name,
@@ -1308,38 +1308,54 @@ export const api = {
         } catch {}
       }
 
-      // 5. Update in itlc_multi_tenants & itlc_active_tenant & hrms_companies_data
-      const savedTenants = localStorage.getItem('itlc_multi_tenants');
-      if (savedTenants) {
-        try {
-          let tList = JSON.parse(savedTenants);
-          if (Array.isArray(tList)) {
-            tList = tList.map((t: any) => {
-              if (t.id === companyId || (t.adminEmail && email && t.adminEmail.toLowerCase() === email)) {
-                return {
-                  ...t,
-                  adminName: updated.name || t.adminName,
-                  adminPhone: updated.phone || t.adminPhone,
-                  logo: updated.avatar || t.logo
-                };
-              }
-              return t;
-            });
-            localStorage.setItem('itlc_multi_tenants', JSON.stringify(tList));
-          }
-        } catch {}
-      }
+      // 5. Update in itlc_multi_tenants & itlc_active_tenant ONLY if the user is the actual Company Admin / Owner
+      const isEmployeeUser = Boolean(
+        data.isEmployee || 
+        (data.role && String(data.role).toLowerCase().includes('employee')) ||
+        (updated.role && String(updated.role).toLowerCase().includes('employee'))
+      );
 
-      const activeTenant = localStorage.getItem('itlc_active_tenant');
-      if (activeTenant) {
-        try {
-          const t = JSON.parse(activeTenant);
-          if (t.id === companyId || (t.adminEmail && email && t.adminEmail.toLowerCase() === email)) {
-            if (updated.name) t.adminName = updated.name;
-            if (updated.phone) t.adminPhone = updated.phone;
-            localStorage.setItem('itlc_active_tenant', JSON.stringify(t));
-          }
-        } catch {}
+      if (!isEmployeeUser) {
+        const savedTenants = localStorage.getItem('itlc_multi_tenants');
+        if (savedTenants) {
+          try {
+            let tList = JSON.parse(savedTenants);
+            if (Array.isArray(tList)) {
+              tList = tList.map((t: any) => {
+                const isTenantAdmin = Boolean(
+                  (t.adminEmail && email && t.adminEmail.toLowerCase() === email) ||
+                  (t.email && email && t.email.toLowerCase() === email)
+                );
+                if (isTenantAdmin) {
+                  return {
+                    ...t,
+                    adminName: updated.name || t.adminName,
+                    adminPhone: updated.phone || t.adminPhone,
+                    logo: updated.avatar || t.logo
+                  };
+                }
+                return t;
+              });
+              localStorage.setItem('itlc_multi_tenants', JSON.stringify(tList));
+            }
+          } catch {}
+        }
+
+        const activeTenant = localStorage.getItem('itlc_active_tenant');
+        if (activeTenant) {
+          try {
+            const t = JSON.parse(activeTenant);
+            const isTenantAdmin = Boolean(
+              (t.adminEmail && email && t.adminEmail.toLowerCase() === email) ||
+              (t.email && email && t.email.toLowerCase() === email)
+            );
+            if (isTenantAdmin) {
+              if (updated.name) t.adminName = updated.name;
+              if (updated.phone) t.adminPhone = updated.phone;
+              localStorage.setItem('itlc_active_tenant', JSON.stringify(t));
+            }
+          } catch {}
+        }
       }
 
       // 6. Update in hrms_superowner_users

@@ -1092,7 +1092,9 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
       const payload: any = {
         id: profile.id,
         email: profile.email,
-        employeeId: profile.id
+        employeeId: profile.id,
+        role: profile.designation || 'Employee',
+        isEmployee: true
       };
       if (updatedFields.fullName !== undefined) payload.name = updatedFields.fullName;
       if (updatedFields.mobile !== undefined) payload.phone = updatedFields.mobile;
