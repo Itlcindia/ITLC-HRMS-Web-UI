@@ -307,7 +307,7 @@ export const SubscriptionQuotaMeterModal: React.FC<SubscriptionQuotaMeterModalPr
         <div style="margin-top: 36px; padding: 16px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 11px; color: #64748b; line-height: 1.6;">
           <strong>Legal Terms & Regulatory Note:</strong><br/>
           ${metrics.invoiceTerms || 'Tax invoice issued in accordance with Section 31 of CGST Act, 2017. Computer generated receipt.'}<br/>
-          <strong>Platform Super Owner:</strong> ${metrics.registeredLegalName} • Helpline: +91 83688 17744 • Email: billing@itlc.in
+          <strong>Platform Super Owner:</strong> ${metrics.registeredLegalName} • Helpline: +91 9532341000 • Email: support@itlcindia.com
         </div>
         <script>
           window.print();

@@ -57,7 +57,7 @@ export const SmartAutomationsHubModal: React.FC<SmartAutomationsHubModalProps> =
   const [empId, setEmpId] = useState('EMP-2041');
   const [empRole, setEmpRole] = useState('Senior Full Stack Engineer');
   const [empDept, setEmpDept] = useState('Technology & Product');
-  const [empPhone, setEmpPhone] = useState('918368817744');
+  const [empPhone, setEmpPhone] = useState('919532341000');
   const [empPan, setEmpPan] = useState('ABCDE1234F');
   const [empUan, setEmpUan] = useState('100982341122');
   const [empBankAcc, setEmpBankAcc] = useState('918200192837482');
@@ -114,7 +114,7 @@ export const SmartAutomationsHubModal: React.FC<SmartAutomationsHubModalProps> =
           <div>
             <div class="company-name">${tenant?.name || taxConfig.registeredLegalName || 'ITLC INDIA PRIVATE LIMITED'}</div>
             <div class="meta">GSTIN: ${tenant?.gstin || taxConfig.gstin || '07AABCI8899K1Z4'} • Universal Business OS</div>
-            <div class="meta">Corporate Office: Tech Park, Ring Road, New Delhi, India</div>
+            <div class="meta">Corporate Office: Sector G1/0049, Olive Wood Villa, Sushant Golf City, Lucknow, 226030, India</div>
           </div>
           <div class="title-box">
             <div class="title">MONTHLY SALARY SLIP</div>
@@ -178,7 +178,7 @@ export const SmartAutomationsHubModal: React.FC<SmartAutomationsHubModalProps> =
         <div class="footer">
           <div>
             This is a computer-generated official payslip issued under OmniStaff HRMS Engine.<br/>
-            No physical signature is required. For queries, email payroll@itlc.in
+            No physical signature is required. For queries, email support@itlcindia.com
           </div>
           <div class="seal-box">
             ✓ DIGITALLY VERIFIED<br/>
@@ -225,7 +225,7 @@ export const SmartAutomationsHubModal: React.FC<SmartAutomationsHubModalProps> =
 
   // ==================== TAB 2: WHATSAPP BUSINESS AUTOMATION STATE ====================
   const [waRecipientType, setWaRecipientType] = useState<'lead' | 'invoice' | 'punch' | 'custom'>('lead');
-  const [waPhone, setWaPhone] = useState('918368817744');
+  const [waPhone, setWaPhone] = useState('919532341000');
   const [waClientName, setWaClientName] = useState('Rohit Verma');
   const [waCustomMessage, setWaCustomMessage] = useState(
     'Hello Rohit Verma! Thank you for inquiring with ITLC Sales CRM. Here is our product brochure and instant demo link: https://crm.itlc.in/demo. Let us know a convenient time for a 10-minute quick walkthrough!'
@@ -234,7 +234,7 @@ export const SmartAutomationsHubModal: React.FC<SmartAutomationsHubModalProps> =
   const getPresetMessage = () => {
     switch (waRecipientType) {
       case 'lead':
-        return `Hello ${waClientName}! 👋\n\nThank you for showing interest in *ITLC Enterprise Sales CRM & OmniStaff HRMS*. We have received your query.\n\n🔗 *Instant Live Demo:* https://app.itlc.in\n📞 *Helpdesk:* +91 83688 17744\n\nWould you like a personalized 10-min product walkthrough today?`;
+        return `Hello ${waClientName}! 👋\n\nThank you for showing interest in *ITLC Enterprise Sales CRM & OmniStaff HRMS*. We have received your query.\n\n🔗 *Instant Live Demo:* https://app.itlc.in\n📞 *Helpdesk:* +91 9532341000\n\nWould you like a personalized 10-min product walkthrough today?`;
       case 'invoice':
         return `Dear ${waClientName},\n\nYour official GST Tax Invoice from *${tenant?.name || 'ITLC India Pvt Ltd'}* is ready.\n\n🧾 *Invoice No:* INV-ITLC-2026-9812\n💵 *Total Amount:* ₹2,359.00 (Incl. 18% GST)\n💳 *Instant UPI QR Pay Link:* https://pay.itlc.in/inv-9812\n\nPlease find the receipt attached. Thank you for your partnership!`;
       case 'punch':
@@ -364,7 +364,7 @@ export const SmartAutomationsHubModal: React.FC<SmartAutomationsHubModalProps> =
   };
 
   const handleSendEodDigestWhatsApp = () => {
-    const ownerPhone = tenant?.adminPhone || '918368817744';
+    const ownerPhone = tenant?.adminPhone || '919532341000';
     const cleanPhone = ownerPhone.replace(/\D/g, '');
     const message = getEodSummaryText();
     const encoded = encodeURIComponent(message);
@@ -1180,7 +1180,7 @@ export const SmartAutomationsHubModal: React.FC<SmartAutomationsHubModalProps> =
                   }}
                 >
                   <Send size={15} />
-                  <span>Send EOD Report to Owner on WhatsApp (+{tenant?.adminPhone || '918368817744'})</span>
+                  <span>Send EOD Report to Owner on WhatsApp (+{tenant?.adminPhone || '919532341000'})</span>
                 </button>
               </div>
 

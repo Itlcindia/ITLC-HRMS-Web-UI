@@ -215,7 +215,7 @@ export const CustomLandingSectionRenderer: React.FC<CustomLandingSectionRenderer
             <button
               onClick={() => {
                 const liveConfig = getLiveLandingPageConfig();
-                const waNum = liveConfig.whatsappSalesNumber || '918368817744';
+                const waNum = liveConfig.whatsappSalesNumber || '919532341000';
                 const waUrl = `https://wa.me/${waNum}?text=` + encodeURIComponent('Hello ITLC Team, I want to learn more about enterprise plans.');
                 window.open(waUrl, '_blank');
               }}

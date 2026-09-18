@@ -1321,7 +1321,7 @@ export const LandingSettingsTab: React.FC<{
                   type="text"
                   value={cmsConfig.whatsappSalesNumber}
                   onChange={(e) => setCmsConfig({ ...cmsConfig, whatsappSalesNumber: e.target.value.replace(/[^0-9]/g, '') })}
-                  placeholder="e.g. 918368817744"
+                  placeholder="e.g. 919532341000"
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
                 <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-mono">digits only</span>
@@ -1364,7 +1364,7 @@ export const LandingSettingsTab: React.FC<{
                 type="email"
                 value={cmsConfig.supportEmail}
                 onChange={(e) => setCmsConfig({ ...cmsConfig, supportEmail: e.target.value })}
-                placeholder="e.g. support@itlc.in"
+                placeholder="e.g. support@itlcindia.com"
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <p className="text-[11px] text-slate-500 dark:text-slate-400">

@@ -2210,7 +2210,7 @@ export const SuperAdminMasterPanel: React.FC<SuperAdminMasterPanelProps> = ({
                       className="super-admin-input"
                       value={cmsConfig.whatsappSalesNumber}
                       onChange={(e) => setCmsConfig({ ...cmsConfig, whatsappSalesNumber: e.target.value })}
-                      placeholder="e.g. 918368817744"
+                      placeholder="e.g. 919532341000"
                     />
                     <span style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', display: 'block' }}>
                       Contact Sales button on landing page connects to https://wa.me/{cmsConfig.whatsappSalesNumber}
@@ -2224,7 +2224,7 @@ export const SuperAdminMasterPanel: React.FC<SuperAdminMasterPanelProps> = ({
                       className="super-admin-input"
                       value={cmsConfig.supportEmail}
                       onChange={(e) => setCmsConfig({ ...cmsConfig, supportEmail: e.target.value })}
-                      placeholder="e.g. support@itlc.in"
+                      placeholder="e.g. support@itlcindia.com"
                     />
                   </div>
                 </div>

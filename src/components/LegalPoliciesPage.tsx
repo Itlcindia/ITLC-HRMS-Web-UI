@@ -11,6 +11,7 @@ import {
   Copy, 
   Check, 
   Mail, 
+  Phone,
   Building2, 
   MapPin, 
   ChevronRight,
@@ -292,7 +293,7 @@ export const LegalPoliciesPage: React.FC<LegalPoliciesPageProps> = ({
                   3. Multi-Tenant Accounts & User Responsibility
                 </h3>
                 <p>
-                  The Customer is solely responsible for maintaining the confidentiality of administrative credentials, super-admin master access, employee credentials, and role permissions. The Customer agrees to notify ITLC India immediately at <a href="mailto:support@itlc.in" style={{ color: '#0284c7', fontWeight: 600 }}>support@itlc.in</a> upon discovering any unauthorized account activity.
+                  The Customer is solely responsible for maintaining the confidentiality of administrative credentials, super-admin master access, employee credentials, and role permissions. The Customer agrees to notify ITLC India immediately at <a href="mailto:support@itlcindia.com" style={{ color: '#0284c7', fontWeight: 600 }}>support@itlcindia.com</a> upon discovering any unauthorized account activity.
                 </p>
 
                 <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a', marginTop: '24px', marginBottom: '10px' }}>
@@ -340,7 +341,7 @@ export const LegalPoliciesPage: React.FC<LegalPoliciesPageProps> = ({
                   9. Governing Law & Dispute Resolution
                 </h3>
                 <p>
-                  These Terms shall be governed by and construed in accordance with the substantive laws of the Republic of India. Any dispute, controversy, or claim arising out of or relating to these Terms shall be subject to the exclusive jurisdiction of the competent courts situated in <strong>New Delhi, India</strong>.
+                  These Terms shall be governed by and construed in accordance with the substantive laws of the Republic of India. Any dispute, controversy, or claim arising out of or relating to these Terms shall be subject to the exclusive jurisdiction of the competent courts situated in <strong>Lucknow, Uttar Pradesh, India</strong>.
                 </p>
               </div>
             )}
@@ -417,7 +418,8 @@ export const LegalPoliciesPage: React.FC<LegalPoliciesPageProps> = ({
                 <div style={{ background: '#f1f5f9', padding: '16px 20px', borderRadius: '8px', marginTop: '12px' }}>
                   <p style={{ margin: '0 0 6px' }}><strong>Designation:</strong> Data Grievance & Compliance Officer</p>
                   <p style={{ margin: '0 0 6px' }}><strong>Company:</strong> ITLC India Private Limited</p>
-                  <p style={{ margin: '0 0 6px' }}><strong>Email:</strong> <a href="mailto:grievance@itlc.in" style={{ color: '#0284c7', fontWeight: 600 }}>grievance@itlc.in</a> / <a href="mailto:support@itlc.in" style={{ color: '#0284c7', fontWeight: 600 }}>support@itlc.in</a></p>
+                  <p style={{ margin: '0 0 6px' }}><strong>Email:</strong> <a href="mailto:support@itlcindia.com" style={{ color: '#0284c7', fontWeight: 600 }}>support@itlcindia.com</a></p>
+                  <p style={{ margin: '0 0 6px' }}><strong>Office Address:</strong> Sector G1/0049, Olive Wood Villa, Sushant Golf City, Lucknow, 226030, India</p>
                   <p style={{ margin: '0' }}><strong>Response Time:</strong> Written acknowledgment within 48 hours; resolution within 15 working days.</p>
                 </div>
               </div>
@@ -447,7 +449,7 @@ export const LegalPoliciesPage: React.FC<LegalPoliciesPageProps> = ({
                 </p>
                 <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
                   <li><strong>Self-Service Console:</strong> Navigate to Admin Settings &gt; Subscription &gt; Cancel Subscription.</li>
-                  <li><strong>Email Request:</strong> Send an email from your registered admin email address to <a href="mailto:billing@itlc.in" style={{ color: '#0284c7', fontWeight: 600 }}>billing@itlc.in</a> with your Organization Name and Workspace ID.</li>
+                  <li><strong>Email Request:</strong> Send an email from your registered admin email address to <a href="mailto:support@itlcindia.com" style={{ color: '#0284c7', fontWeight: 600 }}>support@itlcindia.com</a> with your Organization Name and Workspace ID.</li>
                 </ul>
                 <p>
                   Upon cancellation, your subscription will remain active until the end of your prepaid billing period, and no further renewal charges will be initiated.
@@ -540,8 +542,8 @@ export const LegalPoliciesPage: React.FC<LegalPoliciesPageProps> = ({
                 </p>
                 <div style={{ background: '#f1f5f9', padding: '16px 20px', borderRadius: '8px', marginTop: '12px' }}>
                   <p style={{ margin: '0 0 6px' }}><strong>Technical Support Desk:</strong> ITLC Cloud Provisioning Operations</p>
-                  <p style={{ margin: '0 0 6px' }}><strong>Email:</strong> <a href="mailto:support@itlc.in" style={{ color: '#0284c7', fontWeight: 600 }}>support@itlc.in</a></p>
-                  <p style={{ margin: '0' }}><strong>Priority Escalation WhatsApp:</strong> +91 83688 17744</p>
+                  <p style={{ margin: '0 0 6px' }}><strong>Email:</strong> <a href="mailto:support@itlcindia.com" style={{ color: '#0284c7', fontWeight: 600 }}>support@itlcindia.com</a></p>
+                  <p style={{ margin: '0' }}><strong>Priority Escalation Phone / WhatsApp:</strong> +91 9532341000</p>
                 </div>
               </div>
             )}
@@ -621,7 +623,7 @@ export const LegalPoliciesPage: React.FC<LegalPoliciesPageProps> = ({
                   Questions regarding this policy? Reach our legal and compliance desk.
                 </p>
                 <p style={{ margin: '4px 0 0', fontSize: '13.5px', fontWeight: 600, color: '#0f172a' }}>
-                  <a href="mailto:support@itlc.in" style={{ color: '#0284c7', textDecoration: 'none' }}>support@itlc.in</a> · +91 83688 17744
+                  <a href="mailto:support@itlcindia.com" style={{ color: '#0284c7', textDecoration: 'none' }}>support@itlcindia.com</a> · +91 9532341000
                 </p>
               </div>
 
@@ -670,15 +672,15 @@ export const LegalPoliciesPage: React.FC<LegalPoliciesPageProps> = ({
               <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12.5px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#475569' }}>
                   <Mail size={14} color="#0284c7" />
-                  <a href="mailto:support@itlc.in" style={{ color: '#0284c7', textDecoration: 'none' }}>support@itlc.in</a>
+                  <a href="mailto:support@itlcindia.com" style={{ color: '#0284c7', textDecoration: 'none' }}>support@itlcindia.com</a>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#475569' }}>
-                  <Mail size={14} color="#0284c7" />
-                  <a href="mailto:billing@itlc.in" style={{ color: '#0284c7', textDecoration: 'none' }}>billing@itlc.in</a>
+                  <Phone size={14} color="#0284c7" />
+                  <a href="tel:+919532341000" style={{ color: '#0284c7', textDecoration: 'none' }}>+91 9532341000</a>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#475569' }}>
-                  <MapPin size={14} color="#0284c7" />
-                  <span>New Delhi, India</span>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', color: '#475569' }}>
+                  <MapPin size={14} color="#0284c7" style={{ marginTop: '3px', flexShrink: 0 }} />
+                  <span>Sector G1/0049, Olive Wood Villa, Sushant Golf City, Lucknow, 226030, India</span>
                 </div>
               </div>
             </div>
@@ -758,7 +760,7 @@ export const LegalPoliciesPage: React.FC<LegalPoliciesPageProps> = ({
       {/* Footer */}
       <LandingFooter
         companyName="ITLC India Private Limited"
-        supportEmail="support@itlc.in"
+        supportEmail="support@itlcindia.com"
         onNavigate={(dest) => onNavigateTo(dest)}
       />
 

@@ -47,7 +47,7 @@ const getFooterColumns = (onOpenSuperowner?: () => void) => [
     links: [
       { label: 'About ITLC India', href: '/' },
       { label: 'Workspaces Central Hub', href: '/workspaces' },
-      { label: 'Contact Support', href: 'mailto:support@itlc.in' },
+      { label: 'Contact Support', href: 'mailto:support@itlcindia.com' },
       ...(onOpenSuperowner ? [{ label: '⚡ Super Owner Portal', onClick: onOpenSuperowner }] : [])
     ]
   },
@@ -67,7 +67,7 @@ const getFooterColumns = (onOpenSuperowner?: () => void) => [
 
 export const LandingFooter: React.FC<LandingFooterProps> = ({
   companyName = 'ITLC India Private Limited',
-  supportEmail = 'support@itlc.in',
+  supportEmail = 'support@itlcindia.com',
   onOpenSuperowner,
   onNavigate
 }) => {

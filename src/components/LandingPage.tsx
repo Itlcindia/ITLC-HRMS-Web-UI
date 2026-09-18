@@ -109,7 +109,7 @@ function HiringOnboardingSection({
     { name: 'Neha Gupta', role: 'Digital Marketer', exp: '3+ Years Experience', score: 68, color: '#f59e0b' }
   ];
 
-  const waNumber = whatsappNumber || '918368817744';
+  const waNumber = whatsappNumber || '919532341000';
 
   return (
     <section className="itlc-hiring-section" aria-labelledby="itlc-hiring-title">
@@ -378,7 +378,7 @@ function ReadyStartedSection({
   onStart: () => void;
   whatsappNumber?: string;
 }) {
-  const waNumber = whatsappNumber || '918368817744';
+  const waNumber = whatsappNumber || '919532341000';
   const avatars = [
     { className: 'avatar-a', src: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=180&q=80' },
     { className: 'avatar-b', src: 'https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&w=180&q=80' },
@@ -700,7 +700,7 @@ export default function LandingPage({
               </button>
               <a
                 className="itlc-reference-secondary"
-                href={`https://wa.me/${cmsConfig.whatsappSalesNumber || '918368817744'}?text=Hello%20ITLC%20Team%2C%20I%20want%20a%20demo%20of%20ITLC%20HRMS`}
+                href={`https://wa.me/${cmsConfig.whatsappSalesNumber || '919532341000'}?text=Hello%20ITLC%20Team%2C%20I%20want%20a%20demo%20of%20ITLC%20HRMS`}
                 target="_blank"
                 rel="noreferrer"
               >
@@ -841,7 +841,7 @@ export default function LandingPage({
         })}
 
       <LandingFooter 
-        supportEmail={cmsConfig.supportEmail || 'support@itlc.in'} 
+        supportEmail={cmsConfig.supportEmail || 'support@itlcindia.com'} 
         companyName="ITLC India"
         onOpenSuperowner={onOpenSuperowner}
         onNavigate={navigateTo}
