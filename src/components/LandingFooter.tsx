@@ -4,7 +4,7 @@ interface LandingFooterProps {
   supportEmail?: string;
   companyName?: string;
   onOpenSuperowner?: () => void;
-  onNavigate?: (page: 'home' | 'workspaces' | 'security' | 'modules' | 'pricing') => void;
+  onNavigate?: (page: 'home' | 'workspaces' | 'security' | 'modules' | 'pricing' | 'terms' | 'privacy' | 'refund' | 'shipping' | 'pricing-policy') => void;
 }
 
 const getFooterColumns = (onOpenSuperowner?: () => void) => [
@@ -37,7 +37,7 @@ const getFooterColumns = (onOpenSuperowner?: () => void) => [
       { label: 'System Documentation', href: '/modules' },
       { label: 'API & Webhook Integrations', href: '/modules' },
       { label: 'Security & Compliance', href: '/security' },
-      { label: 'GST & Invoicing Guide', href: '/security' },
+      { label: 'GST & Invoicing Guide', href: '/pricing-policy' },
       { label: 'System Changelog', href: '/workspaces' }
     ]
   },
@@ -55,9 +55,11 @@ const getFooterColumns = (onOpenSuperowner?: () => void) => [
     title: 'Legal & Trust',
     className: 'landing-footer-col-legal',
     links: [
-      { label: 'Terms of Service', href: '/security' },
-      { label: 'Privacy Policy', href: '/security' },
-      { label: 'Cookie Policy', href: '/security' },
+      { label: 'Terms & Conditions', href: '/terms' },
+      { label: 'Privacy Policy', href: '/privacy' },
+      { label: 'Cancellation & Refund', href: '/cancellation-refund' },
+      { label: 'Shipping & Delivery', href: '/shipping-policy' },
+      { label: 'Pricing Policy', href: '/pricing-policy' },
       { label: 'Data Security (SOC-2)', href: '/security' }
     ]
   }
@@ -94,6 +96,21 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({
       } else if (href === '/security') {
         e.preventDefault();
         onNavigate('security');
+      } else if (href === '/terms') {
+        e.preventDefault();
+        onNavigate('terms');
+      } else if (href === '/privacy') {
+        e.preventDefault();
+        onNavigate('privacy');
+      } else if (href === '/cancellation-refund' || href === '/refund') {
+        e.preventDefault();
+        onNavigate('refund');
+      } else if (href === '/shipping-policy' || href === '/shipping') {
+        e.preventDefault();
+        onNavigate('shipping');
+      } else if (href === '/pricing-policy') {
+        e.preventDefault();
+        onNavigate('pricing-policy');
       }
     }
   };
@@ -138,14 +155,20 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({
 
         <div className="landing-footer-bottom">
           <div className="landing-footer-legal-links">
-            <a href="/security" onClick={(e) => handleLinkClick(e, '/security')}>
+            <a href="/terms" onClick={(e) => handleLinkClick(e, '/terms')}>
+              Terms & Conditions
+            </a>
+            <a href="/privacy" onClick={(e) => handleLinkClick(e, '/privacy')}>
               Privacy Policy
             </a>
-            <a href="/security" onClick={(e) => handleLinkClick(e, '/security')}>
-              Terms of Services
+            <a href="/cancellation-refund" onClick={(e) => handleLinkClick(e, '/cancellation-refund')}>
+              Cancellation & Refund
             </a>
-            <a href="/security" onClick={(e) => handleLinkClick(e, '/security')}>
-              Cookies
+            <a href="/shipping-policy" onClick={(e) => handleLinkClick(e, '/shipping-policy')}>
+              Shipping & Delivery
+            </a>
+            <a href="/pricing-policy" onClick={(e) => handleLinkClick(e, '/pricing-policy')}>
+              Pricing Policy
             </a>
             <a href="/security" onClick={(e) => handleLinkClick(e, '/security')}>
               Data Security

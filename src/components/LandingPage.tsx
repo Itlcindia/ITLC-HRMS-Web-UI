@@ -17,6 +17,7 @@ import { WorkspacesPage } from './WorkspacesPage';
 import { SecurityPage } from './SecurityPage';
 import { ModulesPage } from './ModulesPage';
 import { PricingPage } from './PricingPage';
+import { LegalPoliciesPage, type PolicyType } from './LegalPoliciesPage';
 import { LandingHeader } from './LandingHeader';
 import { LandingFooter } from './LandingFooter';
 import { ClientOnboardingModal } from './ClientOnboardingModal';
@@ -37,7 +38,8 @@ import {
   Cpu,
   UsersRound,
   BarChart3,
-  Shield
+  Shield,
+  FileText
 } from 'lucide-react';
 
 export interface LandingPageProps {
@@ -48,14 +50,29 @@ export interface LandingPageProps {
   onSuccessLogin?: () => void;
 }
 
-type LandingView = 'home' | 'workspaces' | 'security' | 'modules' | 'pricing';
+type LandingView = 
+  | 'home' 
+  | 'workspaces' 
+  | 'security' 
+  | 'modules' 
+  | 'pricing' 
+  | 'terms' 
+  | 'privacy' 
+  | 'refund' 
+  | 'shipping' 
+  | 'pricing-policy';
 
 const landingPathByView: Record<LandingView, string> = {
   home: '/',
   workspaces: '/workspaces',
   security: '/security',
   modules: '/modules',
-  pricing: '/pricing'
+  pricing: '/pricing',
+  terms: '/terms',
+  privacy: '/privacy',
+  refund: '/cancellation-refund',
+  shipping: '/shipping-policy',
+  'pricing-policy': '/pricing-policy'
 };
 
 const getLandingRouteState = (): { view: LandingView; registering: boolean } => {
@@ -68,6 +85,11 @@ const getLandingRouteState = (): { view: LandingView; registering: boolean } => 
   if (path === '/security' || path === '/highlights' || hash === '#security' || hash === '#highlights') return { view: 'security', registering: false };
   if (path === '/modules' || hash === '#modules') return { view: 'modules', registering: false };
   if (path === '/pricing' || hash === '#pricing') return { view: 'pricing', registering: false };
+  if (path === '/terms' || hash === '#terms') return { view: 'terms', registering: false };
+  if (path === '/privacy' || hash === '#privacy') return { view: 'privacy', registering: false };
+  if (path === '/cancellation-refund' || path === '/refund' || hash === '#cancellation-refund' || hash === '#refund') return { view: 'refund', registering: false };
+  if (path === '/shipping-policy' || path === '/shipping' || path === '/delivery-policy' || hash === '#shipping-policy' || hash === '#shipping') return { view: 'shipping', registering: false };
+  if (path === '/pricing-policy' || hash === '#pricing-policy') return { view: 'pricing-policy', registering: false };
   if (path === '/register' || hash === '#register' || hash.startsWith('#register')) return { view: 'home', registering: false };
 
   return { view: 'home', registering: false };
@@ -606,6 +628,31 @@ export default function LandingPage({
     );
   }
 
+  // 6. SUB-PAGE: LEGAL POLICIES (Terms, Privacy, Refund, Shipping, Pricing Policy)
+  if (
+    activeLandingView === 'terms' || 
+    activeLandingView === 'privacy' || 
+    activeLandingView === 'refund' || 
+    activeLandingView === 'shipping' || 
+    activeLandingView === 'pricing-policy'
+  ) {
+    return (
+      <LegalPoliciesPage 
+        initialPolicy={activeLandingView as PolicyType}
+        onBackToHome={() => navigateTo('home')}
+        onGetStarted={() => openRegister('starter')}
+        onOpenSignIn={handleAuthTrigger}
+        onOpenSearch={() => setShowSpotlight(true)}
+        onNavigateTo={(page) => navigateTo(page as LandingView)}
+        onPolicyChange={(policy) => {
+          setActiveLandingView(policy);
+          const path = landingPathByView[policy];
+          if (path) window.history.pushState({}, '', path);
+        }}
+      />
+    );
+  }
+
   // MAIN HOMEPAGE LANDING VIEW
   return (
     <div className="itlc-glass-page min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-sky-500 selection:text-white">
@@ -860,6 +907,61 @@ export default function LandingPage({
                 <div className="flex items-center gap-2">
                   <Sparkles size={14} className="text-purple-600" />
                   <span>Subscription Plans & Pricing Calculator</span>
+                </div>
+                <ChevronRight size={14} className="text-slate-400" />
+              </div>
+
+              <div 
+                onClick={() => { setShowSpotlight(false); navigateTo('terms'); }}
+                className="p-2.5 rounded-xl hover:bg-slate-50 cursor-pointer flex items-center justify-between text-slate-700 font-semibold"
+              >
+                <div className="flex items-center gap-2">
+                  <FileText size={14} className="text-sky-600" />
+                  <span>Terms & Conditions (SaaS Agreement)</span>
+                </div>
+                <ChevronRight size={14} className="text-slate-400" />
+              </div>
+
+              <div 
+                onClick={() => { setShowSpotlight(false); navigateTo('privacy'); }}
+                className="p-2.5 rounded-xl hover:bg-slate-50 cursor-pointer flex items-center justify-between text-slate-700 font-semibold"
+              >
+                <div className="flex items-center gap-2">
+                  <ShieldCheck size={14} className="text-emerald-600" />
+                  <span>Privacy Policy (DPDPA 2023 Compliant)</span>
+                </div>
+                <ChevronRight size={14} className="text-slate-400" />
+              </div>
+
+              <div 
+                onClick={() => { setShowSpotlight(false); navigateTo('refund'); }}
+                className="p-2.5 rounded-xl hover:bg-slate-50 cursor-pointer flex items-center justify-between text-slate-700 font-semibold"
+              >
+                <div className="flex items-center gap-2">
+                  <FileText size={14} className="text-amber-600" />
+                  <span>Cancellation & Refund Policy</span>
+                </div>
+                <ChevronRight size={14} className="text-slate-400" />
+              </div>
+
+              <div 
+                onClick={() => { setShowSpotlight(false); navigateTo('shipping'); }}
+                className="p-2.5 rounded-xl hover:bg-slate-50 cursor-pointer flex items-center justify-between text-slate-700 font-semibold"
+              >
+                <div className="flex items-center gap-2">
+                  <FileText size={14} className="text-indigo-600" />
+                  <span>Shipping & Delivery Policy (Digital SaaS Provisioning)</span>
+                </div>
+                <ChevronRight size={14} className="text-slate-400" />
+              </div>
+
+              <div 
+                onClick={() => { setShowSpotlight(false); navigateTo('pricing-policy'); }}
+                className="p-2.5 rounded-xl hover:bg-slate-50 cursor-pointer flex items-center justify-between text-slate-700 font-semibold"
+              >
+                <div className="flex items-center gap-2">
+                  <FileText size={14} className="text-blue-600" />
+                  <span>Pricing & Tax Invoicing Policy</span>
                 </div>
                 <ChevronRight size={14} className="text-slate-400" />
               </div>
