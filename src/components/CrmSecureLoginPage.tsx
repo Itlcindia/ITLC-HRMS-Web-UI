@@ -127,16 +127,34 @@ export const CrmSecureLoginPage: React.FC<CrmSecureLoginPageProps> = ({
         const deletedIdsRaw = localStorage.getItem('hrms_deleted_company_ids');
         if (deletedIdsRaw) {
           const parsed = JSON.parse(deletedIdsRaw);
-          if (Array.isArray(parsed)) deletedIds = new Set(parsed);
+          if (Array.isArray(parsed)) {
+            parsed.forEach((x: any) => {
+              if (typeof x === 'string') deletedIds.add(x.toLowerCase().trim());
+              else if (x?.id) deletedIds.add(String(x.id).toLowerCase().trim());
+              if (x?.email) deletedIds.add(String(x.email).toLowerCase().trim());
+            });
+          }
         }
       } catch {}
+
+      if (deletedIds.has(cleanEmail)) {
+        setErrorMsg('❌ Access Revoked: This account has been permanently deleted by the Super Owner platform administrator.');
+        return;
+      }
 
       let tenants: any[] = [];
       try {
         const saved = localStorage.getItem('itlc_multi_tenants') || localStorage.getItem('multi_tenants_data') || localStorage.getItem('tenants');
         if (saved !== null) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) tenants = parsed.filter((t: any) => t && t.id && !deletedIds.has(t.id));
+          if (Array.isArray(parsed)) {
+            tenants = parsed.filter((t: any) => 
+              t && t.id && 
+              !deletedIds.has(String(t.id).toLowerCase().trim()) && 
+              !deletedIds.has(String(t.adminEmail || '').toLowerCase().trim()) && 
+              t.status !== 'deleted'
+            );
+          }
         } else if (deletedIds.size === 0) {
           tenants = [...initialSeedTenants];
         }
@@ -149,12 +167,14 @@ export const CrmSecureLoginPage: React.FC<CrmSecureLoginPageProps> = ({
           const parsedUsers = JSON.parse(regUsers);
           if (Array.isArray(parsedUsers)) {
             parsedUsers.forEach((u: any) => {
-              if (u.companyId && !tenants.some(t => t.id === u.companyId || t.adminEmail?.toLowerCase() === u.email?.toLowerCase())) {
+              const uCompId = String(u.companyId || '').toLowerCase().trim();
+              const uEmail = String(u.email || '').toLowerCase().trim();
+              if (u.companyId && !deletedIds.has(uCompId) && !deletedIds.has(uEmail) && u.status !== 'deleted' && !tenants.some(t => t.id === u.companyId || t.adminEmail?.toLowerCase() === uEmail)) {
                 tenants.push({
                   id: u.companyId,
-                  name: u.companyName || u.name || 'Pushkar Enterprises',
-                  adminName: u.name || 'Priyanshu Pushkar',
-                  adminEmail: u.email || 'priyanshupushkar263@gmail.com',
+                  name: u.companyName || u.name || 'Enterprise Workspace',
+                  adminName: u.name || 'Company Admin',
+                  adminEmail: u.email || '',
                   planId: u.planId || 'growth',
                   status: 'active'
                 });
@@ -170,72 +190,34 @@ export const CrmSecureLoginPage: React.FC<CrmSecureLoginPageProps> = ({
         (t.domain && (cleanEmail.endsWith(`@${t.domain.toLowerCase()}.com`) || cleanEmail.endsWith(`@${t.domain.toLowerCase()}.in`)))
       );
 
-      const superAdminEmails = [
-        'superowner@itlc.com',
-        'superowner@itlc.cloud',
-        'superadmin@itlc.cloud',
-        'superadmin@itlccrm.com',
-        'owner@itlc.cloud',
-        'priyanshupushkar263@gmail.com'
-      ];
-
-      let customSuperUser: any = null;
-      try {
-        const soUsersRaw = localStorage.getItem('hrms_superowner_users');
-        if (soUsersRaw) {
-          const soUsers = JSON.parse(soUsersRaw);
-          if (Array.isArray(soUsers)) {
-            customSuperUser = soUsers.find((u: any) => {
-              if (!u || !u.email) return false;
-              const r = (u.role || '').toLowerCase().trim();
-              return r.includes('super') && u.email.toLowerCase().trim() === cleanEmail;
-            });
-          }
-        }
-        if (!customSuperUser) {
-          const addRaw = localStorage.getItem('hrms_additional_superowners');
-          if (addRaw) {
-            const addList = JSON.parse(addRaw);
-            if (Array.isArray(addList)) {
-              customSuperUser = addList.find((so: any) => so && so.email && so.email.toLowerCase().trim() === cleanEmail);
-            }
-          }
-        }
-      } catch {}
-
-      const isSuperAdminEmail = superAdminEmails.includes(cleanEmail) || cleanEmail.includes('superowner') || cleanEmail.includes('superadmin') || !!customSuperUser;
-      const uPass = customSuperUser?.password ? String(customSuperUser.password).trim() : '';
-      const isPriyanshu = cleanEmail === 'priyanshupushkar263@gmail.com';
-      const isMasterPass = isPriyanshu
-        ? (password === 'Priyanshu8090')
-        : (uPass ? (password === uPass || password.toLowerCase() === uPass.toLowerCase()) : (password === 'admin' || password === 'Admin@123'));
+      const isSuperAdminEmail = cleanEmail === 'priyanshupushkar263@gmail.com';
 
       // 1. Super Admin Authentication
       if (isSuperAdminEmail) {
-        if (!isMasterPass) {
+        if (password !== 'Priyanshu8090') {
           setErrorMsg('❌ Invalid SuperAdmin password. Access Denied.');
           return;
         }
 
         onSuccessLogin({
-          id: customSuperUser?.id || (cleanEmail === 'priyanshupushkar263@gmail.com' ? 'SUP_PAPZ0YC' : 1),
-          name: customSuperUser?.name || (cleanEmail === 'priyanshupushkar263@gmail.com' ? 'Priyanshu Pushkar' : 'Master SuperAdmin'),
-          email: email.trim(),
+          id: 'SUP_PAPZ0YC',
+          name: 'Priyanshu Pushkar',
+          email: 'priyanshupushkar263@gmail.com',
           role: 'Super Admin',
           companyName: 'ITLC HQ Global Control Room',
-          avatar: (customSuperUser?.name || (isPriyanshu ? 'PP' : 'SA')).slice(0, 2).toUpperCase()
+          avatar: 'PP'
         });
         return;
       }
 
       // 2. Tenant Subscription / User Account Check
-      if (!matchingTenant) {
-        setErrorMsg('❌ Access Blocked: No active account found for this email. Please register your company or purchase a subscription.');
+      if (!matchingTenant || deletedIds.has(String(matchingTenant.id).toLowerCase()) || deletedIds.has(String(matchingTenant.adminEmail || '').toLowerCase()) || matchingTenant.status === 'deleted') {
+        setErrorMsg('❌ Access Blocked: No active account found or this workspace was permanently deleted by Super Owner.');
         return;
       }
 
-      if (matchingTenant.status === 'expired' || matchingTenant.status === 'suspended') {
-        setErrorMsg(`⚠️ Subscription Expired: Company subscription for "${matchingTenant.name}" has expired. Please renew your plan.`);
+      if (matchingTenant.status === 'suspended') {
+        setErrorMsg(`⚠️ Account Suspended: Company account for "${matchingTenant.name}" has been suspended. Please contact support.`);
         return;
       }
 
@@ -273,12 +255,12 @@ export const CrmSecureLoginPage: React.FC<CrmSecureLoginPageProps> = ({
     setTimeout(() => {
       setIsLoading(false);
       onSuccessLogin({
-        id: 1,
-        name: 'Master SuperAdmin',
-        email: 'superadmin@itlccrm.com',
+        id: 'SUP_PAPZ0YC',
+        name: 'Priyanshu Pushkar',
+        email: 'priyanshupushkar263@gmail.com',
         role: 'Super Admin',
         companyName: 'ITLC HQ Global Control Room',
-        avatar: 'SA'
+        avatar: 'PP'
       });
     }, 400);
   };
@@ -704,7 +686,7 @@ export const CrmSecureLoginPage: React.FC<CrmSecureLoginPageProps> = ({
                       <Key size={24} />
                     </div>
                     <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 800, color: '#ffffff' }}>Super Admin Access</h3>
-                    <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94a3b8' }}>Enter your 4-digit Master Security PIN (Default: 1234)</p>
+                    <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94a3b8' }}>Enter Super Owner Master Password</p>
                   </div>
 
                   <div>

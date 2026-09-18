@@ -154,6 +154,7 @@ export default function CompanySettings() {
     try {
       await api.updateAdminCompany({
         name: compName,
+        email: compEmail,
         logo: compLogo,
         themeColor,
         phone,
@@ -174,7 +175,8 @@ export default function CompanySettings() {
       setSuccess(true);
       setTimeout(() => {
         setSuccess(false);
-      }, 4000);
+        window.location.reload();
+      }, 1000);
     } catch (err) {
       alert(err.message || 'Failed to save settings');
     } finally {
@@ -195,7 +197,8 @@ export default function CompanySettings() {
       setProfileSuccess(true);
       setTimeout(() => {
         setProfileSuccess(false);
-      }, 4000);
+        window.location.reload();
+      }, 1000);
     } catch (err) {
       alert(err.message || 'Failed to update profile');
     } finally {

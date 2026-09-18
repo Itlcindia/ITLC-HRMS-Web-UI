@@ -401,6 +401,15 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       } catch {}
     };
 
+    const handlePaymentsEvent = async () => {
+      try {
+        const freshPayments = await api.getSuperOwnerPayments();
+        if (freshPayments && Array.isArray(freshPayments)) {
+          setPayments(prev => JSON.stringify(prev) === JSON.stringify(freshPayments) ? prev : freshPayments);
+        }
+      } catch {}
+    };
+
     window.addEventListener('subscription_plans_updated', handlePlansEvent);
     window.addEventListener('companies_updated', handleCompaniesEvent);
     window.addEventListener('company_updated', handleSingleCompanyUpdated);
@@ -408,6 +417,8 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     window.addEventListener('company_deleted', handleCompanyDeleted);
     window.addEventListener('multi_tenant_updated', handleCompaniesEvent);
     window.addEventListener('superowner_data_updated', handleCompaniesEvent);
+    window.addEventListener('superowner_data_updated', handlePaymentsEvent);
+    window.addEventListener('payment_received', handlePaymentsEvent);
 
     return () => {
       window.removeEventListener('subscription_plans_updated', handlePlansEvent);
@@ -417,6 +428,8 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       window.removeEventListener('company_deleted', handleCompanyDeleted);
       window.removeEventListener('multi_tenant_updated', handleCompaniesEvent);
       window.removeEventListener('superowner_data_updated', handleCompaniesEvent);
+      window.removeEventListener('superowner_data_updated', handlePaymentsEvent);
+      window.removeEventListener('payment_received', handlePaymentsEvent);
     };
   }, []);
   
@@ -475,7 +488,25 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       try {
         const fetchedPlans = await api.getPlans();
         if (fetchedPlans && Array.isArray(fetchedPlans)) {
-          setPlans(prev => JSON.stringify(prev) === JSON.stringify(fetchedPlans) ? prev : fetchedPlans);
+          const safePlans = fetchedPlans.map((p: any) => ({
+            ...p,
+            price: p.price || p.priceMonthly || 499,
+            priceMonthly: p.priceMonthly || p.price || 499,
+            employeeLimit: p.employeeLimit || p.seatLimit || 50,
+            storageLimit: p.storageLimit || p.storageLimitGb || 20,
+            aiCreditsLimit: p.aiCreditsLimit || 500,
+            features: {
+              payroll: true,
+              attendance: true,
+              recruitment: false,
+              faceRecognition: false,
+              gpsAttendance: false,
+              apiAccess: false,
+              whiteLabel: false,
+              ...(typeof p.features === 'object' && p.features !== null ? p.features : {})
+            }
+          }));
+          setPlans(prev => JSON.stringify(prev) === JSON.stringify(safePlans) ? prev : safePlans);
         }
       } catch (e) {
         console.error("Failed to load plans", e);
@@ -611,19 +642,34 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, [selectedCurrency]);
 
-  const formatAmount = (amountInUSD: number, paymentCurrency?: string) => {
-    let normalizedUSD = amountInUSD;
-    if (paymentCurrency && paymentCurrency !== 'USD') {
-      const pDetails = CURRENCY_DETAILS[paymentCurrency];
-      const pRate = pDetails ? pDetails.rate : 1.0;
-      normalizedUSD = amountInUSD / pRate;
+  const formatAmount = (amount: number, paymentCurrency?: string) => {
+    const sourceCurrency = paymentCurrency || 'INR';
+    let amountInINR = Number(amount) || 0;
+    if (sourceCurrency === 'USD') {
+      amountInINR = amount * 83.0;
+    } else if (sourceCurrency === 'EUR') {
+      amountInINR = (amount / 0.92) * 83.0;
+    } else if (sourceCurrency === 'GBP') {
+      amountInINR = (amount / 0.79) * 83.0;
     }
-    const details = CURRENCY_DETAILS[selectedCurrency] || CURRENCY_DETAILS.USD;
-    const converted = normalizedUSD * details.rate;
-    if (selectedCurrency === 'JPY') {
-      return `${details.symbol}${Math.round(converted).toLocaleString()}`;
+
+    const target = selectedCurrency || 'INR';
+    let targetAmount = amountInINR;
+    if (target === 'USD') {
+      targetAmount = amountInINR / 83.0;
+    } else if (target === 'EUR') {
+      targetAmount = (amountInINR / 83.0) * 0.92;
+    } else if (target === 'GBP') {
+      targetAmount = (amountInINR / 83.0) * 0.79;
+    } else if (target === 'INR') {
+      targetAmount = amountInINR;
     }
-    return `${details.symbol}${converted.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+
+    const details = CURRENCY_DETAILS[target] || CURRENCY_DETAILS.INR || { symbol: '₹' };
+    if (target === 'INR') {
+      return `${details.symbol}${Math.round(targetAmount).toLocaleString()}`;
+    }
+    return `${details.symbol}${targetAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
   };
 
   const addToast = (message: string, type: Toast['type'] = 'success') => {

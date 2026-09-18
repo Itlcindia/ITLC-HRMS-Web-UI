@@ -1,14 +1,14 @@
 import React from 'react';
+import { LandingHeader } from './LandingHeader';
+import { LandingFooter } from './LandingFooter';
 import { 
   Briefcase, 
   Building2, 
   ShieldCheck, 
   Sparkles, 
-  ArrowLeft, 
   ArrowRight, 
   CheckCircle2, 
   Layers, 
-  Search, 
   Activity, 
   Users, 
   BarChart3, 
@@ -44,114 +44,15 @@ export const WorkspacesPage: React.FC<WorkspacesPageProps> = ({
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', color: '#0f172a', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       
-      {/* Top Sticky Header */}
-      <header 
-        style={{
-          position: 'sticky',
-          top: '12px',
-          zIndex: 50,
-          maxWidth: '1280px',
-          margin: '12px auto 0',
-          padding: '10px 20px',
-          borderRadius: '16px',
-          background: 'rgba(255, 255, 255, 0.92)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          border: '1px solid rgba(226, 232, 240, 0.9)',
-          boxShadow: '0 10px 30px -5px rgba(15, 23, 42, 0.05)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button 
-            onClick={onBackToHome}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 12px',
-              borderRadius: '9px',
-              border: '1px solid #e2e8f0',
-              background: '#ffffff',
-              color: '#334155',
-              fontSize: '12px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            <ArrowLeft size={14} />
-            <span>Back to Home</span>
-          </button>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a' }}>ITLC Orbit</span>
-            <span style={{ fontSize: '10px', background: 'rgba(2, 132, 199, 0.08)', color: '#0284c7', padding: '2px 7px', borderRadius: '12px', border: '1px solid rgba(2, 132, 199, 0.2)', fontWeight: 700 }}>
-              Workspaces Directory
-            </span>
-          </div>
-        </div>
-
-        {/* Center Nav Links */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(241, 245, 249, 0.8)', padding: '3px', borderRadius: '11px', border: '1px solid rgba(226, 232, 240, 0.8)' }}>
-          <button 
-            onClick={() => onNavigateTo('workspaces')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 700, color: '#0284c7', padding: '5px 12px', borderRadius: '8px', background: '#ffffff', border: 'none', boxShadow: '0 2px 5px rgba(0,0,0,0.05)', cursor: 'pointer' }}
-          >
-            <Briefcase size={13} />
-            <span>Workspaces</span>
-          </button>
-          <button 
-            onClick={() => onNavigateTo('security')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 600, color: '#475569', padding: '5px 12px', borderRadius: '8px', background: 'transparent', border: 'none', cursor: 'pointer' }}
-          >
-            <ShieldCheck size={13} style={{ color: '#4f46e5' }} />
-            <span>Security</span>
-          </button>
-          <button 
-            onClick={() => onNavigateTo('modules')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 600, color: '#475569', padding: '5px 12px', borderRadius: '8px', background: 'transparent', border: 'none', cursor: 'pointer' }}
-          >
-            <Layers size={13} style={{ color: '#d97706' }} />
-            <span>Modules</span>
-          </button>
-          <button 
-            onClick={() => onNavigateTo('pricing')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 600, color: '#475569', padding: '5px 12px', borderRadius: '8px', background: 'transparent', border: 'none', cursor: 'pointer' }}
-          >
-            <Sparkles size={13} style={{ color: '#9333ea' }} />
-            <span>Pricing</span>
-          </button>
-        </div>
-
-        {/* Right Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button 
-            onClick={onOpenSearch}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 10px', borderRadius: '9px', fontSize: '12px', background: 'rgba(241, 245, 249, 0.9)', border: '1px solid #e2e8f0', color: '#64748b', cursor: 'pointer' }}
-          >
-            <Search size={13} />
-            <kbd style={{ fontSize: '10px', fontWeight: 700, padding: '1px 4px', background: '#fff', borderRadius: '4px', border: '1px solid #cbd5e1' }}>Ctrl K</kbd>
-          </button>
-
-          <button 
-            onClick={onOpenSignIn}
-            style={{ padding: '7px 12px', fontSize: '12px', borderRadius: '9px', background: 'transparent', color: '#334155', border: '1px solid transparent', fontWeight: 600, cursor: 'pointer' }}
-          >
-            Sign In
-          </button>
-
-          <button 
-            onClick={onGetStarted}
-            style={{ padding: '7px 15px', fontSize: '12px', borderRadius: '9px', display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'linear-gradient(135deg, #0284c7, #2563eb)', color: '#fff', border: 'none', fontWeight: 700, boxShadow: '0 4px 12px rgba(2, 132, 199, 0.25)', cursor: 'pointer' }}
-          >
-            <Sparkles size={13} />
-            <span>Get Started</span>
-          </button>
-        </div>
-      </header>
+      <LandingHeader
+        onHome={onBackToHome}
+        onFeatures={() => onNavigateTo('modules')}
+        onPricing={() => onNavigateTo('pricing')}
+        onSolutions={() => onNavigateTo('workspaces')}
+        onSecurity={() => onNavigateTo('security')}
+        onLogin={onOpenSignIn}
+        onGetStarted={onGetStarted}
+      />
 
       {/* Hero Header Section */}
       <section style={{ maxWidth: '1100px', margin: '0 auto', padding: '60px 24px 40px', textAlign: 'center' }}>
@@ -401,13 +302,14 @@ export const WorkspacesPage: React.FC<WorkspacesPageProps> = ({
             </div>
             <div style={{ background: 'rgba(255, 255, 255, 0.05)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
               <Lock size={24} style={{ color: '#fbbf24', marginBottom: '8px' }} />
-              <div style={{ fontSize: '20px', fontWeight: 800 }}>Master PIN</div>
-              <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>Super admin security shield</div>
+              <div style={{ fontSize: '20px', fontWeight: 800 }}>RBAC Shield</div>
+              <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>Role-based access protection</div>
             </div>
           </div>
         </div>
       </section>
 
+      <LandingFooter onNavigate={(p) => p === 'home' ? onBackToHome() : onNavigateTo(p)} />
     </div>
   );
 };

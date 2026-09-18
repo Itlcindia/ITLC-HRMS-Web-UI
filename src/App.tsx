@@ -36,25 +36,7 @@ export const resolveUserRole = (profileData: any): 'superowner' | 'admin' | 'man
     }
   } catch {}
 
-  if (
-    isCustomSuper ||
-    role.includes('superowner') || 
-    role.includes('super owner') || 
-    role.includes('superadmin') || 
-    role.includes('super admin') || 
-    role.includes('super_admin') || 
-    role.includes('super-admin') || 
-    role === 'super owner' ||
-    role === 'super admin' ||
-    email === 'superowner@itlc.com' || 
-    email === 'superowner@itlc.cloud' || 
-    email === 'owner@itlc.cloud' || 
-    email === 'superadmin@itlc.cloud' || 
-    email === 'superadmin@itlccrm.com' || 
-    email === 'priyanshupushkar263@gmail.com' ||
-    email.includes('superowner') ||
-    email.includes('superadmin')
-  ) {
+  if (email === 'priyanshupushkar263@gmail.com') {
     return 'superowner';
   }
 
@@ -83,6 +65,24 @@ export default function App() {
   const [loggedInEmail, setLoggedInEmail] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
+
+  const [selectedPlanForLogin, setSelectedPlanForLogin] = useState<string>(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('plan') || localStorage.getItem('itlc_selected_onboarding_plan') || 'starter';
+    } catch {
+      return 'starter';
+    }
+  });
+  const [isSignUpForLogin, setIsSignUpForLogin] = useState<boolean>(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const hash = window.location.hash.toLowerCase();
+      return urlParams.get('mode') === 'signup' || urlParams.get('mode') === 'register' || hash === '#signup' || hash === '#register';
+    } catch {
+      return false;
+    }
+  });
 
   const loadProfile = async (forceDashboard = false) => {
     try {
@@ -130,7 +130,12 @@ export default function App() {
           setView(targetRole);
         }
       } else {
-        if (isSuperownerRoute) {
+        const hashLower = hash.toLowerCase();
+        const searchLower = search.toLowerCase();
+        if (hashLower === '#signup' || hashLower === '#register' || searchLower.includes('mode=signup') || searchLower.includes('mode=register')) {
+          setIsSignUpForLogin(true);
+          setView('login');
+        } else if (isSuperownerRoute) {
           setView('superowner-login');
         } else if (path === '/login' || search.includes('login') || hash === '#login') {
           setView('login');
@@ -140,9 +145,11 @@ export default function App() {
       }
     } catch (e: any) {
       console.error("Failed to load profile:", e);
-      const isAuthError = e.message && (e.message.includes('401') || e.message.includes('Unauthorized') || e.message.includes('status: 401'));
+      const isAuthError = e.message && (e.message.includes('401') || e.message.includes('403') || e.message.includes('Unauthorized') || e.message.includes('status: 401') || e.message.includes('deleted') || e.message.includes('revoked'));
       if (isAuthError) {
         localStorage.removeItem('hrms_jwt_token');
+        localStorage.removeItem('hrms_user_profile');
+        localStorage.removeItem('itlc_active_tenant');
         setView('landing');
       } else {
         console.warn("Temporary network or server reboot issue. Retrying silently.");
@@ -241,28 +248,7 @@ export default function App() {
     );
   }
 
-  if (view !== 'superowner' && view !== 'superowner-login' && profile?.companyDetails?.status === 'expired') {
-    return (
-      <div className="min-h-screen w-full flex flex-col items-center bg-slate-900 text-white font-sans overflow-y-auto py-10">
-        <div className="w-full max-w-6xl p-6 relative">
-          <div className="bg-rose-500/10 text-rose-400 p-4 rounded-xl border border-rose-500/20 mb-6 flex items-start gap-4 shadow-lg shadow-rose-900/20">
-            <div className="h-10 w-10 shrink-0 bg-rose-500/20 rounded-full flex items-center justify-center font-bold text-xl">!</div>
-            <div>
-              <h3 className="font-bold text-lg">Subscription Expired</h3>
-              <p className="text-sm opacity-80 mt-1">Your company's trial or subscription tier has expired. Please select a plan below to continue using the platform.</p>
-            </div>
-            <button onClick={handleLogout} className="ml-auto px-5 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-bold transition-all shadow-md">
-              Logout
-            </button>
-          </div>
-          
-          <div className="bg-slate-800 rounded-2xl p-2 sm:p-6 border border-slate-700 shadow-2xl">
-             <Subscription onSubscriptionUpdate={loadProfile} /> 
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Direct access to dashboard - no subscription purchase barrier on login
 
   if (view !== 'superowner' && view !== 'superowner-login' && profile?.companyDetails?.status === 'suspended') {
     return (
@@ -325,7 +311,11 @@ export default function App() {
   if (view === 'landing') {
     return (
       <LandingPage 
-        onOpenLogin={() => setView('login')}
+        onOpenLogin={(initialPlanId?: string, isSignUp?: boolean) => {
+          if (initialPlanId) setSelectedPlanForLogin(initialPlanId);
+          setIsSignUpForLogin(!!isSignUp);
+          setView('login');
+        }}
         onOpenSuperowner={() => setView('superowner-login')}
         loggedInUser={profile}
         onGoToDashboard={() => {
@@ -370,14 +360,12 @@ export default function App() {
 
       {/* Main card centered on screen */}
       <div className="w-full max-w-[480px] sm:max-w-[540px] md:max-w-3xl lg:max-w-[960px] h-auto relative z-10 flex items-center justify-center mx-auto">
-        {view === 'superowner-login' ? (
-          <SuperownerLogin onSuccessLogin={handleSuccessLogin} />
-        ) : (
-          <LoginForm 
-            onSuccessLogin={handleSuccessLogin} 
-            isSuperownerMode={false} 
-          />
-        )}
+        <LoginForm 
+          onSuccessLogin={handleSuccessLogin} 
+          isSuperownerMode={view === 'superowner-login'} 
+          initialPlanId={selectedPlanForLogin}
+          initialSignUp={isSignUpForLogin}
+        />
       </div>
     </main>
   );

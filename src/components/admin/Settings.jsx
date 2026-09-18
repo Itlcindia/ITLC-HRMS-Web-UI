@@ -153,6 +153,7 @@ export default function CompanySettings() {
     try {
       await api.updateAdminCompany({
         name: compName,
+        email: compEmail,
         logo: compLogo,
         themeColor,
         phone,

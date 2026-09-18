@@ -397,6 +397,25 @@ export const CompanyRegisterPage: React.FC<CompanyRegisterPageProps> = ({
           const payList = savedPayments ? JSON.parse(savedPayments) : [];
           payList.unshift(payRecord);
           localStorage.setItem('hrms_payments_data', JSON.stringify(payList));
+
+          fetch(`${API_URL}/superowner/payments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: payRecord.id,
+              invoiceNumber: payRecord.invoiceNumber,
+              companyId: newTenant.id,
+              companyName: newTenant.name,
+              amount: payRecord.amount,
+              currency: payRecord.currency || 'INR',
+              gateway: payRecord.gateway,
+              status: payRecord.status,
+              date: new Date().toISOString().split('T')[0],
+              planId: newTenant.planId,
+              planName: currentPlan.name,
+              transactionId: paymentRef || payRecord.id
+            })
+          }).catch(() => {});
         } catch (e) {}
 
         // 4. Save activity log
@@ -524,10 +543,7 @@ export const CompanyRegisterPage: React.FC<CompanyRegisterPageProps> = ({
           if (result && result.paymentId) {
             provisionWorkspace(result.paymentId);
           } else {
-            const useTrial = window.confirm('Payment was not completed. Would you like to activate your company workspace immediately in 14-Day Free Trial mode?');
-            if (useTrial) {
-              provisionWorkspace(undefined, true);
-            }
+            alert('Payment was not completed. Workspace can only be provisioned after verified payment.');
           }
         },
         () => {
@@ -537,10 +553,7 @@ export const CompanyRegisterPage: React.FC<CompanyRegisterPageProps> = ({
     } catch (err: any) {
       console.warn('Razorpay checkout error:', err);
       setIsProcessingPayment(false);
-      const useTrial = window.confirm('Payment gateway was not ready. Would you like to activate your company workspace immediately in 14-Day Free Trial mode?');
-      if (useTrial) {
-        provisionWorkspace(undefined, true);
-      }
+      alert('Payment could not be completed. Please retry checkout.');
     }
   };
 

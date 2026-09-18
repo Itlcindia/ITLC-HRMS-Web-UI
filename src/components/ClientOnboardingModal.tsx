@@ -396,10 +396,7 @@ export const ClientOnboardingModal: React.FC<ClientOnboardingModalProps> = ({
           if (result && result.paymentId) {
             provisionTenant(result.paymentId);
           } else {
-            const fallback = window.confirm('Payment checkout was not completed. Would you like to provision this client workspace in Free Trial mode?');
-            if (fallback) {
-              provisionTenant('trial_' + Date.now());
-            }
+            alert('Payment checkout was not completed. Workspace can only be provisioned after verified payment.');
           }
         },
         () => {
@@ -409,10 +406,7 @@ export const ClientOnboardingModal: React.FC<ClientOnboardingModalProps> = ({
     } catch (err: any) {
       console.warn('Payment failed or cancelled:', err);
       setIsProcessingPayment(false);
-      const fallback = window.confirm('Payment gateway was unavailable. Would you like to provision this client workspace in Free Trial mode?');
-      if (fallback) {
-        provisionTenant('trial_' + Date.now());
-      }
+      alert('Payment could not be completed. Workspace was not created.');
     }
   };
 
@@ -818,15 +812,6 @@ export const ClientOnboardingModal: React.FC<ClientOnboardingModalProps> = ({
               </button>
 
               <div style={{ display: 'flex', gap: '10px' }}>
-                <button 
-                  type="button" 
-                  className="btn btn-secondary"
-                  style={{ background: '#f1f5f9', color: '#334155' }}
-                  onClick={() => provisionTenant()}
-                  title="Direct Sandbox Provisioning"
-                >
-                  <span>⚡ Instant Launch (Trial)</span>
-                </button>
 
                 <button 
                   type="button" 

@@ -126,11 +126,27 @@ const menuItems = [
   { id: 'support', label: 'Support', icon: HeartHandshake },
 ];
 
-export default function Sidebar({ activeTab, setActiveTab, collapsed, setCollapsed, handleLogout, mobileOpen, setMobileOpen, companyName, companyLogo, featureFlags = {}, subscriptionPlanId }) {
+export default function Sidebar({ 
+  activeTab, 
+  setActiveTab, 
+  collapsed, 
+  setCollapsed, 
+  handleLogout, 
+  mobileOpen, 
+  setMobileOpen, 
+  companyName, 
+  companyLogo, 
+  featureFlags = {}, 
+  subscriptionPlanId,
+  isSubscriptionActive = true,
+  onOpenSubscriptionModal
+}) {
   const [expandedMenus, setExpandedMenus] = useState({});
   const [isMobile, setIsMobile] = useState(false);
 
   const isLocked = (itemId) => {
+    if (itemId === 'dashboard' || itemId === 'subscription') return false;
+    if (isSubscriptionActive === false) return true;
     if (!subscriptionPlanId) return false;
     const plan = subscriptionPlanId.toLowerCase();
     if (plan === 'enterprise' || plan === 'business') return false;
@@ -145,6 +161,7 @@ export default function Sidebar({ activeTab, setActiveTab, collapsed, setCollaps
   };
 
   const isSubItemLocked = (itemId, subItemId) => {
+    if (isSubscriptionActive === false) return true;
     if (!subscriptionPlanId) return false;
     const plan = subscriptionPlanId.toLowerCase();
     if (plan === 'enterprise' || plan === 'business') return false;
@@ -343,7 +360,11 @@ export default function Sidebar({ activeTab, setActiveTab, collapsed, setCollaps
                 <button
                   onClick={() => {
                     if (isLocked(item.id)) {
-                      alert(`🔒 FEATURE LOCKED\nThe "${item.label}" module is not included in your current subscription plan (${subscriptionPlanId}). Please upgrade your plan under "Subscription & Billing" to unlock this feature.`);
+                      if (onOpenSubscriptionModal) {
+                        onOpenSubscriptionModal();
+                      } else {
+                        alert(`🔒 FEATURE LOCKED\nThe "${item.label}" module is not included in your current subscription plan (${subscriptionPlanId || 'Free Preview'}). Please choose a plan under "Subscription & Billing" to unlock this feature.`);
+                      }
                       return;
                     }
                     toggleMenu(item.id);
@@ -413,7 +434,11 @@ export default function Sidebar({ activeTab, setActiveTab, collapsed, setCollaps
                             key={sub.id}
                             onClick={() => {
                               if (subLocked) {
-                                alert(`🔒 FEATURE LOCKED\nThe "${sub.label}" feature is locked under your current subscription plan (${subscriptionPlanId}). Please upgrade your plan to unlock.`);
+                                if (onOpenSubscriptionModal) {
+                                  onOpenSubscriptionModal();
+                                } else {
+                                  alert(`🔒 FEATURE LOCKED\nThe "${sub.label}" feature is locked under your current subscription plan (${subscriptionPlanId || 'Free Preview'}). Please choose a plan to unlock.`);
+                                }
                                 return;
                               }
                               handleItemClick(sub.id);
@@ -458,7 +483,11 @@ export default function Sidebar({ activeTab, setActiveTab, collapsed, setCollaps
               key={item.id}
               onClick={() => {
                 if (locked) {
-                  alert(`🔒 FEATURE LOCKED\nThe "${item.label}" module is not included in your current subscription plan (${subscriptionPlanId}). Please upgrade your plan under "Subscription & Billing" to unlock this feature.`);
+                  if (onOpenSubscriptionModal) {
+                    onOpenSubscriptionModal();
+                  } else {
+                    alert(`🔒 FEATURE LOCKED\nThe "${item.label}" module is not included in your current subscription plan (${subscriptionPlanId || 'Free Preview'}). Please upgrade your plan under "Subscription & Billing" to unlock this feature.`);
+                  }
                   return;
                 }
                 handleItemClick(item.id);

@@ -8,7 +8,6 @@ import {
   type LandingPageConfig
 } from '../types/multiTenant';
 import { api } from '../services/api';
-import { HeroHeadlineSection } from './HeroHeadlineSection';
 import { Hero3DQuantumNexus } from './Hero3DQuantumNexus';
 import { ItlcEcosystemOrbit } from './ItlcEcosystemOrbit';
 import { ItlcProductShowcase } from './ItlcProductShowcase';
@@ -18,16 +17,16 @@ import { WorkspacesPage } from './WorkspacesPage';
 import { SecurityPage } from './SecurityPage';
 import { ModulesPage } from './ModulesPage';
 import { PricingPage } from './PricingPage';
-import { CompanyRegisterPage } from './CompanyRegisterPage';
+import { LandingHeader } from './LandingHeader';
+import { LandingFooter } from './LandingFooter';
 import { ClientOnboardingModal } from './ClientOnboardingModal';
 import { SecureAuthModal } from './SecureAuthModal';
+import Carousel from './Carousel';
 import { 
   ShieldCheck, 
   Sparkles, 
   Search, 
   X, 
-  Mail, 
-  MessageCircle, 
   Lock, 
   ArrowRight, 
   Layers, 
@@ -35,15 +34,369 @@ import {
   Briefcase,
   ChevronRight,
   Zap,
-  LayoutDashboard
+  Cpu,
+  UsersRound,
+  BarChart3,
+  Shield
 } from 'lucide-react';
 
 export interface LandingPageProps {
-  onOpenLogin: () => void;
+  onOpenLogin: (initialPlanId?: string, isSignUp?: boolean) => void;
   onOpenSuperowner?: () => void;
   loggedInUser?: any;
   onGoToDashboard?: () => void;
   onSuccessLogin?: () => void;
+}
+
+type LandingView = 'home' | 'workspaces' | 'security' | 'modules' | 'pricing';
+
+const landingPathByView: Record<LandingView, string> = {
+  home: '/',
+  workspaces: '/workspaces',
+  security: '/security',
+  modules: '/modules',
+  pricing: '/pricing'
+};
+
+const getLandingRouteState = (): { view: LandingView; registering: boolean } => {
+  if (typeof window === 'undefined') return { view: 'home', registering: false };
+
+  const path = window.location.pathname.toLowerCase().replace(/\/+$/, '') || '/';
+  const hash = window.location.hash.toLowerCase();
+
+  if (path === '/workspaces' || hash === '#workspaces') return { view: 'workspaces', registering: false };
+  if (path === '/security' || path === '/highlights' || hash === '#security' || hash === '#highlights') return { view: 'security', registering: false };
+  if (path === '/modules' || hash === '#modules') return { view: 'modules', registering: false };
+  if (path === '/pricing' || hash === '#pricing') return { view: 'pricing', registering: false };
+  if (path === '/register' || hash === '#register' || hash.startsWith('#register')) return { view: 'home', registering: false };
+
+  return { view: 'home', registering: false };
+};
+
+function HiringOnboardingSection({
+  onStart,
+  whatsappNumber
+}: {
+  onStart: () => void;
+  whatsappNumber?: string;
+}) {
+  const candidates = [
+    { name: 'Rahul Sharma', role: 'Software Developer', exp: '5+ Years Experience', score: 92, color: '#22c55e' },
+    { name: 'Priya Singh', role: 'UI/UX Designer', exp: '4+ Years Experience', score: 87, color: '#22c55e' },
+    { name: 'Amit Verma', role: 'Full Stack Developer', exp: '6+ Years Experience', score: 76, color: '#f59e0b' },
+    { name: 'Neha Gupta', role: 'Digital Marketer', exp: '3+ Years Experience', score: 68, color: '#f59e0b' }
+  ];
+
+  const waNumber = whatsappNumber || '918368817744';
+
+  return (
+    <section className="itlc-hiring-section" aria-labelledby="itlc-hiring-title">
+      <div className="itlc-hiring-content">
+        <div className="itlc-hiring-copy">
+          <div className="itlc-hiring-badge">
+            <UsersRound size={19} />
+            <span>Recruitment & Onboarding</span>
+          </div>
+
+          <h2 id="itlc-hiring-title">
+            Hiring and
+            <span>Onboarding</span>
+          </h2>
+
+          <p>
+            Find the right talent, streamline your hiring process, and deliver a seamless onboarding experience with ITLC India's smart HR solution.
+          </p>
+
+          <div className="itlc-hiring-actions">
+            <button type="button" className="itlc-hiring-primary" onClick={onStart}>
+              Start Free Trial <ArrowRight size={18} />
+            </button>
+            <a
+              className="itlc-hiring-secondary"
+              href={`https://wa.me/${waNumber}?text=Hello%20ITLC%20Team%2C%20I%20want%20a%20demo%20of%20ITLC%20Recruitment%20and%20Onboarding`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Request Demo
+            </a>
+          </div>
+
+          <div className="itlc-hiring-features" aria-label="Hiring features">
+            <span><Zap size={20} /> Automated Hiring</span>
+            <span><Shield size={20} /> Custom Onboarding Workflows</span>
+            <span><UsersRound size={20} /> Offer Letter with E-sign</span>
+            <span><BarChart3 size={20} /> Track Progress & Reports</span>
+          </div>
+        </div>
+
+        <div className="itlc-hiring-visual" aria-hidden="true">
+          <div className="itlc-hiring-photo">
+            <div className="itlc-hiring-photo-note">Better<br />Teams,<br />Brighter<br />Future</div>
+          </div>
+
+          <div className="itlc-candidate-panel">
+            <div className="itlc-candidate-head">
+              <div>
+                <strong>Candidate Matches</strong>
+                <p>Zia helps you automatically screen and identify the best candidates from your database.</p>
+              </div>
+              <X size={16} />
+            </div>
+            <span className="itlc-match-meta">4 Matches · Refine Match</span>
+
+            <div className="itlc-candidate-list">
+              {candidates.map((candidate, index) => (
+                <div className="itlc-candidate-row" key={candidate.name}>
+                  <div className="itlc-score-ring" style={{ ['--score-color' as any]: candidate.color }}>
+                    <strong>{candidate.score}%</strong>
+                    <span>Match</span>
+                  </div>
+                  <div className="itlc-avatar">{candidate.name.split(' ').map(part => part[0]).join('')}</div>
+                  <div>
+                    <strong>{candidate.name}</strong>
+                    <span>{candidate.role}</span>
+                    <em>{candidate.exp}</em>
+                  </div>
+                  {index === 0 && (
+                    <div className="itlc-status-pop">
+                      <strong>Rahul Sharma</strong>
+                      <span>03.01.2025 · 10:33 AM</span>
+                      <div><CheckCircle size={13} /> Candidate</div>
+                      <div><CheckCircle size={13} /> Employee</div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="itlc-hiring-stack">
+            <span><UsersRound size={18} /> Smart Screening</span>
+            <span><Cpu size={18} /> Automated Workflows</span>
+            <span><CheckCircle size={18} /> Seamless Onboarding</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CoreHrManagementSection({
+  onExplore
+}: {
+  onExplore: () => void;
+}) {
+  const people = [
+    { name: 'Christine Spalding', role: 'HR Manager', active: true },
+    { name: 'Davis Rosemary', role: 'Marketing Manager' },
+    { name: 'Wilson Carla', role: 'Software Engineer' }
+  ];
+
+  const directory = [
+    { name: 'Anitha Joshi', role: 'HR Manager', active: true },
+    { name: 'Rodriguez Sue', role: 'Payroll Associate' },
+    { name: 'Rebecca Biaggio', role: 'HR Manager' },
+    { name: 'Keb Lisa', role: 'HR Manager' },
+    { name: 'Sandra Marks', role: 'HR Analyst' },
+    { name: 'John Broadnax', role: 'HR Associate' },
+    { name: 'Randall Gladstone', role: 'HR Manager' },
+    { name: 'Mary Hansley', role: 'Recruitment Associate' },
+    { name: 'Frank Ocean', role: 'HR Analyst' }
+  ];
+
+  const features = ['Employee management', 'Time and attendance', 'Document management', 'HR helpdesk'];
+
+  return (
+    <section className="itlc-core-hr-section" aria-labelledby="itlc-core-hr-title">
+      <div className="itlc-core-hr-shell">
+        <div className="itlc-core-hr-copy">
+          <h2 id="itlc-core-hr-title">Core HR management</h2>
+          <p>
+            Boost workplace efficiency with a robust HR system that is highly customizable. Simplify your routine HR processes and effectively manage all your employee information from a single, centralized database.
+          </p>
+
+          <button type="button" className="itlc-core-hr-button" onClick={onExplore}>
+            Explore Core HR <ArrowRight size={18} />
+          </button>
+
+          <div className="itlc-core-hr-features" aria-label="Core HR features">
+            {features.map((feature) => (
+              <span key={feature}>
+                <CheckCircle size={16} />
+                {feature}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="itlc-core-hr-visual" aria-hidden="true">
+          <div className="itlc-core-hr-art-bg" />
+          <div className="itlc-org-panel">
+            <div className="itlc-org-tabs">
+              <span className="active">Employee Tree</span>
+              <span>Department Tree</span>
+              <span>Department Directory</span>
+              <span>...</span>
+            </div>
+
+            <div className="itlc-org-board">
+              <div className="itlc-org-avatar-rail">
+                {['CS', 'DR', 'WC', 'JA', 'MJ', 'KB'].map((initials, index) => (
+                  <span key={initials} className={index === 0 ? 'active' : ''}>{initials}</span>
+                ))}
+              </div>
+
+              <div className="itlc-org-branch">
+                <span className="itlc-org-count first">133</span>
+                {people.map((person) => (
+                  <div className={`itlc-org-person ${person.active ? 'active' : ''}`} key={person.name}>
+                    <span>{person.name.split(' ').map(part => part[0]).join('')}</span>
+                    <strong>{person.name}</strong>
+                    <em>{person.role}</em>
+                  </div>
+                ))}
+              </div>
+
+              <div className="itlc-org-directory">
+                <span className="itlc-org-count">38</span>
+                {directory.map((person) => (
+                  <div className={`itlc-org-person compact ${person.active ? 'active' : ''}`} key={person.name}>
+                    <span>{person.name.split(' ').map(part => part[0]).join('')}</span>
+                    <strong>{person.name}</strong>
+                    <em>{person.role}</em>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="itlc-leave-card">
+            <div className="itlc-leave-avatar">JA</div>
+            <div>
+              <strong>6097 · Jonessa Alisa</strong>
+              <p>has requested for <span>Sick leave</span></p>
+              <div>
+                <button type="button">Approve</button>
+                <button type="button">Reject</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HrmsFeatureFaqSection() {
+  const questions = [
+    {
+      q: 'Is ITLC HRMS useful for my company?',
+      a: 'Yes. ITLC HRMS helps teams manage employee records, attendance, leave, payroll-ready data, documents, onboarding, and HR approvals from one cloud workspace.'
+    },
+    {
+      q: 'Can I manage attendance and leave in one place?',
+      a: 'Track biometric punches, mobile attendance, shift rosters, holiday calendars, and approval workflows without switching tools.'
+    },
+    {
+      q: 'Which HRMS features are included with ITLC?',
+      a: 'Core HR, employee database, document locker, recruitment, onboarding, leave, attendance, reports, and admin controls can be configured as per your plan.'
+    },
+    {
+      q: 'Can payroll and compliance reports be prepared?',
+      a: 'ITLC keeps HR data organized for payroll workflows, salary processing, statutory reports, and audit-ready records.'
+    },
+    {
+      q: 'How do employees use ITLC HRMS?',
+      a: 'Employees can access self-service tools for profile updates, leave requests, attendance visibility, documents, and notifications.'
+    }
+  ];
+
+  return (
+    <section className="itlc-hrms-faq-section" aria-labelledby="itlc-hrms-faq-title">
+      <div className="itlc-hrms-faq-shell">
+        <div className="itlc-hrms-faq-left">
+          <h2 id="itlc-hrms-faq-title">
+            Control all your HRMS features with ITLC
+          </h2>
+
+          <div className="itlc-hrms-faq-photo-card" aria-hidden="true">
+            <img src="/mockup2.jpg" alt="" />
+            <div className="itlc-hrms-mini-card">
+              <strong>1,096.30</strong>
+              <span>Monthly HR activities</span>
+              <i />
+            </div>
+          </div>
+        </div>
+
+        <div className="itlc-hrms-faq-list">
+          <button type="button" className="itlc-hrms-see-more">
+            See More FAQs <ArrowRight size={14} />
+          </button>
+
+          {questions.map((item, index) => (
+            <article className={`itlc-hrms-faq-item ${index === 0 ? 'active' : ''}`} key={item.q}>
+              <span>{String(index + 1).padStart(2, '0')}.</span>
+              <div>
+                <h3>{item.q}</h3>
+                {index === 0 && <p>{item.a}</p>}
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ReadyStartedSection({
+  onStart,
+  whatsappNumber
+}: {
+  onStart: () => void;
+  whatsappNumber?: string;
+}) {
+  const waNumber = whatsappNumber || '918368817744';
+  const avatars = [
+    { className: 'avatar-a', src: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=180&q=80' },
+    { className: 'avatar-b', src: 'https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&w=180&q=80' },
+    { className: 'avatar-c', src: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=180&q=80' },
+    { className: 'avatar-d', src: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=180&q=80' },
+    { className: 'avatar-e', src: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&w=180&q=80' },
+    { className: 'avatar-f', src: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=180&q=80' }
+  ];
+
+  return (
+    <section className="itlc-ready-section" aria-labelledby="itlc-ready-title">
+      {avatars.map((avatar) => (
+        <img
+          key={avatar.className}
+          className={`itlc-ready-avatar ${avatar.className}`}
+          src={avatar.src}
+          alt=""
+          loading="lazy"
+          aria-hidden="true"
+        />
+      ))}
+
+      <div className="itlc-ready-content">
+        <h2 id="itlc-ready-title">Ready to get Started?</h2>
+        <p>
+          Start your ITLC HRMS journey with a smarter way to manage people, attendance, onboarding, payroll-ready records, and employee experiences.
+        </p>
+        <div className="itlc-ready-actions">
+          <button type="button" onClick={onStart}>Get Started</button>
+          <a
+            href={`https://wa.me/${waNumber}?text=Hello%20ITLC%20Team%2C%20I%20want%20to%20learn%20more%20about%20ITLC%20HRMS`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Learn More
+          </a>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 export default function LandingPage({
@@ -53,24 +406,8 @@ export default function LandingPage({
   onGoToDashboard,
   onSuccessLogin
 }: LandingPageProps) {
-  const [activeLandingView, setActiveLandingView] = useState<'home' | 'workspaces' | 'security' | 'modules' | 'pricing'>(() => {
-    if (typeof window !== 'undefined') {
-      const hash = window.location.hash.toLowerCase();
-      if (hash === '#workspaces') return 'workspaces';
-      if (hash === '#security' || hash === '#highlights') return 'security';
-      if (hash === '#modules') return 'modules';
-      if (hash === '#pricing') return 'pricing';
-    }
-    return 'home';
-  });
+  const [activeLandingView, setActiveLandingView] = useState<LandingView>(() => getLandingRouteState().view);
 
-  const [isRegisteringCompany, setIsRegisteringCompany] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const hash = window.location.hash.toLowerCase();
-      return hash === '#register' || hash.startsWith('#register');
-    }
-    return false;
-  });
 
   const [selectedOnboardingPlanId, setSelectedOnboardingPlanId] = useState<string>('starter');
   const [showOnboardingModal, setShowOnboardingModal] = useState<boolean>(false);
@@ -126,33 +463,36 @@ export default function LandingPage({
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  // Sync hash changes
+  // Sync clean path navigation, while keeping old hash links compatible.
   useEffect(() => {
-    const handleHashChange = () => {
+    const syncRoute = () => {
+      const path = window.location.pathname.toLowerCase().replace(/\/+$/, '') || '/';
       const hash = window.location.hash.toLowerCase();
-      if (hash === '#workspaces') {
-        setActiveLandingView('workspaces');
-        setIsRegisteringCompany(false);
-      } else if (hash === '#security' || hash === '#highlights') {
-        setActiveLandingView('security');
-        setIsRegisteringCompany(false);
-      } else if (hash === '#modules') {
-        setActiveLandingView('modules');
-        setIsRegisteringCompany(false);
-      } else if (hash === '#pricing') {
-        setActiveLandingView('pricing');
-        setIsRegisteringCompany(false);
-      } else if (hash === '#register' || hash.startsWith('#register')) {
-        setIsRegisteringCompany(true);
-      } else {
-        setActiveLandingView('home');
-        setIsRegisteringCompany(false);
+      if (path === '/register' || hash === '#register' || hash.startsWith('#register')) {
+        window.history.replaceState({}, '', '/');
+        if (onOpenLogin) {
+          onOpenLogin('starter', false);
+        }
+        return;
+      }
+
+      const routeState = getLandingRouteState();
+      setActiveLandingView(routeState.view);
+
+      if (window.location.hash) {
+        const cleanPath = landingPathByView[routeState.view] || '/';
+        window.history.replaceState({}, '', cleanPath);
       }
     };
 
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+    syncRoute();
+    window.addEventListener('hashchange', syncRoute);
+    window.addEventListener('popstate', syncRoute);
+    return () => {
+      window.removeEventListener('hashchange', syncRoute);
+      window.removeEventListener('popstate', syncRoute);
+    };
+  }, [onOpenLogin]);
 
   // Spotlight Keyboard Shortcut (Ctrl+K / Cmd+K)
   useEffect(() => {
@@ -169,64 +509,30 @@ export default function LandingPage({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const navigateTo = (view: 'home' | 'workspaces' | 'security' | 'modules' | 'pricing') => {
+  const navigateTo = (view: LandingView) => {
     setActiveLandingView(view);
-    setIsRegisteringCompany(false);
-    window.location.hash = view === 'home' ? '' : `#${view}`;
+    window.history.pushState({}, '', landingPathByView[view]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const openRegister = (planId: string = 'starter') => {
     setSelectedOnboardingPlanId(planId);
-    setIsRegisteringCompany(true);
-    window.location.hash = '#register';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleAuthTrigger = () => {
-    if (loggedInUser && onGoToDashboard) {
-      onGoToDashboard();
+    if (onOpenLogin) {
+      onOpenLogin(planId, false);
     } else {
       setShowSecureAuthModal(true);
     }
   };
 
-  // 1. SUB-PAGE: COMPANY REGISTRATION & CHECKOUT
-  if (isRegisteringCompany) {
-    return (
-      <div className="min-h-screen bg-slate-950 text-white">
-        <CompanyRegisterPage 
-          initialPlanId={selectedOnboardingPlanId}
-          onBackToHome={() => {
-            setIsRegisteringCompany(false);
-            window.location.hash = '';
-          }}
-          onCompleteRegistration={async (newTenant) => {
-            setIsRegisteringCompany(false);
-            window.location.hash = '';
-            triggerToast(`Workspace "${newTenant.name}" created successfully! Launching workspace...`);
-            try {
-              const pass = (newTenant as any).password || (newTenant as any).adminPassword || 'Admin@123';
-              await api.login({ email: newTenant.adminEmail, password: pass });
-              if (onSuccessLogin) onSuccessLogin();
-              else if (onGoToDashboard) onGoToDashboard();
-              else window.location.href = '/';
-            } catch {
-              if (onOpenLogin) onOpenLogin();
-              else setShowSecureAuthModal(true);
-            }
-          }}
-          lang={lang}
-        />
-        {toastMessage && (
-          <div className="fixed bottom-6 right-6 z-50 bg-slate-900 border border-emerald-500/40 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3">
-            <CheckCircle className="h-5 w-5 text-emerald-400" />
-            <span className="text-sm font-semibold">{toastMessage}</span>
-          </div>
-        )}
-      </div>
-    );
-  }
+  const handleAuthTrigger = () => {
+    if (loggedInUser && onGoToDashboard) {
+      onGoToDashboard();
+    } else if (onOpenLogin) {
+      onOpenLogin();
+    } else {
+      setShowSecureAuthModal(true);
+    }
+  };
 
   // 2. SUB-PAGE: WORKSPACES
   if (activeLandingView === 'workspaces') {
@@ -314,167 +620,113 @@ export default function LandingPage({
         />
       </div>
 
-      {/* Top Sticky Navigation Bar */}
-      <header 
-        className="itlc-glass-nav sticky top-3 z-50 max-w-7xl mx-auto px-5 py-2.5 rounded-2xl flex items-center justify-between transition-all duration-200"
-        style={{
-          background: 'rgba(255, 255, 255, 0.9)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          border: '1px solid rgba(226, 232, 240, 0.85)',
-          boxShadow: '0 10px 30px -5px rgba(15, 23, 42, 0.05)'
-        }}
-      >
-        {/* Brand Logo & Title */}
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigateTo('home')}>
-          <div 
-            className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 p-0.5 shadow-md shadow-sky-500/20 flex items-center justify-center flex-shrink-0"
-            style={{ width: '40px', height: '40px', minWidth: '40px', minHeight: '40px', maxWidth: '40px', maxHeight: '40px' }}
-          >
-            <div className="w-full h-full bg-white rounded-[10px] flex items-center justify-center p-0.5" style={{ width: '100%', height: '100%' }}>
-              <img 
-                src={cmsConfig.logoUrl || '/itlc_logo.png'} 
-                alt="ITLC Logo" 
-                className="w-full h-full object-contain" 
-                style={{ width: '32px', height: '32px', maxWidth: '32px', maxHeight: '32px', objectFit: 'contain', display: 'block' }}
-                onError={(e) => { (e.target as any).src = '/itlc_logo.png'; }}
-              />
-            </div>
-          </div>
-
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[15px] font-extrabold tracking-tight text-slate-900 leading-tight">
-                {cmsConfig.companyName || 'ITLC INDIA PVT LTD'}
-              </span>
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-sky-50 text-sky-600 px-2 py-0.5 rounded-full border border-sky-200/60">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Cloud 3.0
-              </span>
-            </div>
-            <span className="block text-[11px] text-slate-500 font-medium">
-              {cmsConfig.companyTagline || 'Unified Business & Workforce OS'}
-            </span>
-          </div>
-        </div>
-
-        {/* Center Nav Links */}
-        <div className="hidden md:flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/70">
-          <button 
-            onClick={() => navigateTo('workspaces')}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 px-3 py-1.5 rounded-lg hover:text-sky-600 hover:bg-white hover:shadow-xs transition cursor-pointer"
-          >
-            <Briefcase size={13} className="text-sky-600" />
-            <span>Workspaces</span>
-          </button>
-
-          <button 
-            onClick={() => navigateTo('security')}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 px-3 py-1.5 rounded-lg hover:text-sky-600 hover:bg-white hover:shadow-xs transition cursor-pointer"
-          >
-            <ShieldCheck size={13} className="text-indigo-600" />
-            <span>Security</span>
-          </button>
-
-          <button 
-            onClick={() => navigateTo('modules')}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 px-3 py-1.5 rounded-lg hover:text-sky-600 hover:bg-white hover:shadow-xs transition cursor-pointer"
-          >
-            <Layers size={13} className="text-amber-600" />
-            <span>Modules</span>
-          </button>
-
-          <button 
-            onClick={() => navigateTo('pricing')}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 px-3 py-1.5 rounded-lg hover:text-sky-600 hover:bg-white hover:shadow-xs transition cursor-pointer"
-          >
-            <Sparkles size={13} className="text-purple-600" />
-            <span>Pricing</span>
-          </button>
-        </div>
-
-        {/* Right Action Cluster */}
-        <div className="flex items-center gap-2">
-          {/* Spotlight Search Trigger */}
-          <button 
-            onClick={() => setShowSpotlight(true)}
-            title="Quick Search (Ctrl + K)"
-            className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs bg-slate-100 border border-slate-200 text-slate-500 hover:bg-slate-200/70 hover:text-slate-800 transition cursor-pointer"
-          >
-            <Search size={13} />
-            <span className="hidden sm:inline font-medium">Search...</span>
-            <kbd className="text-[10px] font-bold px-1.5 py-0.5 bg-white rounded border border-slate-300 text-slate-600">Ctrl K</kbd>
-          </button>
-
-          {/* Conditional: Go to Dashboard or Login */}
-          {loggedInUser ? (
-            <button 
-              onClick={onGoToDashboard}
-              className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 text-white shadow-md shadow-emerald-600/20 hover:bg-emerald-500 transition inline-flex items-center gap-1.5 cursor-pointer"
-            >
-              <LayoutDashboard size={12} />
-              <span>Dashboard ({loggedInUser.role})</span>
-            </button>
-          ) : (
-            <button 
-              onClick={() => onOpenLogin ? onOpenLogin() : setShowSecureAuthModal(true)}
-              className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-sky-50 text-sky-600 border border-sky-200 hover:bg-sky-600 hover:text-white transition inline-flex items-center gap-1.5 cursor-pointer"
-            >
-              <Lock size={12} />
-              <span>Portal Login</span>
-            </button>
-          )}
-
-          {/* Primary CTA */}
-          <button 
-            onClick={() => openRegister('starter')}
-            className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 text-white shadow-md shadow-sky-500/20 hover:shadow-lg transition inline-flex items-center gap-1.5 cursor-pointer"
-          >
-            <Sparkles size={12} />
-            <span>Get Started</span>
-            <ArrowRight size={12} />
-          </button>
-        </div>
-      </header>
-
-      {/* SECTION 1: HERO HEADLINE SECTION */}
-      <HeroHeadlineSection 
-        badgeText={cmsConfig.orbitSyncBadge ? `✨ ${cmsConfig.orbitSyncBadge} • 100% Real-Time Cloud Sync` : undefined}
-        headline={lang === 'hi' ? (cmsConfig.heroHeadlineHi || cmsConfig.heroHeadlineEn) : (cmsConfig.heroHeadlineEn || cmsConfig.heroHeadlineHi)}
-        subtitle={lang === 'hi' ? (cmsConfig.heroSubtitleHi || cmsConfig.heroSubtitleEn) : (cmsConfig.heroSubtitleEn || cmsConfig.heroSubtitleHi)}
-        primaryButtonText="Start Free Enterprise Trial"
-        whatsAppNumber={cmsConfig.whatsappSalesNumber || '9532341000'}
-        whatsAppMessage={`Hello, I want more information about ${cmsConfig.companyName || 'ITLC OmniStaff HRMS'}`}
-        onOpenOnboarding={() => openRegister('starter')}
-        onScrollToEcosystem={() => {
-          const el = document.getElementById('hero_3d_stage');
-          if (el) el.scrollIntoView({ behavior: 'smooth' });
-        }}
+      <LandingHeader
+        logoUrl={cmsConfig.logoUrl || '/itlc_logo.png'}
+        loggedIn={Boolean(loggedInUser)}
+        onHome={() => navigateTo('home')}
+        onFeatures={() => navigateTo('modules')}
+        onPricing={() => navigateTo('pricing')}
+        onSolutions={() => navigateTo('workspaces')}
+        onSecurity={() => navigateTo('security')}
+        onLogin={() => onOpenLogin ? onOpenLogin() : setShowSecureAuthModal(true)}
+        onGetStarted={() => openRegister('starter')}
+        onDashboard={onGoToDashboard}
       />
+
+      {/* Minimal Zoho-style hero section */}
+      <section className="itlc-reference-hero" aria-labelledby="itlc-reference-hero-title">
+        <div className="itlc-reference-hero-bg" />
+        <div className="itlc-reference-hero-content">
+          <div className="itlc-reference-copy">
+            <h1 id="itlc-reference-hero-title">
+              AI-first HR software
+              <span>for every business</span>
+            </h1>
+
+            <p>
+              Streamline all your HR processes and deliver exceptional employee experiences with ITLC India, cloud-based AI HR software that's intuitive, agile, mobile-friendly.
+            </p>
+
+            <div className="itlc-reference-cta-row">
+              <button className="itlc-reference-primary" onClick={() => openRegister('starter')}>
+                Sign up for free trial <ArrowRight size={30} />
+              </button>
+              <a
+                className="itlc-reference-secondary"
+                href={`https://wa.me/${cmsConfig.whatsappSalesNumber || '918368817744'}?text=Hello%20ITLC%20Team%2C%20I%20want%20a%20demo%20of%20ITLC%20HRMS`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Request Demo <ArrowRight size={30} />
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* DYNAMIC LANDING SECTIONS */}
       {landingSectionsOrder
-        .filter(sec => sec.enabled && sec.id !== 'navbar' && sec.id !== 'footer' && sec.type !== 'system_navbar' && sec.type !== 'system_footer')
+        .filter(sec => (
+          sec.enabled &&
+          sec.id !== 'navbar' &&
+          sec.id !== 'footer' &&
+          sec.id !== 'product_showcase' &&
+          sec.id !== 'pricing_plans' &&
+          sec.id !== 'system_pricing' &&
+          sec.type !== 'system_navbar' &&
+          sec.type !== 'system_footer'
+        ))
         .map((sec) => {
           switch (sec.id) {
             case 'hero_3d':
               return (
-                <Hero3DQuantumNexus 
-                  key="hero_3d"
-                  onExploreCrm={() => {
-                    triggerToast('🚀 ITLC Sales CRM is Coming Soon! Stay tuned.');
-                  }}
-                  onExploreHrms={() => {
-                    if (onOpenLogin) onOpenLogin();
-                    else setShowSecureAuthModal(true);
-                  }}
-                  onOpenSuperAdmin={() => {
-                    if (onOpenSuperowner) onOpenSuperowner();
-                    else setShowSecureAuthModal(true);
-                  }}
-                  onOpenOnboarding={() => openRegister('starter')}
-                  lang={lang}
-                />
+                <React.Fragment key="hero_3d">
+                  <Hero3DQuantumNexus 
+                    onExploreCrm={() => {
+                      triggerToast('🚀 ITLC Sales CRM is Coming Soon! Stay tuned.');
+                    }}
+                    onExploreHrms={() => {
+                      if (onOpenLogin) onOpenLogin();
+                      else setShowSecureAuthModal(true);
+                    }}
+                    onOpenSuperAdmin={() => {
+                      if (onOpenSuperowner) onOpenSuperowner();
+                      else setShowSecureAuthModal(true);
+                    }}
+                    onOpenOnboarding={() => openRegister('starter')}
+                    lang={lang}
+                  />
+                  <HiringOnboardingSection
+                    onStart={() => openRegister('starter')}
+                    whatsappNumber={cmsConfig.whatsappSalesNumber}
+                  />
+                  <CoreHrManagementSection
+                    onExplore={() => {
+                      if (onOpenLogin) onOpenLogin();
+                      else setShowSecureAuthModal(true);
+                    }}
+                  />
+                  {/* Interactive Workspaces 3D Carousel Showcase */}
+                  <section className="py-14 bg-gradient-to-b from-white via-slate-50 to-white border-y border-slate-200/70 relative overflow-hidden">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-8">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-100/90 text-sky-700 text-xs font-extrabold uppercase tracking-wider mb-3">
+                        <Sparkles size={14} className="text-sky-600" /> Enterprise Workspace Suite
+                      </div>
+                      <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+                        Experience Next-Gen HRMS & Business Intelligence
+                      </h2>
+                      <p className="mt-2 text-slate-600 text-sm sm:text-base max-w-2xl mx-auto">
+                        Explore unified employee records, live biometric attendance, Kanban pipelines, and automated payroll in an interactive 3D tour.
+                      </p>
+                    </div>
+                    <Carousel />
+                  </section>
+                  <HrmsFeatureFaqSection />
+                  <ReadyStartedSection
+                    onStart={() => openRegister('starter')}
+                    whatsappNumber={cmsConfig.whatsappSalesNumber}
+                  />
+                </React.Fragment>
               );
 
             case 'ecosystem_orbit':
@@ -541,139 +793,12 @@ export default function LandingPage({
           }
         })}
 
-      {/* 4-COLUMN ENTERPRISE FOOTER */}
-      <footer id="contact" className="bg-white border-t border-slate-200 pt-14 pb-8 px-6 relative z-10">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-9 pb-10 border-b border-slate-200">
-          {/* Brand Info */}
-          <div>
-            <div className="flex items-center gap-2.5 mb-3.5">
-              <div 
-                className="w-10 h-10 rounded-xl border border-sky-500 bg-white p-1 flex items-center justify-center flex-shrink-0"
-                style={{ width: '40px', height: '40px', minWidth: '40px', minHeight: '40px', maxWidth: '40px', maxHeight: '40px' }}
-              >
-                <img 
-                  src={cmsConfig.logoUrl || '/itlc_logo.png'} 
-                  alt="Logo" 
-                  className="w-full h-full object-contain" 
-                  style={{ width: '32px', height: '32px', maxWidth: '32px', maxHeight: '32px', objectFit: 'contain', display: 'block' }}
-                  onError={(e) => { (e.target as any).src = '/itlc_logo.png'; }}
-                />
-              </div>
-              <div>
-                <h4 className="m-0 text-base font-black text-slate-900">
-                  {cmsConfig.companyName || 'ITLC INDIA PVT LTD'}
-                </h4>
-                <span className="text-xs text-sky-600 font-bold">
-                  {cmsConfig.companyTagline || 'Unified Business Cloud Operating System'}
-                </span>
-              </div>
-            </div>
-            <p className="text-xs text-slate-500 leading-relaxed mb-4">
-              Next-generation enterprise platform connecting intelligent Sales CRM, live biometric HRMS radar, 1-click payroll, and GST tax invoicing.
-            </p>
-
-            <div className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-              <span>All Systems Operational • 99.99% SLA</span>
-            </div>
-          </div>
-
-          {/* Cloud Apps */}
-          <div>
-            <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-900 mb-4">Cloud Apps</h4>
-            <ul className="space-y-2 text-xs text-slate-600">
-              <li>
-                <button 
-                  onClick={() => triggerToast('🚀 ITLC Sales CRM is Coming Soon! Stay tuned.')} 
-                  className="hover:text-sky-600 transition cursor-pointer flex items-center gap-1.5"
-                >
-                  <span>💼 ITLC Sales CRM</span>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300/60">Coming Soon</span>
-                </button>
-              </li>
-              <li>
-                <button 
-                  onClick={() => onOpenLogin ? onOpenLogin() : setShowSecureAuthModal(true)} 
-                  className="hover:text-sky-600 transition cursor-pointer"
-                >
-                  👥 OmniStaff Enterprise HRMS
-                </button>
-              </li>
-              <li><button onClick={() => navigateTo('workspaces')} className="hover:text-sky-600 transition cursor-pointer">📍 GPS Field Rep Tracker</button></li>
-              <li><button onClick={() => navigateTo('modules')} className="hover:text-sky-600 transition cursor-pointer">🕒 Live Biometric Radar</button></li>
-            </ul>
-          </div>
-
-          {/* Enterprise Tools */}
-          <div>
-            <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-900 mb-4">Enterprise Tools</h4>
-            <ul className="space-y-2 text-xs text-slate-600">
-              <li><button onClick={() => navigateTo('modules')} className="hover:text-sky-600 transition cursor-pointer">🧾 Automated GST Invoicing</button></li>
-              <li><button onClick={() => navigateTo('modules')} className="hover:text-sky-600 transition cursor-pointer">📢 WhatsApp Broadcast Engine</button></li>
-              <li><button onClick={() => openRegister('starter')} className="hover:text-sky-600 transition cursor-pointer">🏢 Instant Company Onboarding</button></li>
-              <li><button onClick={() => setShowSecureAuthModal(true)} className="hover:text-sky-600 transition cursor-pointer">🎧 24/7 Priority Desk</button></li>
-            </ul>
-          </div>
-
-          {/* Live Support & Contact */}
-          <div>
-            <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-900 mb-4">Live Support & Demo</h4>
-            <p className="text-xs text-slate-500 mb-3">Reach out for live assistance or enterprise walkthrough:</p>
-            <div className="space-y-2.5">
-              <a 
-                href={`https://wa.me/${cmsConfig.whatsappSalesNumber || '918368817744'}?text=Hello%20ITLC%20Team%2C%20I%20want%20a%20demo%20of%20ITLC%20Enterprise%20Suite`} 
-                target="_blank" 
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-300/60 text-xs font-bold hover:bg-emerald-100 transition cursor-pointer"
-              >
-                <MessageCircle size={14} />
-                <span>+{cmsConfig.whatsappSalesNumber || '918368817744'} (WhatsApp)</span>
-              </a>
-
-              <a 
-                href={`mailto:${cmsConfig.supportEmail || 'support@itlc.in'}`}
-                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-sky-50 text-sky-700 border border-sky-300/60 text-xs font-bold hover:bg-sky-100 transition cursor-pointer"
-              >
-                <Mail size={14} />
-                <span>{cmsConfig.supportEmail || 'support@itlc.in'}</span>
-              </a>
-
-              <div className="text-[11px] text-slate-400">
-                🕒 Mon – Sat: 9:00 AM – 7:00 PM IST
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Compliance Badges */}
-        <div className="max-w-7xl mx-auto mt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-[11px] text-slate-500 font-medium">
-          <div className="flex flex-wrap items-center gap-3">
-            <span>🔒 256-Bit SSL Encryption</span>
-            <span>•</span>
-            <span>🛡️ SOC-2 Multi-Tenant Isolation</span>
-            <span>•</span>
-            <span>📜 ISO 27001 Certified</span>
-            <span>•</span>
-            <span>🇮🇳 GST 100% Tax Compliant</span>
-          </div>
-
-          <div>
-            © {new Date().getFullYear()} {cmsConfig.companyName || 'ITLC INDIA PVT LTD'}. All Rights Reserved.
-          </div>
-        </div>
-      </footer>
-
-      {/* Floating 24/7 WhatsApp Live Desk Capsule */}
-      <a 
-        href={`https://wa.me/${cmsConfig.whatsappSalesNumber || '918368817744'}?text=Hello%20ITLC%20Team%2C%20I%20have%20an%20inquiry%20regarding%20ITLC%20Enterprise%20Platform`}
-        target="_blank"
-        rel="noreferrer"
-        className="fixed bottom-6 right-6 z-40 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-full shadow-xl shadow-emerald-600/30 flex items-center gap-2 transition hover:scale-105 cursor-pointer"
-      >
-        <span className="w-2 h-2 rounded-full bg-white animate-ping" />
-        <span>24/7 Live Desk</span>
-        <ArrowRight size={13} />
-      </a>
+      <LandingFooter 
+        supportEmail={cmsConfig.supportEmail || 'support@itlc.in'} 
+        companyName="ITLC India"
+        onOpenSuperowner={onOpenSuperowner}
+        onNavigate={navigateTo}
+      />
 
       {/* Spotlight Command Modal (Ctrl + K) */}
       {showSpotlight && (
@@ -745,7 +870,7 @@ export default function LandingPage({
               >
                 <div className="flex items-center gap-2">
                   <Zap size={14} className="text-sky-600" />
-                  <span>Create Workspace & Instant Onboard</span>
+                  <span>Access HRMS / Login</span>
                 </div>
                 <ArrowRight size={14} className="text-sky-600" />
               </div>

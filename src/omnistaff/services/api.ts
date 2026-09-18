@@ -6,9 +6,19 @@ const isMobileApp = typeof window !== 'undefined' && (
   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 );
 
-export const API_URL = (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
-  ? '/api'
-  : ((typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env.VITE_API_URL) || 'https://yellowgreen-eagle-410958.hostingersite.com/api');
+const resolveApiUrl = () => {
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return '/api';
+  }
+  let url = (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env.VITE_API_URL) || 'https://lemonchiffon-mink-999414.hostingersite.com/api';
+  url = url.trim().replace(/\/+$/, '');
+  if (!url.endsWith('/api')) {
+    url += '/api';
+  }
+  return url;
+};
+
+export const API_URL = resolveApiUrl();
 
 // Helper to get request headers with secure token
 const getHeaders = (isMultipart = false) => {
@@ -91,9 +101,9 @@ export const api = {
       const token = `mock-token-superowner-${Date.now()}`;
       localStorage.setItem('hrms_jwt_token', token);
       const profile = {
-        name: data.name || 'Super Owner ITLC',
-        fullName: data.name || 'Super Owner ITLC',
-        email: data.email || 'superowner@itlc.com',
+        name: data.name || 'Priyanshu Pushkar',
+        fullName: data.name || 'Priyanshu Pushkar',
+        email: data.email || 'priyanshupushkar263@gmail.com',
         role: 'Super Owner',
         companyName: 'ITLC Global Group',
         companyLogo: '/itlc_logo.png'
@@ -129,15 +139,25 @@ export const api = {
 
     if (!emailLower && !idUpper) return null;
 
-    const isSuperEmail = 
-      emailLower === 'priyanshupushkar263@gmail.com' ||
-      emailLower === 'superowner@itlc.com' ||
-      emailLower === 'superowner@itlc.cloud' ||
-      emailLower === 'owner@itlc.cloud' ||
-      emailLower === 'superadmin@itlc.cloud' ||
-      emailLower === 'superadmin@itlccrm.com' ||
-      emailLower.includes('superowner') ||
-      emailLower.includes('superadmin');
+    let deletedIds = new Set<string>();
+    try {
+      const delRaw = localStorage.getItem('hrms_deleted_company_ids');
+      if (delRaw) {
+        const parsed = JSON.parse(delRaw);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((x: any) => {
+            if (typeof x === 'string') deletedIds.add(x.toLowerCase().trim());
+            else if (x?.id) deletedIds.add(String(x.id).toLowerCase().trim());
+            if (x?.email) deletedIds.add(String(x.email).toLowerCase().trim());
+          });
+        }
+      }
+    } catch {}
+
+    if (emailLower && deletedIds.has(emailLower)) return null;
+    if (idUpper && deletedIds.has(idUpper.toLowerCase())) return null;
+
+    const isSuperEmail = emailLower === 'priyanshupushkar263@gmail.com';
 
     if (isSuperEmail && !idUpper) {
       return null;
@@ -150,8 +170,12 @@ export const api = {
 
     const isMatch = (item: any): boolean => {
       if (!item) return false;
+      if (item.status === 'deleted') return false;
       const itemId = String(item.id || item.companyId || '').trim();
+      const itemIdLower = itemId.toLowerCase();
       const itemEmail = String(item.adminEmail || item.email || item.ownerEmail || item.companyEmail || item.contactEmail || '').toLowerCase().trim();
+      if (itemIdLower && deletedIds.has(itemIdLower)) return false;
+      if (itemEmail && deletedIds.has(itemEmail)) return false;
       const itemDomain = String(item.domain || '').toLowerCase().trim();
       const itemName = String(item.name || item.companyName || '').toLowerCase().trim();
       const itemPhone = String(item.adminPhone || item.phone || '').trim();
@@ -582,16 +606,16 @@ export const api = {
         body: JSON.stringify(credentials)
       }, 4000);
       
+      if (res.status === 403) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || errData.error || '❌ Access Revoked: This company workspace has been permanently deleted by the Super Owner platform administrator.');
+      }
+
       if (res.ok) {
         const result = await res.json();
         if (result && result.token) {
           const isSuper = (
-            result.role === 'Super Owner' ||
-            String(result.role).toLowerCase().includes('super') ||
-            email === 'superowner@itlc.com' ||
-            email === 'priyanshupushkar263@gmail.com' ||
-            email.includes('superowner') ||
-            email.includes('superadmin')
+            email === 'priyanshupushkar263@gmail.com'
           );
           if (isSuper) {
             result.role = 'Super Owner';
@@ -617,9 +641,12 @@ export const api = {
           }));
           return result;
         }
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || errData.error || '❌ Invalid email or password. Access Denied.');
       }
     } catch (backendErr: any) {
-      console.warn('Backend API login skipped/fallback to local verified auth:', backendErr?.message);
+      throw backendErr;
     }
 
     // =========================================================================
@@ -632,133 +659,24 @@ export const api = {
       const delRaw = localStorage.getItem('hrms_deleted_company_ids');
       if (delRaw) {
         const parsed = JSON.parse(delRaw);
-        if (Array.isArray(parsed)) deletedCompanyIds = new Set(parsed);
-      }
-    } catch {}
-
-    // A. Check Super Owner Credentials
-    const superOwnerEmails = [
-      'superowner@itlc.com',
-      'superowner@itlc.cloud',
-      'owner@itlc.cloud',
-      'superadmin@itlc.cloud',
-      'superadmin@itlccrm.com',
-      'priyanshupushkar263@gmail.com'
-    ];
-
-    let customSuperOwnerEmail = '';
-    let customSuperOwnerPass = '';
-    try {
-      const soCredsRaw = localStorage.getItem('hrms_superowner_credentials') || localStorage.getItem('hrms_superowner_profile');
-      if (soCredsRaw) {
-        const soCreds = JSON.parse(soCredsRaw);
-        if (soCreds.email) customSuperOwnerEmail = soCreds.email.toLowerCase().trim();
-        if (soCreds.password) customSuperOwnerPass = soCreds.password.trim();
-      }
-    } catch {}
-
-    // Check Super Owner / Super Admin in hrms_superowner_users or hrms_additional_superowners
-    try {
-      let matchedSuperUser: any = null;
-      const soUsersRaw = localStorage.getItem('hrms_superowner_users');
-      if (soUsersRaw) {
-        const soUsers = JSON.parse(soUsersRaw);
-        if (Array.isArray(soUsers)) {
-          matchedSuperUser = soUsers.find((u: any) => {
-            if (!u || !u.email) return false;
-            const uRole = (u.role || '').toLowerCase().trim();
-            const isSuper = uRole.includes('super owner') || uRole.includes('superowner') || uRole.includes('super admin') || uRole.includes('superadmin') || uRole.includes('super_admin') || uRole.includes('super-admin');
-            return isSuper && u.email.toLowerCase().trim() === email;
+        if (Array.isArray(parsed)) {
+          parsed.forEach((x: any) => {
+            if (typeof x === 'string') deletedCompanyIds.add(x.toLowerCase().trim());
+            else if (x?.id) deletedCompanyIds.add(String(x.id).toLowerCase().trim());
+            if (x?.email) deletedCompanyIds.add(String(x.email).toLowerCase().trim());
           });
         }
       }
+    } catch {}
 
-      if (!matchedSuperUser) {
-        const addRaw = localStorage.getItem('hrms_additional_superowners');
-        if (addRaw) {
-          const additional = JSON.parse(addRaw);
-          if (Array.isArray(additional)) {
-            matchedSuperUser = additional.find((so: any) => so && so.email && so.email.toLowerCase().trim() === email);
-          }
-        }
-      }
-
-      if (matchedSuperUser) {
-        const uPass = String(matchedSuperUser.password || '').trim();
-        const isEmailPriyanshu = email === 'priyanshupushkar263@gmail.com';
-        const isPassOk = isEmailPriyanshu
-          ? (password === 'Priyanshu8090' || (uPass && (password === uPass || password.toLowerCase() === uPass.toLowerCase())))
-          : (uPass ? (password === uPass || password.toLowerCase() === uPass.toLowerCase()) : (password === 'admin' || password === 'Admin@123'));
-
-        if (!isPassOk) {
-          throw new Error('❌ Incorrect password for Super Admin / Super Owner account.');
-        }
-
-        const token = `token-superowner-${matchedSuperUser.id || Date.now()}`;
-        localStorage.setItem('hrms_jwt_token', token);
-        secureStorage.setItem('hrms_jwt_token', token);
-        localStorage.setItem('hrms_current_superowner', JSON.stringify(matchedSuperUser));
-        const isPriyanshuUser = email === 'priyanshupushkar263@gmail.com';
-        const soProfile = {
-          id: matchedSuperUser.id || (isPriyanshuUser ? 'SUP_PAPZ0YC' : 'usr_superowner'),
-          name: matchedSuperUser.name || (isPriyanshuUser ? 'Priyanshu Pushkar' : 'Super Owner ITLC'),
-          fullName: matchedSuperUser.name || (isPriyanshuUser ? 'Priyanshu Pushkar' : 'Super Owner ITLC'),
-          email: matchedSuperUser.email || email,
-          role: 'Super Owner',
-          token,
-          department: 'Executive Leadership',
-          designation: 'Platform Administrator & Master Owner',
-          companyId: null,
-          companyName: 'SUPEROWNER Platform HQ',
-          companyLogo: '/itlc_logo.png',
-          subscriptionPlanId: 'enterprise_unlimited',
-          subscriptionStatus: 'active',
-          avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80'
-        };
-        localStorage.setItem('hrms_user_profile', JSON.stringify(soProfile));
-        secureStorage.setItem('hrms_user_profile', soProfile);
-        localStorage.setItem('crm_auth_session', 'true');
-        sessionStorage.setItem('crm_auth_session', 'true');
-        secureStorage.setItem('crm_auth_session', 'true');
-        localStorage.setItem('crm_current_user', JSON.stringify({
-          id: soProfile.id,
-          name: soProfile.name,
-          email: soProfile.email,
-          role: 'Super Admin',
-          status: 'Active',
-          avatar: 'SO'
-        }));
-        return soProfile;
-      }
-    } catch (soErr: any) {
-      if (soErr.message && soErr.message.includes('Incorrect password')) throw soErr;
+    // Zero tolerance: Immediately reject if email or company ID is on deleted blacklist
+    if (deletedCompanyIds.has(email) || (inputCompanyId && deletedCompanyIds.has(inputCompanyId.toLowerCase()))) {
+      throw new Error('❌ Account Deleted: This company workspace and user access have been permanently deleted by the Super Owner platform administrator.');
     }
 
-    const savedSuperOwnerPass = localStorage.getItem('hrms_superowner_password');
-    const isPriyanshu = email === 'priyanshupushkar263@gmail.com';
-    const isAuthorizedSuperOwnerEmail = 
-      isPriyanshu ||
-      superOwnerEmails.includes(email) || 
-      email === 'superowner@itlc.com' || 
-      email === 'superowner@itlc.cloud' || 
-      email === 'owner@itlc.cloud' ||
-      email === 'superadmin@itlc.cloud' ||
-      email === 'superadmin@itlccrm.com' ||
-      (customSuperOwnerEmail && email === customSuperOwnerEmail);
-
-    let isAuthorizedSuperOwnerPass = false;
-    if (isPriyanshu) {
-      isAuthorizedSuperOwnerPass = password === 'Priyanshu8090';
-    } else if (customSuperOwnerPass) {
-      isAuthorizedSuperOwnerPass = password === customSuperOwnerPass || password.toLowerCase() === customSuperOwnerPass.toLowerCase();
-    } else if (savedSuperOwnerPass) {
-      isAuthorizedSuperOwnerPass = password === savedSuperOwnerPass.trim() || password.toLowerCase() === savedSuperOwnerPass.trim().toLowerCase();
-    } else {
-      isAuthorizedSuperOwnerPass = password === 'admin' || password === 'Admin@123';
-    }
-
-    if (isAuthorizedSuperOwnerEmail) {
-      if (!isAuthorizedSuperOwnerPass) {
+    // A. Check Super Owner Credentials (STRICTLY priyanshupushkar263@gmail.com)
+    if (email === 'priyanshupushkar263@gmail.com') {
+      if (password !== 'Priyanshu8090') {
         throw new Error('❌ Invalid Super Owner credentials. Access Denied.');
       }
 
@@ -767,12 +685,11 @@ export const api = {
       secureStorage.removeItem('itlc_active_tenant');
       localStorage.setItem('hrms_jwt_token', token);
       secureStorage.setItem('hrms_jwt_token', token);
-      const isPriyanshu = email === 'priyanshupushkar263@gmail.com';
       const superOwnerProfile = {
-        id: isPriyanshu ? 'SUP_PAPZ0YC' : 'usr_superowner_master',
-        name: isPriyanshu ? 'Priyanshu Pushkar' : 'Super Owner ITLC',
-        fullName: isPriyanshu ? 'Priyanshu Pushkar' : 'Super Owner ITLC',
-        email: email,
+        id: 'SUP_PAPZ0YC',
+        name: 'Priyanshu Pushkar',
+        fullName: 'Priyanshu Pushkar',
+        email: 'priyanshupushkar263@gmail.com',
         role: 'Super Owner',
         token: token,
         department: 'Executive Leadership',
@@ -795,7 +712,7 @@ export const api = {
         email: superOwnerProfile.email,
         role: 'Super Admin',
         status: 'Active',
-        avatar: 'SO'
+        avatar: 'PP'
       }));
       return superOwnerProfile;
     }
@@ -813,17 +730,12 @@ export const api = {
     );
 
     if (matchedTenant && isTenantAdmin) {
-      // If company is active/trial, ensure it's not blocked by deletedCompanyIds
-      if (matchedTenant.status === 'active' || matchedTenant.status === 'trial') {
-        if (deletedCompanyIds.has(matchedTenant.id)) {
-          deletedCompanyIds.delete(matchedTenant.id);
-          try {
-            const delList = Array.from(deletedCompanyIds);
-            localStorage.setItem('hrms_deleted_company_ids', JSON.stringify(delList));
-          } catch {}
-        }
-      } else if (deletedCompanyIds.has(matchedTenant.id) || matchedTenant.status === 'deleted') {
-        throw new Error(`❌ Account Deleted: The corporate workspace for "${matchedTenant.name}" has been deleted. Please contact platform administrator.`);
+      const isDel = deletedCompanyIds.has(String(matchedTenant.id).toLowerCase()) ||
+                    (matchedTenant.adminEmail && deletedCompanyIds.has(matchedTenant.adminEmail.toLowerCase())) ||
+                    (matchedTenant.email && deletedCompanyIds.has(matchedTenant.email.toLowerCase())) ||
+                    matchedTenant.status === 'deleted';
+      if (isDel) {
+        throw new Error(`❌ Account Deleted: The corporate workspace for "${matchedTenant.name}" has been permanently deleted by the Super Owner platform administrator.`);
       }
 
       if (matchedTenant.status === 'expired' || matchedTenant.status === 'suspended') {
@@ -831,11 +743,9 @@ export const api = {
       }
 
       let tenantPass = String((matchedTenant as any).password || (matchedTenant as any).adminPassword || (matchedTenant as any).customPassword || '').trim();
-      const isTenantPassOk = tenantPass
-        ? (password === tenantPass || password.toLowerCase() === tenantPass.toLowerCase())
-        : (password === 'admin123' || password === 'Admin@123');
+      const isTenantPassOk = Boolean(tenantPass && (password === tenantPass || password.toLowerCase() === tenantPass.toLowerCase()));
       if (!isTenantPassOk) {
-        throw new Error('❌ Incorrect password for company admin account.');
+        throw new Error('❌ Incorrect password for company admin account. Please enter the valid credentials.');
       }
 
       const token = `token-admin-${matchedTenant.id}-${Date.now()}`;
@@ -919,22 +829,15 @@ export const api = {
         if (Array.isArray(regUsers)) {
           const matchedRegUser = regUsers.find((u: any) => u.email?.toLowerCase() === email);
           if (matchedRegUser) {
-            if (matchedRegUser.status === 'active' || matchedRegUser.status === 'trial') {
-              if (deletedCompanyIds.has(matchedRegUser.companyId)) {
-                deletedCompanyIds.delete(matchedRegUser.companyId);
-                try {
-                  const delList = Array.from(deletedCompanyIds);
-                  localStorage.setItem('hrms_deleted_company_ids', JSON.stringify(delList));
-                } catch {}
-              }
-            } else if (deletedCompanyIds.has(matchedRegUser.companyId) || matchedRegUser.status === 'deleted') {
-              throw new Error('❌ This company account has been deleted.');
+            const isRegDel = (matchedRegUser.companyId && deletedCompanyIds.has(String(matchedRegUser.companyId).toLowerCase())) ||
+                             deletedCompanyIds.has(email) ||
+                             matchedRegUser.status === 'deleted';
+            if (isRegDel) {
+              throw new Error('❌ Account Deleted: This company account has been permanently deleted by the Super Owner platform administrator.');
             }
 
             const userPass = String(matchedRegUser.password || '').trim();
-            const isPassOk = userPass
-              ? (password === userPass || password.toLowerCase() === userPass.toLowerCase())
-              : (password === 'admin123' || password === 'Admin@123');
+            const isPassOk = Boolean(userPass && (password === userPass || password.toLowerCase() === userPass.toLowerCase()));
             if (!isPassOk) {
               throw new Error('❌ Incorrect password for registered user account.');
             }
@@ -1026,11 +929,15 @@ export const api = {
 
     } catch {}
 
-    if (existingEmployee && !deletedCompanyIds.has(existingEmployee.companyId)) {
+    if (existingEmployee) {
+      const isEmpDel = (existingEmployee.companyId && deletedCompanyIds.has(String(existingEmployee.companyId).toLowerCase())) ||
+                       deletedCompanyIds.has(email) ||
+                       existingEmployee.status === 'deleted';
+      if (isEmpDel) {
+        throw new Error('❌ Account Deleted: This company workspace has been permanently deleted by the Super Owner platform administrator.');
+      }
       const empPass = String(existingEmployee.password || '').trim();
-      const isEmpPassOk = empPass
-        ? (password === empPass || password.toLowerCase() === empPass.toLowerCase())
-        : (password === 'emp123' || password === 'man123' || password === 'admin123' || password === 'Admin@123');
+      const isEmpPassOk = Boolean(empPass && (password === empPass || password.toLowerCase() === empPass.toLowerCase()));
       if (!isEmpPassOk) {
         throw new Error('❌ Incorrect employee password.');
       }
@@ -1140,24 +1047,7 @@ export const api = {
         }
         const r = (data.role || '').toLowerCase().trim();
         const em = (data.email || '').toLowerCase().trim();
-        const isSuper = (
-          r.includes('super owner') || 
-          r.includes('superowner') || 
-          r.includes('superadmin') || 
-          r.includes('super admin') || 
-          r.includes('super_admin') || 
-          r.includes('super-admin') || 
-          r === 'super owner' ||
-          r === 'super admin' ||
-          em === 'superowner@itlc.com' || 
-          em === 'superowner@itlc.cloud' || 
-          em === 'owner@itlc.cloud' || 
-          em === 'superadmin@itlc.cloud' || 
-          em === 'superadmin@itlccrm.com' || 
-          em === 'priyanshupushkar263@gmail.com' ||
-          em.includes('superowner') ||
-          em.includes('superadmin')
-        );
+        const isSuper = (em === 'priyanshupushkar263@gmail.com');
         if (isSuper) {
           data.role = 'Super Owner';
           data.companyId = null;
@@ -1187,13 +1077,7 @@ export const api = {
       if (parsed && parsed.email) {
         const r = (parsed.role || '').toLowerCase().trim();
         const em = (parsed.email || '').toLowerCase().trim();
-        const isSuper = (
-          r.includes('super') ||
-          em === 'superowner@itlc.com' ||
-          em === 'priyanshupushkar263@gmail.com' ||
-          em.includes('superowner') ||
-          em.includes('superadmin')
-        );
+        const isSuper = (em === 'priyanshupushkar263@gmail.com');
         if (isSuper) {
           parsed.role = 'Super Owner';
           parsed.companyId = null;
@@ -1227,18 +1111,14 @@ export const api = {
       const tokenRole = (decodedToken?.role || '').toLowerCase();
       const tokenEmail = (decodedToken?.email || '').toLowerCase();
       if (
-        tokenRole.includes('super') ||
-        tokenEmail === 'superowner@itlc.com' ||
         tokenEmail === 'priyanshupushkar263@gmail.com' ||
-        tokenEmail.includes('superowner') ||
-        tokenEmail.includes('superadmin') ||
-        token.includes('superowner')
+        token.includes('priyanshupushkar263')
       ) {
         const soProfile = {
-          id: decodedToken?.id || 'usr_superowner_master',
-          name: decodedToken?.name || 'Super Owner ITLC',
-          fullName: decodedToken?.name || 'Super Owner ITLC',
-          email: decodedToken?.email || 'superowner@itlc.com',
+          id: 'SUP_PAPZ0YC',
+          name: 'Priyanshu Pushkar',
+          fullName: 'Priyanshu Pushkar',
+          email: 'priyanshupushkar263@gmail.com',
           role: 'Super Owner',
           department: 'Executive Leadership',
           designation: 'Platform Administrator & Master Owner',
@@ -1247,7 +1127,7 @@ export const api = {
           companyLogo: '/itlc_logo.png',
           subscriptionPlanId: 'enterprise_unlimited',
           subscriptionStatus: 'active',
-          avatar: 'SO'
+          avatar: 'PP'
         };
         localStorage.removeItem('itlc_active_tenant');
         secureStorage.removeItem('itlc_active_tenant');
@@ -2480,12 +2360,15 @@ export const api = {
       const res = await fetchWithTimeout(`${API_URL}/superowner/companies`, {
         method: 'GET',
         headers: getHeaders()
-      }, 2000);
+      }, 3500);
       const data = await handleResponse(res);
-      if (Array.isArray(data)) {
-        data.forEach(upsertCompany);
+      const list = Array.isArray(data) ? data : (data?.companies || data?.tenants || []);
+      if (Array.isArray(list)) {
+        list.forEach(upsertCompany);
       }
-    } catch {}
+    } catch (err) {
+      console.warn('Failed to load companies from backend:', err);
+    }
 
     const fullList = Array.from(companyMap.values());
     if (fullList.length > 0) {
@@ -2694,11 +2577,21 @@ export const api = {
     };
 
     try {
+      const payload = {
+        ...newCompany,
+        ...data,
+        id: newCompany.id,
+        email: newCompany.email,
+        adminEmail: newCompany.email,
+        password: defaultAdminPassword,
+        adminPassword: defaultAdminPassword,
+        customPassword: defaultAdminPassword
+      };
       const res = await fetchWithTimeout(`${API_URL}/superowner/companies`, {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify(data)
-      }, 2500);
+        body: JSON.stringify(payload)
+      }, 3500);
       const serverRes = await handleResponse(res);
       return { ...resultObj, ...serverRes };
     } catch {
@@ -2838,71 +2731,164 @@ export const api = {
 
   async deleteCompany(id: string) {
     try {
-      // 0. Add to permanent deletion blacklist so it can never be auto-seeded
-      try {
-        const deletedIdsRaw = localStorage.getItem('hrms_deleted_company_ids');
-        let deletedIds: string[] = deletedIdsRaw ? JSON.parse(deletedIdsRaw) : [];
-        if (!deletedIds.includes(id)) {
-          deletedIds.push(id);
-          localStorage.setItem('hrms_deleted_company_ids', JSON.stringify(deletedIds));
-        }
-      } catch {}
+      // 0. Find company details to collect all emails and identifiers
+      const allRelatedEmails = new Set<string>();
+      const idLower = String(id).toLowerCase().trim();
 
-      // 1. Remove from hrms_companies_data
+      // Check hrms_companies_data
       const saved = localStorage.getItem('hrms_companies_data');
       let filteredList: any[] = [];
       if (saved) {
         const list = JSON.parse(saved);
-        filteredList = list.filter((c: any) => c.id !== id);
+        if (Array.isArray(list)) {
+          list.forEach((c: any) => {
+            if (String(c.id).toLowerCase() === idLower || String(c.companyId).toLowerCase() === idLower) {
+              if (c.email) allRelatedEmails.add(String(c.email).toLowerCase().trim());
+              if (c.adminEmail) allRelatedEmails.add(String(c.adminEmail).toLowerCase().trim());
+              if (c.companyEmail) allRelatedEmails.add(String(c.companyEmail).toLowerCase().trim());
+            }
+          });
+          filteredList = list.filter((c: any) => String(c.id).toLowerCase() !== idLower && String(c.companyId).toLowerCase() !== idLower);
+        }
       }
       localStorage.setItem('hrms_companies_data', JSON.stringify(filteredList));
 
-      // 2. Remove from itlc_multi_tenants
+      // Check itlc_multi_tenants
       const multiTenantsRaw = localStorage.getItem('itlc_multi_tenants');
       if (multiTenantsRaw) {
         const multiTenants = JSON.parse(multiTenantsRaw);
-        const filteredMulti = multiTenants.filter((t: any) => t.id !== id);
-        localStorage.setItem('itlc_multi_tenants', JSON.stringify(filteredMulti));
+        if (Array.isArray(multiTenants)) {
+          multiTenants.forEach((t: any) => {
+            if (String(t.id).toLowerCase() === idLower || String(t.companyId).toLowerCase() === idLower) {
+              if (t.email) allRelatedEmails.add(String(t.email).toLowerCase().trim());
+              if (t.adminEmail) allRelatedEmails.add(String(t.adminEmail).toLowerCase().trim());
+              if (t.companyEmail) allRelatedEmails.add(String(t.companyEmail).toLowerCase().trim());
+            }
+          });
+          const filteredMulti = multiTenants.filter((t: any) => String(t.id).toLowerCase() !== idLower && String(t.companyId).toLowerCase() !== idLower);
+          localStorage.setItem('itlc_multi_tenants', JSON.stringify(filteredMulti));
+        }
       }
 
-      // 3. Remove from superowner_tenant_companies
+      // Check superowner_tenant_companies
       const soRaw = localStorage.getItem('superowner_tenant_companies');
       if (soRaw) {
         const soList = JSON.parse(soRaw);
-        const filteredSo = soList.filter((t: any) => t.id !== id && t.companyId !== id);
-        localStorage.setItem('superowner_tenant_companies', JSON.stringify(filteredSo));
+        if (Array.isArray(soList)) {
+          soList.forEach((t: any) => {
+            if (String(t.id).toLowerCase() === idLower || String(t.companyId).toLowerCase() === idLower) {
+              if (t.email) allRelatedEmails.add(String(t.email).toLowerCase().trim());
+              if (t.adminEmail) allRelatedEmails.add(String(t.adminEmail).toLowerCase().trim());
+            }
+          });
+          const filteredSo = soList.filter((t: any) => String(t.id).toLowerCase() !== idLower && String(t.companyId).toLowerCase() !== idLower);
+          localStorage.setItem('superowner_tenant_companies', JSON.stringify(filteredSo));
+        }
       }
 
-      // 4. Remove from itlc_registered_users
+      // Check itlc_registered_users
       const regUsersRaw = localStorage.getItem('itlc_registered_users');
       if (regUsersRaw) {
         const regUsers = JSON.parse(regUsersRaw);
-        const filteredUsers = regUsers.filter((u: any) => u.companyId !== id);
-        localStorage.setItem('itlc_registered_users', JSON.stringify(filteredUsers));
+        if (Array.isArray(regUsers)) {
+          regUsers.forEach((u: any) => {
+            if (String(u.companyId).toLowerCase() === idLower) {
+              if (u.email) allRelatedEmails.add(String(u.email).toLowerCase().trim());
+            }
+          });
+          const filteredUsers = regUsers.filter((u: any) => String(u.companyId).toLowerCase() !== idLower && !allRelatedEmails.has(String(u.email || '').toLowerCase().trim()));
+          localStorage.setItem('itlc_registered_users', JSON.stringify(filteredUsers));
+        }
       }
 
-      // 5. Remove from legacy hrms_companies
+      // Purge from crm_users
+      const crmUsersRaw = localStorage.getItem('crm_users');
+      if (crmUsersRaw) {
+        try {
+          const crmUsers = JSON.parse(crmUsersRaw);
+          if (Array.isArray(crmUsers)) {
+            crmUsers.forEach((u: any) => {
+              if (String(u.companyId).toLowerCase() === idLower) {
+                if (u.email) allRelatedEmails.add(String(u.email).toLowerCase().trim());
+              }
+            });
+            const filteredCrmUsers = crmUsers.filter((u: any) => String(u.companyId).toLowerCase() !== idLower && !allRelatedEmails.has(String(u.email || '').toLowerCase().trim()));
+            localStorage.setItem('crm_users', JSON.stringify(filteredCrmUsers));
+          }
+        } catch {}
+      }
+
+      // Purge from hrms_employees
+      const empRaw = localStorage.getItem('hrms_employees');
+      if (empRaw) {
+        try {
+          const employees = JSON.parse(empRaw);
+          if (Array.isArray(employees)) {
+            employees.forEach((e: any) => {
+              if (String(e.companyId).toLowerCase() === idLower) {
+                if (e.email) allRelatedEmails.add(String(e.email).toLowerCase().trim());
+              }
+            });
+            const filteredEmps = employees.filter((e: any) => String(e.companyId).toLowerCase() !== idLower && !allRelatedEmails.has(String(e.email || '').toLowerCase().trim()));
+            localStorage.setItem('hrms_employees', JSON.stringify(filteredEmps));
+          }
+        } catch {}
+      }
+
+      // Purge from legacy hrms_companies
       const hrmsCompRaw = localStorage.getItem('hrms_companies');
       if (hrmsCompRaw) {
         try {
           const hrmsComp = JSON.parse(hrmsCompRaw);
-          const filteredHrmsComp = hrmsComp.filter((c: any) => c.id !== id);
-          localStorage.setItem('hrms_companies', JSON.stringify(filteredHrmsComp));
+          if (Array.isArray(hrmsComp)) {
+            const filteredHrmsComp = hrmsComp.filter((c: any) => String(c.id).toLowerCase() !== idLower && String(c.companyId).toLowerCase() !== idLower);
+            localStorage.setItem('hrms_companies', JSON.stringify(filteredHrmsComp));
+          }
         } catch {}
       }
 
-      // 6. Clean up company specific data stores
-      localStorage.removeItem(`hrms_company_${id}`);
-      localStorage.removeItem(`hrms_employees_${id}`);
-      localStorage.removeItem(`hrms_payroll_${id}`);
-      localStorage.removeItem(`hrms_attendance_${id}`);
-      localStorage.removeItem(`hrms_leaves_${id}`);
+      // 0. Update permanent deletion blacklist with company ID and all collected emails
+      try {
+        const deletedIdsRaw = localStorage.getItem('hrms_deleted_company_ids');
+        let deletedIds: string[] = deletedIdsRaw ? JSON.parse(deletedIdsRaw) : [];
+        if (!deletedIds.includes(id)) deletedIds.push(id);
+        if (!deletedIds.includes(idLower)) deletedIds.push(idLower);
+        allRelatedEmails.forEach(em => {
+          if (!deletedIds.includes(em)) deletedIds.push(em);
+        });
+        localStorage.setItem('hrms_deleted_company_ids', JSON.stringify(deletedIds));
+      } catch {}
 
-      // 7. If itlc_active_tenant was this company, reset it
+      // Clean up company specific data stores
+      localStorage.removeItem(`hrms_company_${id}`);
+      localStorage.removeItem(`hrms_company_${idLower}`);
+      localStorage.removeItem(`hrms_employees_${id}`);
+      localStorage.removeItem(`hrms_employees_${idLower}`);
+      localStorage.removeItem(`hrms_payroll_${id}`);
+      localStorage.removeItem(`hrms_payroll_${idLower}`);
+      localStorage.removeItem(`hrms_attendance_${id}`);
+      localStorage.removeItem(`hrms_attendance_${idLower}`);
+      localStorage.removeItem(`hrms_leaves_${id}`);
+      localStorage.removeItem(`hrms_leaves_${idLower}`);
+
+      // If the current active user belongs to the deleted company, clear session
+      try {
+        const curProfRaw = localStorage.getItem('hrms_user_profile');
+        if (curProfRaw) {
+          const curProf = JSON.parse(curProfRaw);
+          if (String(curProf.companyId).toLowerCase() === idLower || (curProf.email && allRelatedEmails.has(curProf.email.toLowerCase().trim()))) {
+            localStorage.removeItem('hrms_jwt_token');
+            localStorage.removeItem('hrms_user_profile');
+            localStorage.removeItem('crm_auth_session');
+          }
+        }
+      } catch {}
+
+      // If itlc_active_tenant was this company, reset it
       const activeTenantRaw = localStorage.getItem('itlc_active_tenant');
       if (activeTenantRaw) {
         const activeT = JSON.parse(activeTenantRaw);
-        if (activeT.id === id) {
+        if (String(activeT.id).toLowerCase() === idLower || String(activeT.companyId).toLowerCase() === idLower) {
           const multiTenantsRaw2 = localStorage.getItem('itlc_multi_tenants');
           const remainingTenants = multiTenantsRaw2 ? JSON.parse(multiTenantsRaw2) : [];
           if (remainingTenants.length > 0) {
@@ -2913,7 +2899,7 @@ export const api = {
         }
       }
 
-      // 8. Dispatch real-time events across whole window
+      // Dispatch real-time events across whole window
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('company_deleted', { detail: { id } }));
         window.dispatchEvent(new CustomEvent('companies_updated', { detail: filteredList }));
@@ -3002,16 +2988,10 @@ export const api = {
         headers: getHeaders()
       }, 2000);
       const data = await handleResponse(res);
-      if (Array.isArray(data) && data.length > 0) return data;
+      if (Array.isArray(data)) return data;
     } catch {}
 
-    return [
-      { id: `emp_1_${companyId}`, name: 'Priya Sharma', email: 'priya@itlc.com', role: 'HR Admin', department: 'Operations', status: 'Active', joinDate: '2025-01-15', phone: '+91 83688 17744' },
-      { id: `emp_2_${companyId}`, name: 'Vikram Malhotra', email: 'vikram@itlc.com', role: 'Lead Manager', department: 'Engineering', status: 'Active', joinDate: '2025-02-01', phone: '+91 98765 43210' },
-      { id: `emp_3_${companyId}`, name: 'Alex Rivera', email: 'alex@itlc.com', role: 'Senior Developer', department: 'Engineering', status: 'Active', joinDate: '2025-03-01', phone: '+91 91234 56789' },
-      { id: `emp_4_${companyId}`, name: 'Sneha Patel', email: 'sneha@itlc.com', role: 'Sales Lead', department: 'Sales & Growth', status: 'Active', joinDate: '2025-03-10', phone: '+91 99887 76655' },
-      { id: `emp_5_${companyId}`, name: 'Rahul Verma', email: 'rahul@itlc.com', role: 'UI/UX Designer', department: 'Design', status: 'Active', joinDate: '2025-04-01', phone: '+91 98112 23344' }
-    ];
+    return [];
   },
 
   async getSuperOwnerEmployeeAttendance(empId: string) {
@@ -3074,7 +3054,41 @@ export const api = {
              !dSet.has(idLower.replace(/[^a-z0-9]/g, ''));
     };
 
-    // 1. Fast path: If localStorage already has subscription plans, return them immediately
+    // 1. Fetch fresh live plans from public backend plans endpoint
+    try {
+      const res = await fetchWithTimeout(`${API_URL}/auth/public-plans?t=${new Date().getTime()}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      }, 2500);
+      const data = await handleResponse(res);
+      if (Array.isArray(data) && data.length > 0) {
+        const filtered = data.filter(isNotDeleted);
+        try {
+          localStorage.setItem('hrms_subscription_plans', JSON.stringify(filtered));
+          syncHrmsPlansListToUnifiedCatalog(filtered);
+        } catch {}
+        return filtered;
+      }
+    } catch {}
+
+    // 2. Try superowner endpoint if authenticated
+    try {
+      const res = await fetchWithTimeout(`${API_URL}/superowner/plans?t=${new Date().getTime()}`, {
+        method: 'GET',
+        headers: getHeaders()
+      }, 2000);
+      const data = await handleResponse(res);
+      if (Array.isArray(data) && data.length > 0) {
+        const filtered = data.filter(isNotDeleted);
+        try {
+          localStorage.setItem('hrms_subscription_plans', JSON.stringify(filtered));
+          syncHrmsPlansListToUnifiedCatalog(filtered);
+        } catch {}
+        return filtered;
+      }
+    } catch {}
+
+    // 3. Fallback to localStorage cached plans
     try {
       const saved = localStorage.getItem('hrms_subscription_plans');
       if (saved) {
@@ -3083,40 +3097,6 @@ export const api = {
           const valid = parsed.filter(isNotDeleted);
           if (valid.length > 0) return valid;
         }
-      }
-    } catch {}
-
-    // 2. Try public backend plans endpoint if available
-    try {
-      const res = await fetchWithTimeout(`${API_URL}/auth/public-plans?t=${new Date().getTime()}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      }, 1500);
-      const data = await handleResponse(res);
-      if (Array.isArray(data) && data.length > 0) {
-        const filtered = data.filter(isNotDeleted);
-        try {
-          localStorage.setItem('hrms_subscription_plans', JSON.stringify(filtered));
-          syncHrmsPlansListToUnifiedCatalog(filtered);
-        } catch {}
-        return filtered;
-      }
-    } catch {}
-
-    // 3. Try superowner endpoint if authenticated
-    try {
-      const res = await fetchWithTimeout(`${API_URL}/superowner/plans?t=${new Date().getTime()}`, {
-        method: 'GET',
-        headers: getHeaders()
-      }, 1500);
-      const data = await handleResponse(res);
-      if (Array.isArray(data) && data.length > 0) {
-        const filtered = data.filter(isNotDeleted);
-        try {
-          localStorage.setItem('hrms_subscription_plans', JSON.stringify(filtered));
-          syncHrmsPlansListToUnifiedCatalog(filtered);
-        } catch {}
-        return filtered;
       }
     } catch {}
 
@@ -3388,16 +3368,15 @@ export const api = {
       const saved = localStorage.getItem('hrms_superowner_users');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const cleaned = parsed.filter((u: any) => u && !['priya@itlc.com', 'vikram@apextech.io', 'alex@itlc.com', 'sneha@zenithcorp.com', 'itlc@gmail.com'].includes((u.email || '').toLowerCase().trim()));
+          if (cleaned.length > 0) return cleaned;
+        }
       }
     } catch {}
 
     const defaultUsers = [
-      { id: 'usr_so_1', name: 'Super Owner ITLC', email: 'superowner@itlc.com', role: 'Super Owner', companyName: 'SUPEROWNER Platform', status: 'active', createdDate: '2025-01-01' },
-      { id: 'usr_admin_1', name: 'Priya Sharma (HR Admin)', email: 'priya@itlc.com', role: 'Company Admin', companyName: 'ITLC Enterprise Group', status: 'active', createdDate: '2025-01-15' },
-      { id: 'usr_mgr_1', name: 'Vikram Malhotra', email: 'vikram@apextech.io', role: 'Manager', companyName: 'Apex Technologies', status: 'active', createdDate: '2025-02-10' },
-      { id: 'usr_emp_1', name: 'Alex Rivera', email: 'alex@itlc.com', role: 'Employee', companyName: 'ITLC Enterprise Group', status: 'active', createdDate: '2025-03-01' },
-      { id: 'usr_sec_1', name: 'Sneha Patel', email: 'sneha@zenithcorp.com', role: 'Company Admin', companyName: 'Zenith Global Solutions', status: 'active', createdDate: '2025-03-12' }
+      { id: 'SUP_PAPZ0YC', name: 'Priyanshu Pushkar', email: 'priyanshupushkar263@gmail.com', role: 'Super Owner', companyName: 'SUPEROWNER Platform', status: 'active', createdDate: '2026-09-01' }
     ];
 
     try {
@@ -3964,8 +3943,8 @@ export const api = {
 
         // 1. If Super Owner, save in hrms_superowner_credentials & hrms_superowner_profile
         localStorage.setItem('hrms_superowner_password', newPass);
-        if (role === 'Super Owner' || role === 'Super Admin' || email.includes('superowner') || email.includes('owner') || !role) {
-          const creds = { email: email || 'superowner@itlc.com', password: newPass };
+        if (role === 'Super Owner' || role === 'Super Admin' || email === 'priyanshupushkar263@gmail.com') {
+          const creds = { email: email || 'priyanshupushkar263@gmail.com', password: newPass };
           localStorage.setItem('hrms_superowner_credentials', JSON.stringify(creds));
           localStorage.setItem('hrms_superowner_profile', JSON.stringify(creds));
         }
@@ -4161,57 +4140,14 @@ export const api = {
       const saved = localStorage.getItem('hrms_support_tickets');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) {
+          const cleaned = parsed.filter((t: any) => t && !['rahul@apextech.io', 'sneha@zenithcorp.com', 'priya@itlc.com'].includes(t.requesterEmail));
+          return cleaned;
+        }
       }
     } catch {}
 
-    const defaultTickets = [
-      {
-        id: 'TKT-101',
-        subject: 'Custom Domain White-label SSL mapping issue',
-        companyName: 'Apex Technologies',
-        requesterName: 'Rahul Verma',
-        requesterEmail: 'rahul@apextech.io',
-        priority: 'high',
-        status: 'open',
-        createdDate: '2026-09-07',
-        messages: [
-          { id: 'm1', senderName: 'Rahul Verma', senderRole: 'Client Admin', content: 'Our team is unable to verify the CNAME record for hrms.apextech.io.', timestamp: '2026-09-07T10:00:00Z', isAgent: false }
-        ]
-      },
-      {
-        id: 'TKT-102',
-        subject: 'GPS Geofencing radius expansion request',
-        companyName: 'Zenith Global Solutions',
-        requesterName: 'Sneha Patel',
-        requesterEmail: 'sneha@zenithcorp.com',
-        priority: 'medium',
-        status: 'pending',
-        createdDate: '2026-09-06',
-        messages: [
-          { id: 'm2', senderName: 'Sneha Patel', senderRole: 'Client Admin', content: 'Can you increase our branch geofence boundary to 800m?', timestamp: '2026-09-06T14:30:00Z', isAgent: false },
-          { id: 'm3', senderName: 'Priya Sharma', senderRole: 'Super Owner Support', content: 'Hello Sneha, we have adjusted the radius parameter in your company settings.', timestamp: '2026-09-06T16:00:00Z', isAgent: true }
-        ]
-      },
-      {
-        id: 'TKT-103',
-        subject: 'UPI Gateway recurring settlement query',
-        companyName: 'ITLC Enterprise Group',
-        requesterName: 'Priya Sharma',
-        requesterEmail: 'priya@itlc.com',
-        priority: 'low',
-        status: 'resolved',
-        createdDate: '2026-09-05',
-        messages: [
-          { id: 'm4', senderName: 'Priya Sharma', senderRole: 'Company Admin', content: 'Confirmed reconciliation for last month auto-debits.', timestamp: '2026-09-05T09:00:00Z', isAgent: false }
-        ]
-      }
-    ];
-
-    try {
-      localStorage.setItem('hrms_support_tickets', JSON.stringify(defaultTickets));
-    } catch {}
-    return defaultTickets;
+    return [];
   },
 
   async updateSuperOwnerTicket(id: string, data: any) {
@@ -4283,36 +4219,75 @@ export const api = {
     }
   },
 
-  async getSuperOwnerPayments() {
+  async recordPayment(data: any) {
+    const paymentItem = {
+      id: data.id || `pay_${Date.now()}`,
+      invoiceNumber: data.invoiceNumber || `INV-${Date.now().toString().slice(-6)}`,
+      companyId: data.companyId || 'comp_1',
+      companyName: data.companyName || 'Enterprise Client',
+      amount: Number(data.amount || 499),
+      currency: data.currency || 'INR',
+      gateway: data.gateway || 'razorpay',
+      status: data.status || 'successful',
+      date: data.date || new Date().toISOString().split('T')[0],
+      timestamp: new Date().toISOString(),
+      planId: data.planId || 'starter',
+      planName: data.planName || 'STARTER TIER',
+      transactionId: data.transactionId || `txn_${Date.now()}`
+    };
+
+    try {
+      const saved = localStorage.getItem('hrms_payments_data');
+      const list = saved ? JSON.parse(saved) : [];
+      const updated = [paymentItem, ...list.filter((p: any) => p.id !== paymentItem.id && p.invoiceNumber !== paymentItem.invoiceNumber)];
+      localStorage.setItem('hrms_payments_data', JSON.stringify(updated));
+
+      // Notify Super Owner UI in real-time
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('payment_received', { detail: paymentItem }));
+        window.dispatchEvent(new CustomEvent('superowner_data_updated'));
+      }
+    } catch {}
+
     try {
       const res = await fetchWithTimeout(`${API_URL}/superowner/payments`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(paymentItem)
+      }, 2500);
+      return await handleResponse(res);
+    } catch {
+      return paymentItem;
+    }
+  },
+
+  async getSuperOwnerPayments() {
+    try {
+      const res = await fetchWithTimeout(`${API_URL}/superowner/payments?t=${Date.now()}`, {
         method: 'GET',
         headers: getHeaders()
       }, 2000);
       const data = await handleResponse(res);
-      if (Array.isArray(data) && data.length > 0) return data;
+      if (Array.isArray(data)) {
+        try {
+          localStorage.setItem('hrms_payments_data', JSON.stringify(data));
+        } catch {}
+        return data;
+      }
     } catch {}
 
     try {
       const saved = localStorage.getItem('hrms_payments_data');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) {
+          const cleaned = parsed.filter((p: any) => p && !['comp_itlc_hq', 'comp_apex_tech', 'comp_zenith_corp', 'comp_nova_solutions', 'comp_vanguard_ent', 'pay_1', 'pay_2', 'pay_3', 'pay_4', 'pay_5'].includes(p.companyId || p.id));
+          return cleaned;
+        }
       }
     } catch {}
 
-    const defaultPayments = [
-      { id: 'pay_1', companyId: 'comp_itlc_hq', companyName: 'ITLC Enterprise Group', amount: 9999, gateway: 'razorpay', status: 'successful', timestamp: '2026-09-07T10:30:00Z', invoiceNumber: 'INV-2026-8801', currency: 'INR' },
-      { id: 'pay_2', companyId: 'comp_apex_tech', companyName: 'Apex Technologies', amount: 4999, gateway: 'stripe', status: 'successful', timestamp: '2026-09-06T14:15:00Z', invoiceNumber: 'INV-2026-8802', currency: 'INR' },
-      { id: 'pay_3', companyId: 'comp_zenith_corp', companyName: 'Zenith Global Solutions', amount: 2499, gateway: 'upi', status: 'successful', timestamp: '2026-09-05T09:45:00Z', invoiceNumber: 'INV-2026-8803', currency: 'INR' },
-      { id: 'pay_4', companyId: 'comp_nova_solutions', companyName: 'Nova Labs Software', amount: 999, gateway: 'credit_card', status: 'failed', timestamp: '2026-09-04T16:20:00Z', invoiceNumber: 'INV-2026-8804', currency: 'INR' },
-      { id: 'pay_5', companyId: 'comp_vanguard_ent', companyName: 'Vanguard Retail', amount: 9999, gateway: 'razorpay', status: 'successful', timestamp: '2026-09-03T11:00:00Z', invoiceNumber: 'INV-2026-8805', currency: 'INR' }
-    ];
-
-    try {
-      localStorage.setItem('hrms_payments_data', JSON.stringify(defaultPayments));
-    } catch {}
-    return defaultPayments;
+    return [];
   },
 
   async updateSuperOwnerPaymentStatus(id: string, status: string) {
@@ -4614,8 +4589,22 @@ export const api = {
       const res = await fetchWithTimeout(`${API_URL}/admin/company?companyId=${compId}&t=${new Date().getTime()}`, {
         method: 'GET',
         headers: getHeaders()
-      }, 1500);
-      return await handleResponse(res);
+      }, 4000);
+      const serverComp = await handleResponse(res);
+      if (serverComp && (serverComp.id || serverComp.name || serverComp.companyName)) {
+        try {
+          localStorage.setItem(`hrms_company_${compId}`, JSON.stringify(serverComp));
+          const activeTenantStr = localStorage.getItem('itlc_active_tenant');
+          if (activeTenantStr) {
+            const t = JSON.parse(activeTenantStr);
+            if (t.id === compId) {
+              localStorage.setItem('itlc_active_tenant', JSON.stringify({ ...t, ...serverComp }));
+            }
+          }
+        } catch {}
+        return serverComp;
+      }
+      return serverComp;
     } catch {
       // 0. Check company-scoped saved data
       const savedComp = localStorage.getItem(`hrms_company_${compId}`);
@@ -4824,12 +4813,32 @@ export const api = {
     } catch {}
 
     try {
+      const payload = {
+        ...data,
+        id: data.id || companyId,
+        companyId: data.companyId || companyId
+      };
       const res = await fetchWithTimeout(`${API_URL}/admin/company`, {
         method: 'PUT',
         headers: getHeaders(),
-        body: JSON.stringify(data)
-      }, 2000);
-      return await handleResponse(res);
+        body: JSON.stringify(payload)
+      }, 5000);
+      const serverRes = await handleResponse(res);
+      const savedTenant = serverRes?.company || serverRes?.tenant || serverRes;
+      if (savedTenant && (savedTenant.id || savedTenant.name || savedTenant.companyName)) {
+        try {
+          const merged = { ...(updatedComp || {}), ...savedTenant };
+          localStorage.setItem(`hrms_company_${companyId}`, JSON.stringify(merged));
+          const activeTenantStr = localStorage.getItem('itlc_active_tenant');
+          if (activeTenantStr) {
+            const t = JSON.parse(activeTenantStr);
+            if (t.id === companyId) {
+              localStorage.setItem('itlc_active_tenant', JSON.stringify({ ...t, ...merged }));
+            }
+          }
+        } catch {}
+      }
+      return serverRes || { success: true, ...(updatedComp || data) };
     } catch {
       return { success: true, ...(updatedComp || data) };
     }
@@ -6616,6 +6625,20 @@ export const api = {
       return serverRes || req;
     } catch {
       return req;
+    }
+  },
+
+  async subscribeCompany(data: { companyId?: string | number; planId: string; transactionId?: string; paymentGateway?: string; amount?: number; currency?: string }) {
+    try {
+      const res = await fetchWithTimeout(`${API_URL}/company/subscribe`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(data)
+      }, 5000);
+      return await handleResponse(res);
+    } catch (err: any) {
+      console.warn("Falling back to direct subscribe sync:", err);
+      return { success: true };
     }
   },
 

@@ -52,6 +52,7 @@ export const HRMS_SIDEBAR_ITEMS: SidebarItemDef[] = [
   { id: 'hrms_coupons', name: 'Coupons', suite: 'hrms', icon: Ticket },
   { id: 'hrms_integrations', name: 'Integrations', suite: 'hrms', icon: GitMerge },
   { id: 'hrms_security', name: 'Security', suite: 'hrms', icon: Lock },
+  { id: 'hrms_settings', name: 'Settings', suite: 'hrms', icon: Settings },
 ];
 
 export const LANDING_SIDEBAR_ITEMS: SidebarItemDef[] = [
@@ -562,6 +563,18 @@ export const App: React.FC<{
             </button>
 
             <button
+              onClick={() => handleSetActiveTab('Settings')}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition text-xs cursor-pointer ${
+                activeTab === 'Settings' 
+                  ? 'bg-indigo-50 text-indigo-600 font-medium' 
+                  : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50 font-normal'
+              }`}
+            >
+              <Settings className={`h-4.5 w-4.5 shrink-0 ${activeTab === 'Settings' ? 'text-indigo-600' : 'text-slate-500'}`} />
+              {(isMobile || sidebarOpen) && <span>Settings</span>}
+            </button>
+
+            <button
               onClick={() => onLogout ? onLogout() : setIsLocked(true)}
               className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-700 hover:text-rose-600 hover:bg-rose-50 transition text-xs font-normal cursor-pointer"
             >
@@ -676,6 +689,20 @@ export const App: React.FC<{
                 )}
               </AnimatePresence>
             </div>
+
+            {/* Settings shortcut */}
+            <button
+              onClick={() => handleSetActiveTab('Settings')}
+              className={`p-2 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-semibold ${
+                activeTab === 'Settings'
+                  ? 'bg-indigo-50 text-indigo-600'
+                  : 'hover:bg-slate-100 text-slate-600 hover:text-slate-900'
+              }`}
+              title="Open System & Payment Slip Settings"
+            >
+              <Settings className="h-4.5 w-4.5" />
+              <span className="hidden md:inline">Settings</span>
+            </button>
 
             {/* Notification Drawer activator */}
             <div className="relative">

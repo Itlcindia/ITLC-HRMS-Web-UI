@@ -44,6 +44,31 @@ const getFeatureLabelAndStyle = (key: string, enabled: boolean) => {
   }
 };
 
+export const DEFAULT_PLAN_FEATURES = {
+  payroll: true,
+  attendance: true,
+  recruitment: false,
+  faceRecognition: false,
+  gpsAttendance: false,
+  apiAccess: false,
+  whiteLabel: false
+};
+
+export const resolvePlanFeatures = (rawFeatures: any) => {
+  if (!rawFeatures) return DEFAULT_PLAN_FEATURES;
+  if (typeof rawFeatures === 'string') {
+    try {
+      const parsed = JSON.parse(rawFeatures);
+      if (parsed && typeof parsed === 'object') return { ...DEFAULT_PLAN_FEATURES, ...parsed };
+    } catch {}
+    return DEFAULT_PLAN_FEATURES;
+  }
+  if (typeof rawFeatures === 'object') {
+    return { ...DEFAULT_PLAN_FEATURES, ...rawFeatures };
+  }
+  return DEFAULT_PLAN_FEATURES;
+};
+
 export const SubscriptionsTab: React.FC = () => {
   const { plans, setPlans, companies, setCompanies, addToast, addLog, formatAmount, setIsFormDirty } = useDashboard();
   
@@ -138,7 +163,7 @@ export const SubscriptionsTab: React.FC = () => {
       storageLimit: plan.storageLimit,
       aiCreditsLimit: plan.aiCreditsLimit,
       showOnLandingPage: plan.showOnLandingPage !== false,
-      features: { ...plan.features }
+      features: resolvePlanFeatures(plan.features)
     });
     setIsModalOpen(true);
   };
@@ -443,7 +468,7 @@ export const SubscriptionsTab: React.FC = () => {
                 <div className="space-y-2 pt-2 text-xs">
                   <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Modules Included:</span>
                   
-                  {Object.entries(plan.features).map(([key, enabled]) => {
+                  {Object.entries(resolvePlanFeatures(plan.features)).map(([key, enabled]) => {
                     const styleInfo = getFeatureLabelAndStyle(key, enabled);
                     return (
                       <div key={key} className={`flex items-center justify-between`}>
@@ -682,7 +707,7 @@ export const SubscriptionsTab: React.FC = () => {
                     <label className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Included Modules</label>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                      {Object.entries(formData.features).map(([key, enabled]) => {
+                      {Object.entries(resolvePlanFeatures(formData.features)).map(([key, enabled]) => {
                         const styleInfo = getFeatureLabelAndStyle(key, enabled);
                         return (
                           <div
