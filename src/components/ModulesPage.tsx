@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { LandingHeader } from './LandingHeader';
+import { LandingFooter } from './LandingFooter';
 import { 
   Layers, 
   Briefcase, 
@@ -6,9 +8,8 @@ import {
   ShieldCheck, 
   Lock,
   Sparkles, 
-  ArrowLeft, 
   ArrowRight, 
-  Search, 
+  Search,
   CheckCircle2, 
   MapPin, 
   FileText, 
@@ -24,7 +25,11 @@ import {
   PhoneCall, 
   FileSpreadsheet, 
   Percent, 
-  Sliders
+  Sliders,
+  Star,
+  Share2,
+  Bookmark,
+  TrendingUp
 } from 'lucide-react';
 
 interface ModulesPageProps {
@@ -166,13 +171,13 @@ export const ModulesPage: React.FC<ModulesPageProps> = ({
     {
       id: 'vault-security',
       category: 'governance',
-      title: 'Master PIN Security Vault',
-      badge: 'Dual-Factor Barrier',
+      title: 'Super Owner Sovereign Shield',
+      badge: 'Zero-Trust Barrier',
       icon: KeyRound,
       color: '#4f46e5',
       bgColor: '#eef2ff',
-      description: 'Shields sensitive financial parameters, database exports, and tenant management actions behind a cryptographic master PIN.',
-      features: ['Brute-force lockout barrier', 'Encrypted JSON backup export', '1-Click schema restoration', 'System audit trail logging']
+      description: 'Shields sensitive financial parameters, database exports, and tenant management actions behind Super Owner cryptographic access.',
+      features: ['Role-based authorization', 'Encrypted JSON backup export', '1-Click schema restoration', 'System audit trail logging']
     },
     {
       id: 'csat-radar',
@@ -206,134 +211,48 @@ export const ModulesPage: React.FC<ModulesPageProps> = ({
     return matchesCategory && matchesQuery;
   });
 
+  const getActionLabel = (category: ModuleItem['category']) => {
+    if (category === 'crm') return 'Coming soon';
+    if (category === 'governance') return 'Open hub';
+    if (category === 'automations') return 'Start workflow';
+    return 'Explore module';
+  };
+
   return (
-    <div style={{ minHeight: '100vh', background: '#f8fafc', color: '#0f172a', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div className="itlc-modules-page">
       
-      {/* Top Sticky Header */}
-      <header 
-        style={{
-          position: 'sticky',
-          top: '12px',
-          zIndex: 50,
-          maxWidth: '1280px',
-          margin: '12px auto 0',
-          padding: '10px 20px',
-          borderRadius: '16px',
-          background: 'rgba(255, 255, 255, 0.92)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          border: '1px solid rgba(226, 232, 240, 0.9)',
-          boxShadow: '0 10px 30px -5px rgba(15, 23, 42, 0.05)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button 
-            onClick={onBackToHome}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 12px',
-              borderRadius: '9px',
-              border: '1px solid #e2e8f0',
-              background: '#ffffff',
-              color: '#334155',
-              fontSize: '12px',
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
-          >
-            <ArrowLeft size={14} />
-            <span>Back to Home</span>
-          </button>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a' }}>ITLC Modules</span>
-            <span style={{ fontSize: '10px', background: 'rgba(217, 119, 6, 0.08)', color: '#d97706', padding: '2px 7px', borderRadius: '12px', border: '1px solid rgba(217, 119, 6, 0.2)', fontWeight: 700 }}>
-              20+ Micro-Tools
-            </span>
-          </div>
-        </div>
-
-        {/* Center Nav Links */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(241, 245, 249, 0.8)', padding: '3px', borderRadius: '11px', border: '1px solid rgba(226, 232, 240, 0.8)' }}>
-          
-          <button 
-            onClick={() => onNavigateTo('security')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 600, color: '#475569', padding: '5px 12px', borderRadius: '8px', background: 'transparent', border: 'none', cursor: 'pointer' }}
-          >
-            <ShieldCheck size={13} style={{ color: '#4f46e5' }} />
-            <span>Security</span>
-          </button>
-          <button 
-            onClick={() => onNavigateTo('modules')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 700, color: '#d97706', padding: '5px 12px', borderRadius: '8px', background: '#ffffff', border: 'none', boxShadow: '0 2px 5px rgba(0,0,0,0.05)', cursor: 'pointer' }}
-          >
-            <Layers size={13} />
-            <span>Modules</span>
-          </button>
-          <button 
-            onClick={() => onNavigateTo('pricing')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 600, color: '#475569', padding: '5px 12px', borderRadius: '8px', background: 'transparent', border: 'none', cursor: 'pointer' }}
-          >
-            <Sparkles size={13} style={{ color: '#9333ea' }} />
-            <span>Pricing</span>
-          </button>
-        </div>
-
-        {/* Right Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button 
-            onClick={onOpenSearch}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 10px', borderRadius: '9px', fontSize: '12px', background: 'rgba(241, 245, 249, 0.9)', border: '1px solid #e2e8f0', color: '#64748b', cursor: 'pointer' }}
-          >
-            <Search size={13} />
-            <kbd style={{ fontSize: '10px', fontWeight: 700, padding: '1px 4px', background: '#fff', borderRadius: '4px', border: '1px solid #cbd5e1' }}>Ctrl K</kbd>
-          </button>
-
-          <button 
-            onClick={onOpenSignIn}
-            style={{ padding: '7px 14px', fontSize: '12px', borderRadius: '9px', background: 'rgba(2, 132, 199, 0.08)', color: '#0284c7', border: '1px solid rgba(2, 132, 199, 0.3)', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
-          >
-            <Lock size={13} />
-            <span>Login</span>
-          </button>
-
-          <button 
-            onClick={onGetStarted}
-            style={{ padding: '7px 15px', fontSize: '12px', borderRadius: '9px', display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'linear-gradient(135deg, #d97706, #f59e0b)', color: '#fff', border: 'none', fontWeight: 700, boxShadow: '0 4px 12px rgba(217, 119, 6, 0.25)', cursor: 'pointer' }}
-          >
-            <Sparkles size={13} />
-            <span>Get Started</span>
-          </button>
-        </div>
-      </header>
+      <LandingHeader
+        onHome={onBackToHome}
+        onFeatures={() => onNavigateTo('modules')}
+        onPricing={() => onNavigateTo('pricing')}
+        onSolutions={() => onNavigateTo('workspaces')}
+        onSecurity={() => onNavigateTo('security')}
+        onLogin={onOpenSignIn}
+        onGetStarted={onGetStarted}
+      />
 
       {/* Hero Header */}
-      <section style={{ maxWidth: '1100px', margin: '0 auto', padding: '60px 24px 30px', textAlign: 'center' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 16px', borderRadius: '30px', background: '#fffbeb', color: '#d97706', fontSize: '12px', fontWeight: 700, marginBottom: '16px' }}>
+      <section className="itlc-modules-hero">
+        <div className="itlc-modules-kicker">
           <Layers size={14} />
           <span>MICRO-MODULE ARCHITECTURE DIRECTORY</span>
         </div>
-        <h1 style={{ fontSize: '40px', fontWeight: 900, letterSpacing: '-1px', color: '#0f172a', lineHeight: 1.15, marginBottom: '16px' }}>
+        <h1>
           Enterprise Capabilities &<br />
-          <span style={{ background: 'linear-gradient(135deg, #d97706, #0284c7, #4f46e5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          <span>
             High-Value Business Modules.
           </span>
         </h1>
-        <p style={{ fontSize: '16px', color: '#64748b', maxWidth: '720px', margin: '0 auto', lineHeight: 1.6 }}>
+        <p>
           Explore our suite of interconnected tools designed for enterprise automation, field workforce visibility, GST financial governance, and AI-powered sales execution.
         </p>
       </section>
 
       {/* Filter Tabs & Search Bar */}
-      <section style={{ maxWidth: '1200px', margin: '0 auto 40px', padding: '0 24px' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px', background: '#ffffff', padding: '16px 20px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 15px -2px rgba(0,0,0,0.03)' }}>
+      <section className="itlc-modules-filter-section">
+        <div className="itlc-modules-filter-panel">
           
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          <div className="itlc-modules-tabs">
             {[
               { key: 'all', label: 'All Modules' },
               { key: 'crm', label: 'Sales CRM (Coming Soon)' },
@@ -344,38 +263,20 @@ export const ModulesPage: React.FC<ModulesPageProps> = ({
               <button 
                 key={tab.key}
                 onClick={() => setSelectedCategory(tab.key as any)}
-                style={{
-                  padding: '7px 16px',
-                  borderRadius: '10px',
-                  fontSize: '12px',
-                  fontWeight: selectedCategory === tab.key ? 700 : 600,
-                  background: selectedCategory === tab.key ? '#0f172a' : '#f1f5f9',
-                  color: selectedCategory === tab.key ? '#ffffff' : '#475569',
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease'
-                }}
+                className={selectedCategory === tab.key ? 'active' : ''}
               >
                 {tab.label}
               </button>
             ))}
           </div>
 
-          <div style={{ position: 'relative', minWidth: '260px' }}>
-            <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+          <div className="itlc-modules-search">
+            <Search size={21} />
             <input 
               type="text"
               placeholder="Search module name or feature..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px 8px 34px',
-                borderRadius: '10px',
-                border: '1px solid #cbd5e1',
-                fontSize: '12px',
-                outline: 'none'
-              }}
             />
           </div>
 
@@ -383,87 +284,41 @@ export const ModulesPage: React.FC<ModulesPageProps> = ({
       </section>
 
       {/* Modules Cards Grid */}
-      <section style={{ maxWidth: '1200px', margin: '0 auto 80px', padding: '0 24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '24px' }}>
-          {filteredModules.map((mod) => {
+      <section className="itlc-module-card-section">
+        <div className="itlc-module-glass-grid">
+          {filteredModules.map((mod, index) => {
             const IconComp = mod.icon;
             return (
-              <div 
-                key={mod.id} 
-                style={{ 
-                  background: '#ffffff', 
-                  borderRadius: '18px', 
-                  border: '1px solid #e2e8f0', 
-                  padding: '24px', 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  justifyContent: 'space-between',
-                  boxShadow: '0 6px 18px -4px rgba(0,0,0,0.03)',
-                  transition: 'transform 0.15s ease, box-shadow 0.15s ease'
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                    <div style={{ width: '42px', height: '42px', borderRadius: '11px', background: mod.bgColor, display: 'flex', alignItems: 'center', justifyContent: 'center', color: mod.color }}>
-                      <IconComp size={22} />
-                    </div>
-                    <span style={{ fontSize: '10px', fontWeight: 700, padding: '3px 8px', borderRadius: '12px', background: mod.bgColor, color: mod.color, border: `1px solid ${mod.color}30` }}>
-                      {mod.badge}
-                    </span>
-                  </div>
-
-                  <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '6px' }}>
-                    {mod.title}
-                  </h3>
-                  <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.5, marginBottom: '20px' }}>
-                    {mod.description}
-                  </p>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
-                    {mod.features.map((feat, fIdx) => (
-                      <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#334155' }}>
-                        <CheckCircle2 size={14} style={{ color: mod.color, flexShrink: 0 }} />
-                        <span>{feat}</span>
-                      </div>
-                    ))}
+              <article className="itlc-module-glass-card" key={mod.id}>
+                <div className="itlc-module-card-top">
+                  <div className="itlc-module-icon-tile" style={{ ['--module-accent' as any]: mod.color }}>
+                    <IconComp size={52} />
                   </div>
                 </div>
 
-                <button 
-                  onClick={() => {
-                    if (mod.category === 'crm') onExploreCrm();
-                    else if (mod.category === 'hrms') onExploreHrms();
-                    else if (mod.category === 'governance') onExploreSuperAdmin();
-                    else onGetStarted();
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '9px',
-                    borderRadius: '10px',
-                    background: '#f8fafc',
-                    color: '#0f172a',
-                    border: '1px solid #e2e8f0',
-                    fontWeight: 700,
-                    fontSize: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = mod.color; e.currentTarget.style.color = '#ffffff'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.color = '#0f172a'; }}
-                >
-                  <span>{mod.category === 'crm' ? 'Coming Soon ⏳' : 'Explore Module'}</span>
-                  {mod.category !== 'crm' && <ArrowRight size={13} />}
-                </button>
-              </div>
+                <h3>{mod.title}</h3>
+                <p>{mod.description}</p>
+
+                <div className="itlc-module-chip-row">
+                  <span><Users size={19} /> {mod.category.toUpperCase()}</span>
+                  <span><Briefcase size={19} /> {mod.badge}</span>
+                </div>
+
+                <div className="itlc-module-feature-pills" aria-label={`${mod.title} features`}>
+                  {mod.features.slice(0, 3).map((feature) => (
+                    <span key={feature}>
+                      <CheckCircle2 size={15} />
+                      {feature}
+                    </span>
+                  ))}
+                </div>
+              </article>
             );
           })}
         </div>
       </section>
 
+      <LandingFooter onNavigate={(p) => p === 'home' ? onBackToHome() : onNavigateTo(p)} />
     </div>
   );
 };

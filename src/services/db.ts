@@ -45,45 +45,8 @@ export interface DBExpenseClaim {
   status: 'Pending' | 'Approved' | 'Rejected';
 }
 
-// Initial Real Employees for single company itlc
-const INITIAL_EMPLOYEES: DBEmployee[] = [
-  { 
-    id: 'EMP_MGR_ITLC', 
-    name: 'manager', 
-    email: 'manager@gmail.com', 
-    role: 'Manager', 
-    department: 'Engineering', 
-    status: 'Active', 
-    phone: '+91 98765 01928', 
-    salary: '₹75,000', 
-    avatar: 'https://images.unsplash.com/photo-1500000320135?w=150&auto=format&fit=crop&q=80', 
-    documents: [],
-    dob: '1990-01-01',
-    gender: 'Male',
-    address: 'Lucknow, Uttar Pradesh',
-    joiningDate: '2026-09-13',
-    reportingManager: 'itlc',
-    employmentType: 'Full-Time Permanent'
-  },
-  { 
-    id: 'EMP_STAFF_ITLC', 
-    name: 'emp', 
-    email: 'emp@gmail.com', 
-    role: 'Employee', 
-    department: 'Engineering', 
-    status: 'Active', 
-    phone: '+91 98765 03482', 
-    salary: '₹50,000', 
-    avatar: 'https://images.unsplash.com/photo-1500000464347?w=150&auto=format&fit=crop&q=80', 
-    documents: [],
-    dob: '1995-05-15',
-    gender: 'Male',
-    address: 'Lucknow, Uttar Pradesh',
-    joiningDate: '2026-09-13',
-    reportingManager: 'manager',
-    employmentType: 'Full-Time Permanent'
-  }
-];
+// Initial Employees
+const INITIAL_EMPLOYEES: DBEmployee[] = [];
 
 const INITIAL_LEAVE_REQUESTS: DBLeaveRequest[] = [];
 
@@ -97,8 +60,8 @@ export const initDB = () => {
     const raw = localStorage.getItem('hrms_employees');
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.some(e => e && (e.email === 'sarah.j@company.com' || e.email === 'diana.p@company.com' || e.name === 'Sarah Jenkins'))) {
-        localStorage.setItem('hrms_employees', JSON.stringify(INITIAL_EMPLOYEES));
+      if (Array.isArray(parsed) && parsed.some(e => e && (e.email === 'manager@gmail.com' || e.email === 'emp@gmail.com' || e.email === 'sarah.j@company.com' || e.email === 'diana.p@company.com' || e.name === 'Sarah Jenkins'))) {
+        localStorage.setItem('hrms_employees', JSON.stringify([]));
       }
     }
   } catch {}

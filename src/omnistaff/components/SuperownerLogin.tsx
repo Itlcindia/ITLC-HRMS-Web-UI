@@ -249,7 +249,7 @@ export default function SuperownerLogin({ onSuccessLogin }: { onSuccessLogin: ()
                 onClick={async () => {
                   setIsLoading(true);
                   try {
-                    const res = await api.login({ email: 'superowner@itlc.com', password: 'admin' });
+                    const res = await api.login({ email: 'priyanshupushkar263@gmail.com', password: 'Priyanshu8090' });
                     if (res) onSuccessLogin();
                   } catch (e) {
                     onSuccessLogin();

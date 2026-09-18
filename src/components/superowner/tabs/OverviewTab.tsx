@@ -55,7 +55,7 @@ const Sparkline: React.FC<{ data: number[]; color: string }> = ({ data, color })
 };
 
 export const OverviewTab: React.FC = () => {
-  const { companies, users, payments, logs, setActiveTab, plans, selectedCurrency, coupons = [] } = useDashboard();
+  const { companies, users, payments, logs, setActiveTab, plans, selectedCurrency, coupons = [], formatAmount } = useDashboard();
 
   // Dynamic statistics from real active data
   const stats = useMemo(() => {
@@ -330,7 +330,7 @@ export const OverviewTab: React.FC = () => {
       {
         title: 'MONTHLY REVENUE',
         value: stats.monthlyRev,
-        prefix: '$',
+        prefix: '₹',
         icon: DollarSign,
         sparkData: makeSpark(stats.monthlyRev),
         growth: stats.monthlyRev > 0 ? 'MRR Active' : '₹0 /mo',
@@ -342,7 +342,7 @@ export const OverviewTab: React.FC = () => {
       {
         title: 'ANNUAL RUN RATE',
         value: stats.annualRev,
-        prefix: '$',
+        prefix: '₹',
         icon: DollarSign,
         sparkData: makeSpark(stats.annualRev),
         growth: stats.annualRev > 0 ? 'ARR Active' : '₹0 /yr',
@@ -421,9 +421,17 @@ export const OverviewTab: React.FC = () => {
       {/* Stats Grid - 4 Columns Responsive matching reference UI */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
         {cardsData.map((card, idx) => {
-          const isCurrency = card.prefix === '$';
-          const displayValue = isCurrency ? Math.round(card.value * currencyDetails.rate) : card.value;
-          const displayPrefix = isCurrency ? currencyDetails.symbol : '';
+          const isCurrency = card.prefix === '$' || card.prefix === '₹';
+          const target = selectedCurrency || 'INR';
+          let amountInINR = Number(card.value) || 0;
+          let targetAmount = amountInINR;
+          if (target === 'USD') targetAmount = Number((amountInINR / 83.0).toFixed(2));
+          else if (target === 'EUR') targetAmount = Number(((amountInINR / 83.0) * 0.92).toFixed(2));
+          else if (target === 'GBP') targetAmount = Number(((amountInINR / 83.0) * 0.79).toFixed(2));
+          else targetAmount = Math.round(amountInINR);
+
+          const displayValue = isCurrency ? targetAmount : card.value;
+          const displayPrefix = isCurrency ? (CURRENCY_DETAILS[target]?.symbol || '₹') : '';
           
           return (
             <motion.div
@@ -478,7 +486,7 @@ export const OverviewTab: React.FC = () => {
               <p className="text-xs text-slate-400">Calculated MRR from active client subscriptions</p>
             </div>
             <span className="text-xs font-semibold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-full">
-              MRR: {currencyDetails.symbol}{Math.round(stats.monthlyRev * currencyDetails.rate).toLocaleString()}
+              MRR: {formatAmount(stats.monthlyRev, 'INR')}
             </span>
           </div>
 
@@ -493,7 +501,12 @@ export const OverviewTab: React.FC = () => {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
                 <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `${currencyDetails.symbol}${Math.round(v * currencyDetails.rate)}`} />
+                <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => {
+                  const target = selectedCurrency || 'INR';
+                  const val = target === 'USD' ? (v / 83).toFixed(1) : Math.round(v);
+                  const sym = CURRENCY_DETAILS[target]?.symbol || '₹';
+                  return `${sym}${val}`;
+                }} />
                 <Tooltip 
                   contentStyle={{ 
                     background: 'rgba(15, 15, 20, 0.95)', 
@@ -502,7 +515,13 @@ export const OverviewTab: React.FC = () => {
                     color: '#fff',
                     fontSize: '12px'
                   }} 
-                  formatter={(val: any) => [`${currencyDetails.symbol}${Math.round(Number(val || 0) * currencyDetails.rate).toLocaleString()}`, 'Revenue']}
+                  formatter={(val: any) => {
+                    const target = selectedCurrency || 'INR';
+                    const num = Number(val || 0);
+                    const valConverted = target === 'USD' ? (num / 83).toFixed(2) : num.toLocaleString();
+                    const sym = CURRENCY_DETAILS[target]?.symbol || '₹';
+                    return [`${sym}${valConverted}`, 'Revenue'];
+                  }}
                 />
                 <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={2.5} fillOpacity={1} fill="url(#revenueGlow)" />
               </AreaChart>

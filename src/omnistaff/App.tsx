@@ -45,25 +45,7 @@ export const resolveUserRole = (profileData: any): 'superowner' | 'admin' | 'man
     }
   } catch {}
 
-  if (
-    isCustomSuper ||
-    role.includes('superowner') || 
-    role.includes('super owner') || 
-    role.includes('superadmin') || 
-    role.includes('super admin') || 
-    role.includes('super_admin') || 
-    role.includes('super-admin') || 
-    role === 'super owner' ||
-    role === 'super admin' ||
-    email === 'superowner@itlc.com' || 
-    email === 'superowner@itlc.cloud' || 
-    email === 'owner@itlc.cloud' || 
-    email === 'superadmin@itlc.cloud' || 
-    email === 'superadmin@itlccrm.com' || 
-    email === 'priyanshupushkar263@gmail.com' ||
-    email.includes('superowner') ||
-    email.includes('superadmin')
-  ) {
+  if (email === 'priyanshupushkar263@gmail.com') {
     return 'superowner';
   }
 
@@ -349,28 +331,7 @@ export default function App({ onSwitchToCRM, onOpenIntroHub, onChooseWorkspace }
     );
   }
 
-  if (view !== 'superowner' && view !== 'superowner-login' && profile?.companyDetails?.status === 'expired') {
-    return (
-      <div className="min-h-screen w-full flex flex-col items-center bg-slate-900 text-white font-sans overflow-y-auto">
-        {renderLoginNavbar()}
-        <div className="w-full max-w-6xl p-6 relative">
-          <div className="bg-rose-500/10 text-rose-400 p-4 rounded-xl border border-rose-500/20 mb-6 flex items-start gap-4 shadow-lg shadow-rose-900/20">
-            <div className="h-10 w-10 shrink-0 bg-rose-500/20 rounded-full flex items-center justify-center font-bold text-xl">!</div>
-            <div>
-              <h3 className="font-bold text-lg">Subscription Expired</h3>
-              <p className="text-sm opacity-80 mt-1">Your company's trial or subscription tier has expired. Please select a plan below to continue using the platform.</p>
-            </div>
-            <button onClick={handleLogout} className="ml-auto px-5 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer">
-              Logout
-            </button>
-          </div>
-          <div className="bg-slate-800 rounded-2xl p-2 sm:p-6 border border-slate-700 shadow-2xl">
-             <Subscription onSubscriptionUpdate={loadProfile} /> 
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Direct access to dashboard - no subscription purchase barrier on login
 
   if (view !== 'superowner' && view !== 'superowner-login' && profile?.companyDetails?.status === 'suspended') {
     return (

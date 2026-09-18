@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -32,9 +33,10 @@ const initialMessages = [];
 
 import { api } from '../../services/api';
 import { applyThemeColor } from '../../utils/theme';
+import { downloadPaymentSlip } from '../../utils/PaymentSlip';
 
 export default function App({ onLogout, loggedInEmail }) {
-  const [activeTab, setActiveTab] = useState('attendance');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [collapsed, setCollapsed] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
@@ -43,6 +45,7 @@ export default function App({ onLogout, loggedInEmail }) {
   const [isMobile, setIsMobile] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [featureFlags, setFeatureFlags] = useState({});
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   const handleMarkNotificationRead = (id) => {
     const readIds = JSON.parse(localStorage.getItem("hrms_admin_read_notification_ids") || "[]");
@@ -73,13 +76,25 @@ export default function App({ onLogout, loggedInEmail }) {
   }, []);
 
   useEffect(() => {
-    if (isMobile && !['attendance', 'settings', 'payroll', 'attendance-dashboard', 'attendance-logs', 'attendance-grid', 'attendance-my', 'attendance-shift', 'attendance-reports'].includes(activeTab) && !activeTab.startsWith('payroll-')) {
-      setActiveTab('attendance-dashboard');
+    if (isMobile && !['dashboard', 'attendance', 'settings', 'payroll', 'attendance-dashboard', 'attendance-logs', 'attendance-grid', 'attendance-my', 'attendance-shift', 'attendance-reports'].includes(activeTab) && !activeTab.startsWith('payroll-')) {
+      setActiveTab('dashboard');
     }
   }, [isMobile, activeTab]);
   const [company, setCompany] = useState(null);
   const [plans, setPlans] = useState([]);
-  const [selectedCurrency, setSelectedCurrency] = useState('USD');
+  const [selectedCurrency, setSelectedCurrency] = useState(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return localStorage.getItem('hrms_billing_currency') || 'INR';
+    }
+    return 'INR';
+  });
+
+  const handleCurrencyChange = (curr) => {
+    setSelectedCurrency(curr);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem('hrms_billing_currency', curr);
+    }
+  };
   const [checkoutPlan, setCheckoutPlan] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [employees, setEmployees] = useState([]);
@@ -124,14 +139,21 @@ export default function App({ onLogout, loggedInEmail }) {
       try {
         const prof = await api.getProfile();
         const comp = await api.getAdminCompany();
-        setCompany(comp);
-        if (comp && (comp.subscriptionPlanId === 'unselected' || comp.subscriptionPlanId === 'none')) {
-          try {
-            const fetchedPlans = await api.getAdminPlans();
-            setPlans(fetchedPlans || []);
-          } catch (err) {
-            console.error("Failed to load active subscription plans:", err);
+        const normalizedComp = comp ? {
+          ...comp,
+          subscriptionStatus: comp.subscriptionStatus || comp.status || 'active',
+          subscriptionPlanId: comp.subscriptionPlanId || comp.planId || comp.plan || 'demo',
+          planId: comp.subscriptionPlanId || comp.planId || comp.plan || 'demo',
+          plan: comp.subscriptionPlanId || comp.planId || comp.plan || 'demo'
+        } : comp;
+        setCompany(normalizedComp);
+        try {
+          const fetchedPlans = await api.getPlans().catch(() => api.getAdminPlans());
+          if (fetchedPlans && fetchedPlans.length > 0) {
+            setPlans(fetchedPlans);
           }
+        } catch (err) {
+          console.error("Failed to load active subscription plans:", err);
         }
         setProfile({
           name: prof.name,
@@ -287,6 +309,7 @@ export default function App({ onLogout, loggedInEmail }) {
       loadAdminData();
     };
 
+    window.addEventListener('subscription_plans_updated', handleSync);
     window.addEventListener('company_updated', handleSync);
     window.addEventListener('subscription_updated', handleSync);
     window.addEventListener('multi_tenant_updated', handleSync);
@@ -302,6 +325,7 @@ export default function App({ onLogout, loggedInEmail }) {
     const interval = setInterval(loadAdminData, 10000);
     return () => {
       clearInterval(interval);
+      window.removeEventListener('subscription_plans_updated', handleSync);
       window.removeEventListener('company_updated', handleSync);
       window.removeEventListener('subscription_updated', handleSync);
       window.removeEventListener('multi_tenant_updated', handleSync);
@@ -379,10 +403,93 @@ export default function App({ onLogout, loggedInEmail }) {
     onLogout && onLogout();
   };
 
+  const isSubscriptionActive = Boolean(
+    company &&
+    (company.subscriptionStatus === 'active' || company.status === 'active') &&
+    (company.subscriptionPlanId || company.planId || company.plan) &&
+    (company.subscriptionPlanId !== 'none' && company.planId !== 'none' && company.plan !== 'none') &&
+    (company.subscriptionPlanId !== 'unselected' && company.planId !== 'unselected')
+  );
+
   const renderActiveView = () => {
+    if (!isSubscriptionActive && activeTab !== 'dashboard' && activeTab !== 'subscription') {
+      return (
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '65vh',
+          textAlign: 'center',
+          padding: '40px 20px',
+          background: darkMode ? '#0f172a' : '#ffffff',
+          borderRadius: '24px',
+          border: '1px solid ' + (darkMode ? '#1e293b' : '#e2e8f0'),
+          boxShadow: '0 10px 30px rgba(0,0,0,0.04)'
+        }}>
+          <div style={{
+            width: 72,
+            height: 72,
+            borderRadius: '20px',
+            background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(245, 158, 11, 0.1) 100%)',
+            border: '1px solid rgba(239, 68, 68, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '2rem',
+            marginBottom: 20
+          }}>
+            🔒
+          </div>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, margin: '0 0 8px 0', color: darkMode ? '#f8fafc' : '#0f172a' }}>
+            Feature Locked Under Free Preview
+          </h2>
+          <p style={{ fontSize: '0.95rem', color: darkMode ? '#94a3b8' : '#64748b', maxWidth: 520, lineHeight: 1.6, margin: '0 0 28px 0' }}>
+            This module is locked because your workspace does not have an active subscription. Please buy a subscription plan created by the Super Owner to unlock workforce management, attendance, payroll, leaves, and settings.
+          </p>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+            <button
+              onClick={() => setShowSubscriptionModal(true)}
+              style={{
+                padding: '12px 28px',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                color: '#ffffff',
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 4px 15px rgba(79, 70, 229, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8
+              }}
+            >
+              <span>⚡ Buy Subscription Now</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              style={{
+                padding: '12px 20px',
+                borderRadius: '12px',
+                background: darkMode ? '#1e293b' : '#f1f5f9',
+                color: darkMode ? '#e2e8f0' : '#475569',
+                fontWeight: 600,
+                fontSize: '0.95rem',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              Return to Dashboard
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardOverview employeesList={employees} notifications={notifications} setActiveTab={setActiveTab} currency={profile.currency} />;
+        return <DashboardOverview employeesList={employees} notifications={notifications} setActiveTab={setActiveTab} currency={profile.currency} isSubscriptionActive={isSubscriptionActive} onOpenSubscriptionModal={() => setShowSubscriptionModal(true)} />;
       case 'people':
       case 'people-dashboard':
       case 'directory':
@@ -466,7 +573,7 @@ export default function App({ onLogout, loggedInEmail }) {
       case 'ai-assistant':
         return <AiFeatures setActiveTab={setActiveTab} employees={employees} />;
       default:
-        return <DashboardOverview employeesList={employees} notifications={notifications} setActiveTab={setActiveTab} currency={profile.currency} />;
+        return <DashboardOverview employeesList={employees} notifications={notifications} setActiveTab={setActiveTab} currency={profile.currency} isSubscriptionActive={isSubscriptionActive} onOpenSubscriptionModal={() => setShowSubscriptionModal(true)} />;
     }
   };
 
@@ -514,26 +621,6 @@ export default function App({ onLogout, loggedInEmail }) {
     }
   };
 
-  const handleSelectPlan = async (planId) => {
-    const plan = plans.find(p => p.id === planId);
-    if (!plan) return;
-
-    if (plan.price === 0) {
-      try {
-        const result = await api.chooseSubscriptionPlan(planId, selectedCurrency);
-        if (result.success) {
-          alert(`Congratulations! You have successfully subscribed to the ${plan.name}.`);
-          window.location.reload();
-        }
-      } catch (err) {
-        alert("Failed to activate plan: " + err.message);
-      }
-    } else {
-      setCheckoutPlan(plan);
-      setShowPaymentModal(true);
-    }
-  };
-
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
       if (window.Razorpay) {
@@ -548,259 +635,206 @@ export default function App({ onLogout, loggedInEmail }) {
     });
   };
 
-  const handleInitiatePayment = async (gateway) => {
-    if (!checkoutPlan) return;
-    const price = selectedCurrency === 'INR' ? checkoutPlan.price * 83 : checkoutPlan.price;
+  const handleBuyPlan = async (plan) => {
+    if (!plan) return;
+    const rawPrice = Number(plan.priceMonthly !== undefined ? plan.priceMonthly : (plan.price || 0));
+    const price = selectedCurrency === 'INR' 
+      ? rawPrice
+      : Math.max(1, Math.round(rawPrice / 83));
 
-    try {
-      if (gateway === 'mock') {
-        const result = await api.chooseSubscriptionPlan(checkoutPlan.id, selectedCurrency);
-        if (result.success) {
-          alert(`Congratulations! You have successfully subscribed to the ${checkoutPlan.name} (Trial Mode).`);
-          window.location.reload();
-        }
-      } 
-      else if (gateway === 'stripe') {
-        const result = await api.createStripeSession({
-          planId: checkoutPlan.id,
-          planName: checkoutPlan.name,
-          amount: Math.round(price),
+    if (price === 0 || plan.id === 'free_trial' || plan.id === 'trial') {
+      try {
+        const compId = company?.id || company?.tenantId || profile?.companyId;
+        const subRes = await api.subscribeCompany({
+          companyId: compId,
+          planId: plan.id,
+          transactionId: `trial_${Date.now()}`,
+          paymentGateway: 'free_trial',
+          amount: 0,
           currency: selectedCurrency
         });
-        if (result.success && result.url) {
-          window.location.href = result.url;
-        } else {
-          alert("Stripe Checkout failed to load.");
+        await api.chooseSubscriptionPlan(plan.id, selectedCurrency).catch(() => {});
+        const seatCount = Number(plan.seatLimit || plan.employeeLimit || 50);
+        const storageCount = Number(plan.storageLimitGb || plan.storageLimit || 50);
+        const updatedComp = {
+          ...(company || {}),
+          ...(subRes?.tenant || {}),
+          status: 'active',
+          subscriptionStatus: 'active',
+          subscriptionPlanId: plan.id,
+          plan: plan.id,
+          planId: plan.id,
+          seatLimit: seatCount,
+          maxEmployees: seatCount,
+          storageLimitGb: storageCount,
+          storageLimit: storageCount
+        };
+        setCompany(updatedComp);
+        if (updatedComp.id) {
+          localStorage.setItem(`hrms_company_${updatedComp.id}`, JSON.stringify(updatedComp));
         }
-      } 
-      else if (gateway === 'razorpay') {
-        const loaded = await loadRazorpayScript();
-        if (!loaded) {
-          alert("Failed to load Razorpay Payment Gateway script.");
-          return;
-        }
+        localStorage.setItem('itlc_active_tenant', JSON.stringify(updatedComp));
+        setShowSubscriptionModal(false);
+        alert(`🎉 Congratulations! Your plan "${plan.name}" is now active. All HRMS modules are unlocked!`);
+        window.dispatchEvent(new Event('subscription_updated'));
+        window.dispatchEvent(new Event('company_updated'));
+      } catch (err) {
+        alert("Failed to activate plan: " + err.message);
+      }
+      return;
+    }
 
-        const order = await api.createRazorpayOrder({
-          amount: Math.round(price),
+    try {
+      const loaded = await loadRazorpayScript();
+      if (!loaded) {
+        alert("Failed to load Razorpay Payment Gateway script. Please check your internet connection.");
+        return;
+      }
+
+      let activeKey = 'rzp_live_Tb2olLw1YkeJRm';
+      try {
+        const s = localStorage.getItem('hrms_global_settings');
+        if (s) {
+          const parsed = JSON.parse(s);
+          if (parsed.razorpayKeyId && parsed.razorpayKeyId.trim()) activeKey = parsed.razorpayKeyId.trim();
+        }
+      } catch {}
+
+      let orderId = undefined;
+      try {
+        const orderRes = await api.createRazorpayOrder({
+          amount: Math.max(1, price),
           currency: selectedCurrency === 'INR' ? 'INR' : 'USD'
         });
-
-        if (order.success) {
-          // Dynamic Key from SuperOwner settings, razorpay_config or fallback
-          let activeKey = order.key || '';
-          try {
-            const s = localStorage.getItem('hrms_global_settings');
-            if (s) {
-              const parsed = JSON.parse(s);
-              if (parsed.razorpayKeyId && parsed.razorpayKeyId.trim()) {
-                activeKey = parsed.razorpayKeyId.trim();
-              }
-            }
-          } catch {}
-          if (!activeKey) {
-            try {
-              const c = localStorage.getItem('razorpay_config');
-              if (c) {
-                const parsed = JSON.parse(c);
-                if (parsed.keyId && parsed.keyId.trim()) {
-                  activeKey = parsed.keyId.trim();
-                }
-              }
-            } catch {}
+        if (orderRes && orderRes.success) {
+          if (orderRes.key) activeKey = orderRes.key;
+          if (orderRes.orderId && !orderRes.orderId.includes('mock') && !orderRes.orderId.includes('order_local_')) {
+            orderId = orderRes.orderId;
           }
-          if (!activeKey) {
-            activeKey = 'rzp_live_Tb2olLw1YkeJRm';
-          }
-
-          const options = {
-            key: activeKey,
-            amount: order.amount,
-            currency: order.currency || (selectedCurrency === 'INR' ? 'INR' : 'USD'),
-            name: "ITLC HRMS Workspace",
-            description: `Subscription for ${checkoutPlan.name}`,
-            order_id: (order.orderId && !order.orderId.includes('mock') && !order.orderId.includes('order_local_')) ? order.orderId : undefined,
-            handler: async function (response) {
-              try {
-                const verify = await api.verifyPayment({
-                  gateway: 'razorpay',
-                  planId: checkoutPlan.id,
-                  paymentId: response.razorpay_payment_id,
-                  orderId: response.razorpay_order_id,
-                  signature: response.razorpay_signature,
-                  amount: price,
-                  currency: selectedCurrency
-                });
-                if (verify.success) {
-                  alert(`Payment verified successfully! Welcome to ITLC HRMS.`);
-                  window.location.reload();
-                }
-              } catch (err) {
-                alert("Payment verification failed: " + err.message);
-              }
-            },
-            prefill: {
-              name: profile.name,
-              email: profile.email || ''
-            },
-            theme: {
-              color: "#4F46E5"
-            }
-          };
-          const rzp = new window.Razorpay(options);
-          rzp.open();
         }
+      } catch (e) {
+        console.warn("Could not create server order, proceeding with client checkout", e);
       }
+
+      const options = {
+        key: activeKey,
+        amount: Math.max(1, price) * 100,
+        currency: selectedCurrency === 'INR' ? 'INR' : 'USD',
+        name: profile.companyName || "ITLC HRMS Workspace",
+        description: `Subscription: ${plan.name}`,
+        order_id: orderId,
+        handler: async function (response) {
+          try {
+            const compId = company?.id || company?.tenantId || profile?.companyId;
+            const subRes = await api.subscribeCompany({
+              companyId: compId,
+              planId: plan.id,
+              transactionId: response.razorpay_payment_id,
+              paymentGateway: 'razorpay',
+              amount: price,
+              currency: selectedCurrency
+            });
+
+            await api.verifyPayment({
+              gateway: 'razorpay',
+              planId: plan.id,
+              paymentId: response.razorpay_payment_id,
+              orderId: response.razorpay_order_id,
+              signature: response.razorpay_signature,
+              amount: price,
+              currency: selectedCurrency
+            }).catch(() => {});
+
+            const seatCount = Number(plan.seatLimit || plan.employeeLimit || 50);
+            const storageCount = Number(plan.storageLimitGb || plan.storageLimit || 50);
+            const updatedComp = {
+              ...(company || {}),
+              ...(subRes?.tenant || {}),
+              status: 'active',
+              subscriptionStatus: 'active',
+              subscriptionPlanId: plan.id,
+              plan: plan.id,
+              planId: plan.id,
+              seatLimit: seatCount,
+              maxEmployees: seatCount,
+              storageLimitGb: storageCount,
+              storageLimit: storageCount
+            };
+
+            setCompany(updatedComp);
+
+            if (updatedComp.id) {
+              localStorage.setItem(`hrms_company_${updatedComp.id}`, JSON.stringify(updatedComp));
+            }
+            localStorage.setItem('itlc_active_tenant', JSON.stringify(updatedComp));
+
+            try {
+              const curProf = JSON.parse(localStorage.getItem('hrms_user_profile') || '{}');
+              curProf.subscriptionStatus = 'active';
+              curProf.subscriptionPlanId = plan.id;
+              if (curProf.companyDetails) {
+                curProf.companyDetails.subscriptionStatus = 'active';
+                curProf.companyDetails.subscriptionPlanId = plan.id;
+                curProf.companyDetails.seatLimit = seatCount;
+                curProf.companyDetails.storageLimitGb = storageCount;
+              }
+              localStorage.setItem('hrms_user_profile', JSON.stringify(curProf));
+            } catch {}
+
+            setShowSubscriptionModal(false);
+
+            // Download Payment Slip immediately
+            const paymentSlipData = {
+              id: response.razorpay_payment_id || `PAY-${Date.now()}`,
+              invoiceNumber: subRes?.payment?.invoiceNumber || `INV-${Date.now().toString().slice(-6)}`,
+              date: new Date().toISOString(),
+              amount: price,
+              currency: selectedCurrency,
+              status: 'successful',
+              planId: plan.id,
+              planName: plan.name,
+              gateway: 'Razorpay',
+              companyName: profile.companyName || updatedComp.name || updatedComp.companyName || "Company Workspace"
+            };
+            const companySlipDetails = {
+              name: profile.companyName || updatedComp.name || updatedComp.companyName || "Company Workspace",
+              email: loggedInEmail || profile.email || updatedComp.email || updatedComp.adminEmail || "",
+              address: updatedComp.address || "",
+              city: updatedComp.city || "",
+              state: updatedComp.state || ""
+            };
+
+            try {
+              downloadPaymentSlip(paymentSlipData, companySlipDetails);
+            } catch (slipErr) {
+              console.warn("Could not auto-trigger payment slip download:", slipErr);
+            }
+
+            alert(`🎉 Payment verified successfully! Welcome to ITLC HRMS. All modules are now unlocked, and your payment slip has been downloaded.`);
+            window.dispatchEvent(new Event('subscription_updated'));
+            window.dispatchEvent(new Event('company_updated'));
+          } catch (err) {
+            alert("Subscription activation error: " + err.message);
+          }
+        },
+        prefill: {
+          name: profile.name,
+          email: loggedInEmail || profile.email || ''
+        },
+        theme: {
+          color: "#4F46E5"
+        }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (resp) {
+        alert("Payment Failed: " + (resp.error?.description || "Transaction was cancelled or declined"));
+      });
+      rzp.open();
     } catch (err) {
       alert("Payment processing error: " + err.message);
     }
   };
-
-  if (company && (company.subscriptionPlanId === 'unselected' || company.subscriptionPlanId === 'none')) {
-    return (
-      <div className={`flex flex-col items-center justify-center min-h-screen w-screen p-6 ${darkMode ? 'dark bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`} style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ maxWidth: '1100px', width: '100%', display: 'flex', flexDirection: 'column', gap: 32, textAlign: 'center' }}>
-          <div>
-            <h2 style={{ fontSize: '2.5rem', fontWeight: 800, background: 'linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #ec4899 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>
-              Welcome to ITLC HRMS Workspace!
-            </h2>
-            <p style={{ marginTop: 12, fontSize: '1.1rem', opacity: 0.8 }}>
-              Select your currency and select a subscription plan to unlock your workspace.
-            </p>
-          </div>
-
-          {/* Currency Selector Row */}
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontSize: '0.95rem', fontWeight: 700 }}>Choose System Currency:</span>
-            <select 
-              value={selectedCurrency} 
-              onChange={(e) => setSelectedCurrency(e.target.value)}
-              className="premium-input"
-              style={{ width: '150px', padding: '8px 14px', borderRadius: '8px' }}
-            >
-              <option value="USD">USD ($)</option>
-              <option value="INR">INR (₹)</option>
-              <option value="EUR">EUR (€)</option>
-              <option value="GBP">GBP (£)</option>
-            </select>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24, marginTop: 16 }}>
-            {plans.map((p) => {
-              let features = {};
-              if (typeof p.features === 'string') {
-                try { features = JSON.parse(p.features); } catch (e) {}
-              } else if (p.features && typeof p.features === 'object') {
-                features = p.features;
-              }
-              const isPopular = p.id === 'starter' || p.id === 'professional';
-              return (
-                <div key={p.id} className="premium-card" style={{ display: 'flex', flexDirection: 'column', padding: 32, textAlign: 'center', border: isPopular ? '2px solid var(--color-primary)' : '1px solid var(--color-border)', borderRadius: 24, background: 'var(--glass-bg)', backdropFilter: 'blur(20px)', position: 'relative' }}>
-                  {isPopular && (
-                    <div style={{ position: 'absolute', top: 0, right: 0, background: 'var(--color-primary)', color: 'white', fontSize: '0.7rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', padding: '6px 16px', borderRadius: '0 20px 0 12px' }}>
-                      Popular
-                    </div>
-                  )}
-                  <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }}>{p.name}</h3>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--color-text-tertiary)', marginTop: 8 }}>
-                    {p.id === 'free_trial' ? 'Explore basic workflows' : p.id === 'starter' ? 'Best for growing startups' : 'Complete power & enterprise tools'}
-                  </p>
-                  <div style={{ marginTop: 16, display: 'flex', alignItems: 'baseline', justifyContent: 'center' }}>
-                    <span style={{ fontSize: '3rem', fontWeight: 800 }}>
-                      {selectedCurrency === 'INR' ? '₹' : selectedCurrency === 'EUR' ? '€' : selectedCurrency === 'GBP' ? '£' : '$'}
-                      {Math.round(selectedCurrency === 'INR' ? p.price * 83 : p.price).toLocaleString()}
-                    </span>
-                    <span style={{ fontSize: '1.2rem', color: 'var(--color-text-tertiary)', marginLeft: 4 }}>/mo</span>
-                  </div>
-                  <ul style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 12, fontSize: '0.85rem', textAlign: 'left', listStyle: 'none', padding: 0 }}>
-                    <li>🟢 Limit: {p.employeeLimit >= 99999 ? 'Unlimited' : `${p.employeeLimit} Employees`}</li>
-                    <li>🟢 Storage: {p.storageLimit} GB Limit</li>
-                    <li>{features.payroll ? '🟢 Monthly Payroll & Payslips' : '❌ Payroll & Payslips'}</li>
-                    <li>{features.attendance ? '🟢 Check-in Logs & Corrections' : '❌ Check-in Logs'}</li>
-                    <li>{features.recruitment ? '🟢 Recruitment & Interview Wizard' : '❌ Recruitment Panel'}</li>
-                    <li>{features.faceRecognition || features.gpsAttendance ? '🟢 Face ID & GPS Coordinates Check' : '❌ Geofenced/Biometric Attendance'}</li>
-                  </ul>
-                  <button 
-                    onClick={() => handleSelectPlan(p.id)}
-                    className={isPopular ? 'premium-btn premium-btn-primary' : 'premium-btn premium-btn-secondary'}
-                    style={{ marginTop: 'auto', paddingTop: 12, paddingBottom: 12, borderRadius: 12, fontWeight: 700 }}
-                  >
-                    Select {p.name}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-
-          <div style={{ marginTop: 16 }}>
-            <button 
-              onClick={handleLogout}
-              style={{ border: 'none', background: 'transparent', color: '#ef4444', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
-            >
-              Sign out and return to Login
-            </button>
-          </div>
-
-          {/* Payment Selection Modal */}
-          <AnimatePresence>
-            {showPaymentModal && checkoutPlan && (
-              <>
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 0.5 }}
-                  exit={{ opacity: 0 }}
-                  onClick={() => setShowPaymentModal(false)}
-                  style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 1000 }}
-                />
-                <motion.div
-                  initial={{ scale: 0.95, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.95, opacity: 0 }}
-                  className="premium-card text-center"
-                  style={{
-                    position: 'fixed',
-                    left: '50%',
-                    top: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    zIndex: 1001,
-                    padding: 32,
-                    width: '90%',
-                    maxWidth: 420,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 20
-                  }}
-                >
-                  <div>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>Complete Your Subscription</h3>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--color-text-tertiary)', marginTop: 8 }}>
-                      You are subscribing to the <strong>{checkoutPlan.name}</strong> for {selectedCurrency === 'INR' ? '₹' : selectedCurrency === 'EUR' ? '€' : selectedCurrency === 'GBP' ? '£' : '$'}{Math.round(selectedCurrency === 'INR' ? checkoutPlan.price * 83 : checkoutPlan.price)}/mo.
-                    </p>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <button 
-                      onClick={() => handleInitiatePayment('razorpay')}
-                      className="premium-btn premium-btn-primary"
-                      style={{ padding: 14, borderRadius: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#4f46e5', color: 'white' }}
-                    >
-                      ⚡ Pay with Razorpay (UPI, Cards, Netbanking)
-                    </button>
-                  </div>
-
-                  <button 
-                    onClick={() => setShowPaymentModal(false)}
-                    style={{ border: 'none', background: 'transparent', color: 'var(--color-text-tertiary)', fontSize: '0.8rem', cursor: 'pointer' }}
-                  >
-                    Cancel
-                  </button>
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className={`flex flex-col h-screen w-screen overflow-hidden ${darkMode ? 'dark bg-slate-950' : 'bg-slate-50'}`}>
@@ -846,6 +880,8 @@ export default function App({ onLogout, loggedInEmail }) {
         companyLogo={profile.companyLogo}
         featureFlags={featureFlags}
         subscriptionPlanId={company?.subscriptionPlanId}
+        isSubscriptionActive={isSubscriptionActive}
+        onOpenSubscriptionModal={() => setShowSubscriptionModal(true)}
       />
 
       {/* Main Panel Wrapper */}
@@ -972,6 +1008,251 @@ export default function App({ onLogout, loggedInEmail }) {
           </>
         )}
       </AnimatePresence>
+
+      {/* Super Owner Live Subscription Plans Modal */}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {showSubscriptionModal && (
+            <div
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 99999,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '20px',
+                overflowY: 'auto'
+              }}
+            >
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.65 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowSubscriptionModal(false)}
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  background: '#000000',
+                  backdropFilter: 'blur(6px)',
+                  zIndex: 1
+                }}
+              />
+              <motion.div
+                initial={{ scale: 0.94, opacity: 0, y: 15 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.94, opacity: 0, y: 15 }}
+                transition={{ type: 'spring', damping: 26, stiffness: 320 }}
+                style={{
+                  position: 'relative',
+                  zIndex: 2,
+                  width: '100%',
+                  maxWidth: '1050px',
+                  maxHeight: '90vh',
+                  overflowY: 'auto',
+                  background: darkMode ? '#0f172a' : '#ffffff',
+                  color: darkMode ? '#f8fafc' : '#0f172a',
+                  borderRadius: '24px',
+                  padding: '32px',
+                  boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.4)',
+                  border: '1px solid ' + (darkMode ? '#1e293b' : '#e2e8f0'),
+                  margin: 'auto'
+                }}
+              >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: '1.8rem' }}>💎</span>
+                    <h2 style={{ fontSize: '1.8rem', fontWeight: 800, margin: 0, background: 'linear-gradient(90deg, #4f46e5 0%, #a855f7 50%, #ec4899 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                      Choose Your Subscription Plan
+                    </h2>
+                  </div>
+                  <p style={{ margin: '6px 0 0 0', fontSize: '0.9rem', color: darkMode ? '#94a3b8' : '#64748b' }}>
+                    Select a plan configured for your organization to activate full access to all HRMS modules.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowSubscriptionModal(false)}
+                  style={{
+                    background: darkMode ? '#1e293b' : '#f1f5f9',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: 36,
+                    height: 36,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: darkMode ? '#e2e8f0' : '#475569',
+                    fontSize: '1.1rem',
+                    fontWeight: 700
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Currency Selector */}
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10, marginBottom: 28 }}>
+                <span style={{ fontSize: '0.9rem', fontWeight: 700, color: darkMode ? '#cbd5e1' : '#475569' }}>Billing Currency:</span>
+                <select
+                  value={selectedCurrency}
+                  onChange={(e) => handleCurrencyChange(e.target.value)}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '10px',
+                    border: '1px solid ' + (darkMode ? '#334155' : '#cbd5e1'),
+                    background: darkMode ? '#1e293b' : '#ffffff',
+                    color: darkMode ? '#ffffff' : '#0f172a',
+                    fontWeight: 700,
+                    outline: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="INR">INR (₹)</option>
+                  <option value="USD">USD ($)</option>
+                  <option value="EUR">EUR (€)</option>
+                  <option value="GBP">GBP (£)</option>
+                </select>
+              </div>
+
+              {/* Plans Grid */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: 20
+              }}>
+                {plans.map((p) => {
+                  const isPopular = p.badge?.includes('POPULAR') || p.id === 'starter';
+                  const rawPrice = Number(p.priceMonthly !== undefined ? p.priceMonthly : (p.price || 0));
+                  const price = selectedCurrency === 'INR'
+                    ? rawPrice
+                    : Math.max(1, Math.round(rawPrice / 83));
+                  const curSymbol = selectedCurrency === 'INR' ? '₹' : selectedCurrency === 'EUR' ? '€' : selectedCurrency === 'GBP' ? '£' : '$';
+                  const seatLimit = p.seatLimit || p.employeeLimit || 50;
+                  const storageGb = p.storageLimitGb || p.storageLimit || 50;
+
+                  return (
+                    <div
+                      key={p.id}
+                      style={{
+                        borderRadius: '20px',
+                        padding: '28px 24px',
+                        background: darkMode ? '#1e293b' : '#ffffff',
+                        border: isPopular ? '2px solid #6366f1' : '1px solid ' + (darkMode ? '#334155' : '#e2e8f0'),
+                        boxShadow: isPopular ? '0 10px 30px rgba(99, 102, 241, 0.15)' : '0 4px 15px rgba(0,0,0,0.03)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        position: 'relative'
+                      }}
+                    >
+                      {isPopular && (
+                        <div style={{
+                          position: 'absolute',
+                          top: -12,
+                          right: 20,
+                          background: 'linear-gradient(90deg, #6366f1 0%, #a855f7 100%)',
+                          color: '#ffffff',
+                          fontSize: '0.7rem',
+                          fontWeight: 800,
+                          padding: '4px 12px',
+                          borderRadius: '20px',
+                          letterSpacing: '0.5px'
+                        }}>
+                          POPULAR
+                        </div>
+                      )}
+
+                      <h3 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '0 0 6px 0' }}>{p.name}</h3>
+                      <p style={{ fontSize: '0.8rem', color: darkMode ? '#94a3b8' : '#64748b', margin: '0 0 16px 0', minHeight: 36 }}>
+                        {p.tagline || 'Essential workspace management toolkit.'}
+                      </p>
+
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 20 }}>
+                        <span style={{ fontSize: '2.5rem', fontWeight: 900 }}>{curSymbol}{price.toLocaleString()}</span>
+                        <span style={{ fontSize: '0.9rem', color: darkMode ? '#94a3b8' : '#64748b' }}>/month</span>
+                      </div>
+
+                      {/* Quotas */}
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 8,
+                        padding: '12px 14px',
+                        borderRadius: '12px',
+                        background: darkMode ? '#0f172a' : '#f8fafc',
+                        border: '1px solid ' + (darkMode ? '#334155' : '#e2e8f0'),
+                        marginBottom: 20,
+                        fontSize: '0.82rem',
+                        fontWeight: 600
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span>👥</span>
+                          <span><strong>{seatLimit >= 99999 ? 'Unlimited' : seatLimit}</strong> Staff Seats Limit</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span>💾</span>
+                          <span><strong>{storageGb} GB</strong> Storage Limit</span>
+                        </div>
+                      </div>
+
+                      {/* Features */}
+                      <ul style={{
+                        listStyle: 'none',
+                        padding: 0,
+                        margin: '0 0 24px 0',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 10,
+                        fontSize: '0.82rem',
+                        color: darkMode ? '#cbd5e1' : '#475569',
+                        flex: 1
+                      }}>
+                        {(p.highlightFeatures || [
+                          'Complete Employee Directory',
+                          'Biometric & GPS Attendance',
+                          'Leave Tracking & Policies',
+                          'Automated 1-Click Payroll',
+                          'Role-Based Permissions'
+                        ]).slice(0, 5).map((feat, fIdx) => (
+                          <li key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ color: '#10b981', fontWeight: 800 }}>✓</span>
+                            <span>{feat}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      <button
+                        onClick={() => handleBuyPlan(p)}
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          borderRadius: '12px',
+                          background: isPopular ? 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)' : (darkMode ? '#334155' : '#0f172a'),
+                          color: '#ffffff',
+                          fontWeight: 700,
+                          fontSize: '0.9rem',
+                          border: 'none',
+                          cursor: 'pointer',
+                          transition: 'transform 0.15s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 6
+                        }}
+                      >
+                        <span>⚡ Buy Now</span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>,
+      document.body
+    )}
       </div>
     </div>
   );

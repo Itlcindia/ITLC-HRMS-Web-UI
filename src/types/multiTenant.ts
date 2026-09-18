@@ -81,59 +81,20 @@ export interface SubscriptionPlanDef {
 export const defaultSubscriptionPlans: SubscriptionPlanDef[] = [
   {
     id: 'demo',
-    name: 'DEMO',
-    tagline: 'Ideal for small businesses and agile teams.',
-    priceMonthly: 199,
-    priceAnnual: 1990,
+    name: 'demo',
+    tagline: 'Enterprise plan',
+    priceMonthly: 1,
+    priceAnnual: 10,
     defaultSuites: ['crm', 'hrms'],
-    seatLimit: 10,
-    storageLimitGb: 10,
-    badge: 'STARTER TIER',
+    seatLimit: 5,
+    storageLimitGb: 2,
+    badge: 'ACTIVE PLAN',
     showOnLandingPage: true,
     highlightFeatures: [
-      'Up to 10 Employee Seats',
+      'Up to 5 Employee Seats',
       'Real-time Biometric Radar & GPS',
       'Automated GST Tax Invoicing',
-      'Deals & Kanban Sales Pipeline',
-      'Automated Salary Slip Generation'
-    ]
-  },
-  {
-    id: 'starter',
-    name: 'STARTER',
-    tagline: 'Ideal for small businesses and agile teams.',
-    priceMonthly: 499,
-    priceAnnual: 4990,
-    defaultSuites: ['crm', 'hrms'],
-    seatLimit: 50,
-    storageLimitGb: 50,
-    badge: 'MOST POPULAR',
-    showOnLandingPage: true,
-    highlightFeatures: [
-      'Up to 50 Employee Seats',
-      'Real-time Biometric Radar & GPS',
-      'Automated GST Tax Invoicing',
-      'Multi-Branch Attendance Geofencing',
       'Automated 1-Click Payroll Engine'
-    ]
-  },
-  {
-    id: 'premium',
-    name: 'Premium',
-    tagline: 'Ideal for small businesses and agile teams.',
-    priceMonthly: 999,
-    priceAnnual: 9990,
-    defaultSuites: ['crm', 'hrms'],
-    seatLimit: 100,
-    storageLimitGb: 100,
-    badge: 'PREMIUM & SCALING',
-    showOnLandingPage: true,
-    highlightFeatures: [
-      'Up to 100 Employee Seats',
-      'Real-time Biometric Radar & GPS',
-      'Automated GST Tax Invoicing',
-      'Super Owner Multi-Tenant Governance',
-      'Dedicated 24/7 Priority Support'
     ]
   }
 ];
@@ -150,8 +111,26 @@ export interface SuperOwnerTaxConfig {
   enableStateSplit: boolean; // split into CGST (rate/2) + SGST (rate/2)
   panNumber?: string;
   registeredLegalName?: string;
+  platformBrand?: string;
+  registeredAddress?: string;
+  supportEmail?: string;
+  supportPhone?: string;
+  signatoryName?: string;
+  signatoryTitle?: string;
   taxInvoicePrefix?: string;
+  placeOfSupply?: string;
   invoiceTerms?: string;
+  signatureImageUrl?: string; // Base64 data URL or HTTP image URL of signature / stamp
+  // Visibility toggles (what to show/hide on slip)
+  showGstin?: boolean;
+  showPan?: boolean;
+  showSac?: boolean;
+  showAddress?: boolean;
+  showQrCode?: boolean;
+  showSignatory?: boolean;
+  showAmountInWords?: boolean;
+  showTerms?: boolean;
+  showFeatures?: boolean;
 }
 
 export const defaultSuperOwnerTaxConfig: SuperOwnerTaxConfig = {
@@ -163,9 +142,26 @@ export const defaultSuperOwnerTaxConfig: SuperOwnerTaxConfig = {
   isTaxInclusive: false,
   enableStateSplit: true,
   panNumber: 'AABCI8899K',
-  registeredLegalName: 'ITLC INDIA PRIVATE LIMITED',
-  taxInvoicePrefix: 'INV-ITLC',
-  invoiceTerms: 'Tax invoice issued under Section 31 of CGST Act, 2017. Computer generated receipt.'
+  registeredLegalName: 'ITLC Software Technologies Pvt Ltd',
+  platformBrand: 'ITLC ENTERPRISE HRMS',
+  registeredAddress: 'Cyber City Phase 2, DLF Tech Park, Gurugram, India',
+  supportEmail: 'billing@itlc.in',
+  supportPhone: '+91 83688 17744',
+  signatoryName: 'Priya Sharma',
+  signatoryTitle: 'Authorized Signatory',
+  taxInvoicePrefix: 'INV-2026',
+  placeOfSupply: '07 - Delhi / NCR (Intra-State)',
+  invoiceTerms: 'This invoice is issued electronically under Rule 48 of the CGST Rules, 2017. Digital verification requires no physical stamp. Valid for Input Tax Credit (ITC).',
+  signatureImageUrl: '',
+  showGstin: true,
+  showPan: true,
+  showSac: true,
+  showAddress: true,
+  showQrCode: true,
+  showSignatory: true,
+  showAmountInWords: true,
+  showTerms: true,
+  showFeatures: true
 };
 
 export const getLiveSuperOwnerTaxConfig = (): SuperOwnerTaxConfig => {
@@ -812,18 +808,20 @@ export const syncCompanySubscriptionChange = (updateData: {
       const deletedIdsRaw = localStorage.getItem('hrms_deleted_company_ids');
       if (deletedIdsRaw) {
         const parsed = JSON.parse(deletedIdsRaw);
-        if (Array.isArray(parsed)) deletedIds = new Set(parsed);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((x: any) => {
+            if (typeof x === 'string') deletedIds.add(x.toLowerCase().trim());
+            else if (x?.id) deletedIds.add(String(x.id).toLowerCase().trim());
+            if (x?.email) deletedIds.add(String(x.email).toLowerCase().trim());
+          });
+        }
       }
     } catch {}
 
-    if (updateData.companyId && (updateData.status === 'active' || updateData.status === 'trial')) {
-      deletedIds.delete(updateData.companyId);
-      try {
-        const filtered = Array.from(deletedIds);
-        localStorage.setItem('hrms_deleted_company_ids', JSON.stringify(filtered));
-      } catch {}
-    } else if (updateData.companyId && deletedIds.has(updateData.companyId)) {
-      return; // Do not resurrect or update deleted company
+    const targetCompId = String(updateData.companyId || '').toLowerCase().trim();
+    const targetUpdateEmail = String(updateData.email || '').toLowerCase().trim();
+    if ((targetCompId && deletedIds.has(targetCompId)) || (targetUpdateEmail && deletedIds.has(targetUpdateEmail))) {
+      return; // STRICT SECURITY: Do not resurrect or update deleted company
     }
 
     // 1. Update in itlc_multi_tenants
@@ -1132,9 +1130,15 @@ export const syncCompanySubscriptionChange = (updateData: {
     // 6.1 Sync directly with backend server database (/api/tenants)
     try {
       if (typeof window !== 'undefined' && window.fetch) {
-        const backendApiBase = (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
-          ? '/api'
-          : ((typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env.VITE_API_URL) || 'https://yellowgreen-eagle-410958.hostingersite.com/api');
+        const getSafeBase = () => {
+          if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+            return '/api';
+          }
+          let url = (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env.VITE_API_URL) || 'https://lemonchiffon-mink-999414.hostingersite.com/api';
+          url = url.trim().replace(/\/+$/, '');
+          return url.endsWith('/api') ? url : `${url}/api`;
+        };
+        const backendApiBase = getSafeBase();
         fetch(`${backendApiBase}/tenants`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1176,41 +1180,4 @@ export const syncCompanySubscriptionChange = (updateData: {
   }
 };
 
-export const initialSeedTenants: TenantCompany[] = [
-  {
-    id: 'comp_1789319012221',
-    name: 'itlc',
-    domain: 'itlc',
-    gstin: '',
-    industry: 'Information Technology',
-    adminName: 'itlc',
-    adminEmail: 'itlc@gmail.com',
-    adminPhone: '1234567890',
-    planId: 'growth',
-    suites: ['crm', 'hrms'],
-    status: 'trial',
-    onboardDate: '2026-09-13',
-    renewalDate: '2026-10-13',
-    billingCycle: 'monthly',
-    mrrAmount: 1999,
-    userSeatLimit: 2,
-    activeUsersCount: 1,
-    features: {
-      crmKanban: true,
-      crmGstInvoicing: true,
-      crmGpsFieldTracking: true,
-      crmAiCopilot: true,
-      crmWhatsAppBroadcast: true,
-      crmReports: true,
-      hrmsBiometricRadar: true,
-      hrmsGeofenceAttendance: true,
-      hrmsPayrollPayslips: true,
-      hrmsShiftLeaveManagement: true,
-      hrmsAssetTraining: true,
-      apiWebhooks: true,
-      customDomain: true,
-      prioritySlaSupport: true
-    },
-    notes: 'Single active company workspace.'
-  }
-];
+export const initialSeedTenants: TenantCompany[] = [];

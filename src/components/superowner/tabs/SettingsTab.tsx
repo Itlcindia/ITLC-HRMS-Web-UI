@@ -3,10 +3,13 @@ import {
   Settings, Mail, DollarSign, Palette, ShieldAlert, 
   Database, CheckCircle, RefreshCw, Play, Download,
   Eye, EyeOff, ShieldCheck, Sparkles, Check, Server,
-  Globe, Clock, Moon, Sun, Lock, Receipt, Zap
+  Globe, Clock, Moon, Sun, Lock, Receipt, Zap,
+  Printer, RotateCcw, FileText, Sliders, Building2,
+  Phone, MapPin, QrCode, Upload, Trash2, Image as ImageIcon
 } from 'lucide-react';
 import { useDashboard } from '../context/DashboardContext';
 import { api } from '../../../services/api';
+import { downloadPaymentSlip } from '../../../utils/PaymentSlip';
 import {
   getLiveSuperOwnerTaxConfig,
   saveLiveSuperOwnerTaxConfig,
@@ -49,6 +52,74 @@ export const SettingsTab: React.FC = () => {
     saveLiveSuperOwnerTaxConfig(taxConfig);
     setIsFormDirty(false);
     addToast('All Platform & Super Owner GST Tax configurations saved successfully!', 'success');
+  };
+
+  const handlePreviewSlip = () => {
+    saveLiveSuperOwnerTaxConfig(taxConfig);
+    downloadPaymentSlip({
+      companyName: 'Apex Technologies India Pvt Ltd',
+      companyId: 'COMP_8849',
+      adminName: 'Rajesh Sharma',
+      adminEmail: 'admin@apextech.in',
+      adminPhone: '+91 98765 43210',
+      planName: 'Enterprise Growth Annual',
+      amount: 49999,
+      currency: 'INR',
+      billingCycle: 'Annually',
+      paymentMethod: 'Razorpay UPI / NetBanking',
+      orderId: 'ORD_PREVIEW_8849',
+      paymentId: 'pay_live_test_7719',
+      companyAddress: 'Suite 402, Cyber Tower B, Sector 29, Gurugram, Haryana 122002',
+      companyGstin: '06AAACA1234F1Z8',
+      features: [
+        'Unlimited Employees & Multi-shift Biometric Integration',
+        'Automated Indian Statutory Payroll, PF & ESIC Processing',
+        'Geo-fenced Attendance & Approval Workflow Engine',
+        '24/7 Priority SLA & Dedicated Enterprise Support'
+      ]
+    }, {
+      name: 'Apex Technologies India Pvt Ltd',
+      id: 'COMP_8849',
+      adminName: 'Rajesh Sharma',
+      email: 'admin@apextech.in',
+      phone: '+91 98765 43210',
+      gstin: '06AAACA1234F1Z8'
+    });
+    addToast('Sample Payment Slip / Tax Invoice preview generated!', 'info');
+  };
+
+  const handleResetTaxConfig = () => {
+    const fresh = resetSuperOwnerTaxConfig();
+    setTaxConfig(fresh);
+    setIsFormDirty(true);
+    addToast('Payment slip & tax configurations reset to defaults!', 'info');
+  };
+
+  const handleSignatureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      addToast('Image file size must be less than 2MB', 'error');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (uploadEvent) => {
+      const base64Data = uploadEvent.target?.result as string;
+      if (base64Data) {
+        setTaxConfig(prev => ({ ...prev, signatureImageUrl: base64Data }));
+        setIsFormDirty(true);
+        addToast('Authorized signature / stamp image uploaded successfully!', 'success');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveSignature = () => {
+    setTaxConfig(prev => ({ ...prev, signatureImageUrl: '' }));
+    setIsFormDirty(true);
+    addToast('Signature image removed. Reverted to standard font signature.', 'info');
   };
 
   const handleTestSmtp = () => {
@@ -460,20 +531,46 @@ export const SettingsTab: React.FC = () => {
           </div>
         </div>
 
-        {/* SECTION 4: Super Owner GST & Tax Governance Engine */}
-        <div className="glass-card p-5 sm:p-6 md:p-7 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-lg space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200/60 dark:border-white/10">
+        {/* SECTION 4: Super Owner Payment Slip & Tax Invoice Customizer */}
+        <div className="glass-card p-5 sm:p-6 md:p-7 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-lg space-y-6">
+          {/* Header */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-200/60 dark:border-white/10">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shrink-0">
-                <Receipt className="h-4.5 w-4.5" />
+              <div className="h-10 w-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shrink-0 shadow-xs">
+                <Receipt className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-bold text-white leading-tight">Super Owner GST & Tax Policy Engine</h3>
-                <p className="text-[11px] text-slate-400">Super Owner sovereign control over whether GST is charged, slab percentage, billing mode, and platform GSTIN</p>
+                <h3 className="text-base sm:text-lg font-bold text-white leading-tight">
+                  Payment Slip & Tax Invoice Customizer
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  Super Owner sovereign control over manual slip details, GST rate slabs, and element visibility toggles.
+                </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            {/* Action Buttons */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleResetTaxConfig}
+                className="h-9 px-3 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 flex items-center gap-1.5 transition"
+                title="Reset to default settings"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                Reset Defaults
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePreviewSlip}
+                className="h-9 px-4 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/30 flex items-center gap-2 transition"
+                title="Open sample payment slip with your live settings"
+              >
+                <Printer className="h-4 w-4" />
+                Test / Preview Slip
+              </button>
+
               <button
                 type="button"
                 onClick={() => {
@@ -488,23 +585,53 @@ export const SettingsTab: React.FC = () => {
                 }`}
               >
                 <span className={`h-2 w-2 rounded-full ${taxConfig.enabled ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'}`}></span>
-                {taxConfig.enabled ? `TAX CHARGING ACTIVE (${taxConfig.ratePercent}% GST)` : 'TAX DISABLED (0% EXEMPT)'}
+                {taxConfig.enabled ? `TAX ACTIVE (${taxConfig.ratePercent}% GST)` : 'TAX DISABLED (0% EXEMPT)'}
               </button>
             </div>
           </div>
 
-          {/* Slabs Preset Selector */}
-          <div className="space-y-2">
-            <label className="block text-xs font-semibold text-slate-300">
-              Select GST Rate Slab Preset (%)
-            </label>
+          {/* GST Slabs Preset Selector & Calculation Options */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-semibold text-slate-300">
+                GST Rate Slab Presets (%)
+              </label>
+              <div className="flex items-center gap-4 text-xs">
+                <label className="flex items-center gap-2 cursor-pointer text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={!!taxConfig.isTaxInclusive}
+                    onChange={(e) => {
+                      setTaxConfig(prev => ({ ...prev, isTaxInclusive: e.target.checked }));
+                      setIsFormDirty(true);
+                    }}
+                    className="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span>Tax Inclusive Pricing</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={!!taxConfig.enableStateSplit}
+                    onChange={(e) => {
+                      setTaxConfig(prev => ({ ...prev, enableStateSplit: e.target.checked }));
+                      setIsFormDirty(true);
+                    }}
+                    className="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span>Intra-State CGST + SGST Split</span>
+                </label>
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
               {[
-                { slab: 0, label: '0% Exempt', desc: 'SEZ / Export' },
-                { slab: 5, label: '5% Reduced', desc: 'Concessional' },
-                { slab: 12, label: '12% Standard', desc: 'Low Bracket' },
-                { slab: 18, label: '18% SaaS Default', desc: 'IT Standard' },
-                { slab: 28, label: '28% Luxury', desc: 'Highest' }
+                { slab: 0, label: '0% Exempt', desc: 'SEZ / Export / Zero' },
+                { slab: 5, label: '5% Reduced', desc: 'Concessional Bracket' },
+                { slab: 12, label: '12% Standard', desc: 'Lower IT Standard' },
+                { slab: 18, label: '18% SaaS Default', desc: 'Indian IT & Cloud Standard' },
+                { slab: 28, label: '28% Luxury', desc: 'Highest Tax Tier' }
               ].map(item => {
                 const isSelected = taxConfig.enabled && Number(taxConfig.ratePercent) === item.slab;
                 return (
@@ -529,105 +656,447 @@ export const SettingsTab: React.FC = () => {
             </div>
           </div>
 
-          {/* Grid of Tax Inputs */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300">
-                Exact Tax Rate (%)
-              </label>
-              <input
-                type="number"
-                step="0.1"
-                min="0"
-                max="100"
-                value={taxConfig.ratePercent}
-                onChange={(e) => {
-                  setTaxConfig(prev => ({ ...prev, ratePercent: parseFloat(e.target.value) || 0 }));
-                  setIsFormDirty(true);
-                }}
-                disabled={!taxConfig.enabled}
-                className="glass-input h-11 w-full px-3.5 rounded-xl text-sm text-slate-100 font-bold focus:ring-2 focus:ring-indigo-500/30"
-              />
+          {/* PART 1: Manual Slip Content & Branding Details */}
+          <div className="space-y-3 pt-3 border-t border-slate-200/60 dark:border-white/10">
+            <div className="flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-indigo-400" />
+              <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                1. Manual Slip Content & Branding Details
+              </h4>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300">
-                Tax Name / Label
-              </label>
-              <input
-                type="text"
-                value={taxConfig.taxLabel}
-                onChange={(e) => {
-                  setTaxConfig(prev => ({ ...prev, taxLabel: e.target.value }));
-                  setIsFormDirty(true);
-                }}
-                placeholder="GST / IGST / VAT"
-                className="glass-input h-11 w-full px-3.5 rounded-xl text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500/30"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-300">
+                  Platform Brand / Slip Header
+                </label>
+                <input
+                  type="text"
+                  value={taxConfig.platformBrand || ''}
+                  onChange={(e) => {
+                    setTaxConfig(prev => ({ ...prev, platformBrand: e.target.value }));
+                    setIsFormDirty(true);
+                  }}
+                  placeholder="ITLC ENTERPRISE HRMS"
+                  className="glass-input h-11 w-full px-3.5 rounded-xl text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500/30 font-semibold"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-300">
+                  Registered Legal Entity Name
+                </label>
+                <input
+                  type="text"
+                  value={taxConfig.registeredLegalName || ''}
+                  onChange={(e) => {
+                    setTaxConfig(prev => ({ ...prev, registeredLegalName: e.target.value }));
+                    setIsFormDirty(true);
+                  }}
+                  placeholder="ITLC Software Technologies Pvt Ltd"
+                  className="glass-input h-11 w-full px-3.5 rounded-xl text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500/30 font-semibold"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-300">
+                  Tax Invoice Prefix
+                </label>
+                <input
+                  type="text"
+                  value={taxConfig.taxInvoicePrefix || ''}
+                  onChange={(e) => {
+                    setTaxConfig(prev => ({ ...prev, taxInvoicePrefix: e.target.value }));
+                    setIsFormDirty(true);
+                  }}
+                  placeholder="INV-2026"
+                  className="glass-input h-11 w-full px-3.5 rounded-xl text-sm font-mono text-slate-100 focus:ring-2 focus:ring-indigo-500/30"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-300">
+                  Super Owner Platform GSTIN
+                </label>
+                <input
+                  type="text"
+                  value={taxConfig.gstin || ''}
+                  onChange={(e) => {
+                    setTaxConfig(prev => ({ ...prev, gstin: e.target.value.toUpperCase() }));
+                    setIsFormDirty(true);
+                  }}
+                  placeholder="07AABCI8899K1Z4"
+                  className="glass-input h-11 w-full px-3.5 rounded-xl text-sm font-mono text-slate-100 focus:ring-2 focus:ring-indigo-500/30"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-300">
+                  Company PAN Number
+                </label>
+                <input
+                  type="text"
+                  value={taxConfig.panNumber || ''}
+                  onChange={(e) => {
+                    setTaxConfig(prev => ({ ...prev, panNumber: e.target.value.toUpperCase() }));
+                    setIsFormDirty(true);
+                  }}
+                  placeholder="AABCI8899K"
+                  className="glass-input h-11 w-full px-3.5 rounded-xl text-sm font-mono text-slate-100 focus:ring-2 focus:ring-indigo-500/30"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-300">
+                  HSN / SAC Code (Software)
+                </label>
+                <input
+                  type="text"
+                  value={taxConfig.hsnSacCode || ''}
+                  onChange={(e) => {
+                    setTaxConfig(prev => ({ ...prev, hsnSacCode: e.target.value }));
+                    setIsFormDirty(true);
+                  }}
+                  placeholder="998313 (Cloud IT & SaaS)"
+                  className="glass-input h-11 w-full px-3.5 rounded-xl text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500/30"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-300">
+                  Place of Supply (State / Jurisdiction)
+                </label>
+                <input
+                  type="text"
+                  value={taxConfig.placeOfSupply || ''}
+                  onChange={(e) => {
+                    setTaxConfig(prev => ({ ...prev, placeOfSupply: e.target.value }));
+                    setIsFormDirty(true);
+                  }}
+                  placeholder="07 - Delhi / NCR (Intra-State)"
+                  className="glass-input h-11 w-full px-3.5 rounded-xl text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500/30"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-300">
+                  Billing Support Email
+                </label>
+                <input
+                  type="email"
+                  value={taxConfig.supportEmail || ''}
+                  onChange={(e) => {
+                    setTaxConfig(prev => ({ ...prev, supportEmail: e.target.value }));
+                    setIsFormDirty(true);
+                  }}
+                  placeholder="billing@itlc.in"
+                  className="glass-input h-11 w-full px-3.5 rounded-xl text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500/30"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-300">
+                  Support Helpline Phone
+                </label>
+                <input
+                  type="text"
+                  value={taxConfig.supportPhone || ''}
+                  onChange={(e) => {
+                    setTaxConfig(prev => ({ ...prev, supportPhone: e.target.value }));
+                    setIsFormDirty(true);
+                  }}
+                  placeholder="+91 83688 17744"
+                  className="glass-input h-11 w-full px-3.5 rounded-xl text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500/30"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-300">
+                  Authorized Signatory Name
+                </label>
+                <input
+                  type="text"
+                  value={taxConfig.signatoryName || ''}
+                  onChange={(e) => {
+                    setTaxConfig(prev => ({ ...prev, signatoryName: e.target.value }));
+                    setIsFormDirty(true);
+                  }}
+                  placeholder="Priya Sharma"
+                  className="glass-input h-11 w-full px-3.5 rounded-xl text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500/30 font-semibold"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-300">
+                  Signatory Designation / Title
+                </label>
+                <input
+                  type="text"
+                  value={taxConfig.signatoryTitle || ''}
+                  onChange={(e) => {
+                    setTaxConfig(prev => ({ ...prev, signatoryTitle: e.target.value }));
+                    setIsFormDirty(true);
+                  }}
+                  placeholder="Authorized Signatory / Finance Head"
+                  className="glass-input h-11 w-full px-3.5 rounded-xl text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500/30"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-300">
+                  Exact GST Rate (%)
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="100"
+                  value={taxConfig.ratePercent}
+                  onChange={(e) => {
+                    setTaxConfig(prev => ({ ...prev, ratePercent: parseFloat(e.target.value) || 0 }));
+                    setIsFormDirty(true);
+                  }}
+                  disabled={!taxConfig.enabled}
+                  className="glass-input h-11 w-full px-3.5 rounded-xl text-sm text-slate-100 font-bold focus:ring-2 focus:ring-indigo-500/30"
+                />
+              </div>
+
+              {/* Signature / Official Stamp Image Upload & Live Slip Preview */}
+              <div className="sm:col-span-2 lg:col-span-3 p-4 sm:p-5 rounded-2xl bg-slate-900/80 border border-slate-700/80 shadow-inner space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-800">
+                  <div>
+                    <label className="text-xs font-bold text-slate-200 flex items-center gap-2">
+                      <ImageIcon className="h-4 w-4 text-indigo-400" />
+                      Authorized Signature & Official Stamp Image
+                    </label>
+                    <p className="text-[11px] text-slate-400">
+                      Upload transparent PNG/JPG signature image to be printed on payment receipts & tax invoice PDFs.
+                    </p>
+                  </div>
+                  {taxConfig.signatureImageUrl && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveSignature}
+                      className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 flex items-center gap-1.5 transition cursor-pointer self-start sm:self-auto"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Remove Signature
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <label className="h-10 px-4 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/30 flex items-center gap-2 cursor-pointer transition">
+                        <Upload className="h-4 w-4" />
+                        <span>Upload Signature File</span>
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                          onChange={handleSignatureUpload}
+                          className="hidden"
+                        />
+                      </label>
+                      <span className="text-[11px] text-slate-400">Max 2MB (PNG / JPG)</span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="text-[11px] text-slate-400">Or paste external image URL:</span>
+                      <input
+                        type="text"
+                        value={taxConfig.signatureImageUrl || ''}
+                        onChange={(e) => {
+                          setTaxConfig(prev => ({ ...prev, signatureImageUrl: e.target.value }));
+                          setIsFormDirty(true);
+                        }}
+                        placeholder="https://example.com/signature-stamp.png"
+                        className="glass-input h-10 w-full px-3.5 rounded-xl text-xs text-slate-100 font-mono focus:ring-2 focus:ring-indigo-500/30"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Visual Preview Box representing invoice signature line */}
+                  <div className="min-h-[110px] rounded-xl bg-white border border-slate-300 flex flex-col items-center justify-center p-3 relative overflow-hidden shadow-xs">
+                    <span className="absolute top-1.5 left-2.5 text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                      Live Slip Signature Appearance:
+                    </span>
+                    {taxConfig.signatureImageUrl ? (
+                      <div className="flex flex-col items-center justify-center mt-2">
+                        <img
+                          src={taxConfig.signatureImageUrl}
+                          alt="Signature Preview"
+                          className="max-h-14 max-w-[180px] object-contain"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                        <div className="text-[11px] font-bold text-slate-900 mt-1">
+                          {taxConfig.signatoryName || 'Authorized Signatory'}
+                        </div>
+                        <div className="text-[9px] text-slate-500">
+                          {taxConfig.signatoryTitle || 'Authorized Signatory'}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center mt-3 text-center">
+                        <div className="font-serif italic font-extrabold text-indigo-950 text-base border-b border-slate-300 px-4 pb-0.5">
+                          {taxConfig.signatoryName || 'Priya Sharma'}
+                        </div>
+                        <div className="text-[10px] font-bold text-slate-800 mt-1">
+                          {taxConfig.signatoryTitle || 'Authorized Signatory'}
+                        </div>
+                        <span className="text-[9px] text-amber-600 font-medium mt-0.5">
+                          (No custom image — Fallback stylized font will appear)
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-1.5 sm:col-span-2 lg:col-span-3">
+                <label className="block text-xs font-semibold text-slate-300">
+                  Registered Office Address (Printed on Slip Header)
+                </label>
+                <textarea
+                  rows={2}
+                  value={taxConfig.registeredAddress || ''}
+                  onChange={(e) => {
+                    setTaxConfig(prev => ({ ...prev, registeredAddress: e.target.value }));
+                    setIsFormDirty(true);
+                  }}
+                  placeholder="Cyber City Phase 2, DLF Tech Park, Gurugram, India"
+                  className="glass-input w-full p-3 rounded-xl text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500/30 resize-y"
+                />
+              </div>
+
+              <div className="space-y-1.5 sm:col-span-2 lg:col-span-3">
+                <label className="block text-xs font-semibold text-slate-300">
+                  Invoice Terms, Notes & Legal Disclaimer
+                </label>
+                <textarea
+                  rows={2}
+                  value={taxConfig.invoiceTerms || ''}
+                  onChange={(e) => {
+                    setTaxConfig(prev => ({ ...prev, invoiceTerms: e.target.value }));
+                    setIsFormDirty(true);
+                  }}
+                  placeholder="This invoice is issued electronically under Rule 48 of the CGST Rules, 2017. Digital verification requires no physical stamp. Valid for Input Tax Credit (ITC)."
+                  className="glass-input w-full p-3 rounded-xl text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500/30 resize-y"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* PART 2: Element Display Visibility Switches */}
+          <div className="space-y-3 pt-3 border-t border-slate-200/60 dark:border-white/10">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Sliders className="h-4 w-4 text-emerald-400" />
+                <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                  2. Slip Display Visibility Controls
+                </h4>
+              </div>
+              <span className="text-[11px] text-slate-400">
+                Click any card to show or hide that element from the generated payment receipt & PDF
+              </span>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300">
-                Super Owner Platform GSTIN
-              </label>
-              <input
-                type="text"
-                value={taxConfig.gstin}
-                onChange={(e) => {
-                  setTaxConfig(prev => ({ ...prev, gstin: e.target.value }));
-                  setIsFormDirty(true);
-                }}
-                placeholder="07AABCI8899K1Z4"
-                className="glass-input h-11 w-full px-3.5 rounded-xl text-sm font-mono text-slate-100 focus:ring-2 focus:ring-indigo-500/30"
-              />
-            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {[
+                {
+                  key: 'showGstin',
+                  label: 'Platform GSTIN',
+                  desc: 'Displays Super Owner GSTIN in invoice header',
+                  val: taxConfig.showGstin !== false
+                },
+                {
+                  key: 'showPan',
+                  label: 'Platform PAN Number',
+                  desc: 'Displays Company PAN in seller meta block',
+                  val: taxConfig.showPan !== false
+                },
+                {
+                  key: 'showSac',
+                  label: 'HSN / SAC Code',
+                  desc: 'Displays SAC code 998313 in items table & header',
+                  val: taxConfig.showSac !== false
+                },
+                {
+                  key: 'showAddress',
+                  label: 'Registered Office Address',
+                  desc: 'Displays physical office address under company brand',
+                  val: taxConfig.showAddress !== false
+                },
+                {
+                  key: 'showQrCode',
+                  label: 'Security QR Code',
+                  desc: 'Displays digital verification QR code at footer',
+                  val: taxConfig.showQrCode !== false
+                },
+                {
+                  key: 'showSignatory',
+                  label: 'Authorized Signatory Block',
+                  desc: 'Displays signature line, title, and signatory name',
+                  val: taxConfig.showSignatory !== false
+                },
+                {
+                  key: 'showAmountInWords',
+                  label: 'Amount in Words',
+                  desc: 'Displays Indian Rupees in words (e.g. INR Forty Nine Thousand...)',
+                  val: taxConfig.showAmountInWords !== false
+                },
+                {
+                  key: 'showTerms',
+                  label: 'Terms & Legal Disclaimer',
+                  desc: 'Displays CGST Rule 48 statutory notes at invoice footer',
+                  val: taxConfig.showTerms !== false
+                },
+                {
+                  key: 'showFeatures',
+                  label: 'Plan Features Breakdown',
+                  desc: 'Displays active seats and storage badges under plan title',
+                  val: taxConfig.showFeatures !== false
+                }
+              ].map((item) => {
+                return (
+                  <div
+                    key={item.key}
+                    onClick={() => {
+                      setTaxConfig(prev => ({ ...prev, [item.key]: !item.val }));
+                      setIsFormDirty(true);
+                    }}
+                    className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-start justify-between gap-3 ${
+                      item.val 
+                        ? 'bg-emerald-500/10 border-emerald-500/30 hover:bg-emerald-500/15' 
+                        : 'bg-slate-800/40 border-slate-700/50 hover:bg-slate-800/60 opacity-65'
+                    }`}
+                  >
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-bold ${item.val ? 'text-emerald-300' : 'text-slate-400'}`}>
+                          {item.label}
+                        </span>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${
+                          item.val ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-700 text-slate-400'
+                        }`}>
+                          {item.val ? 'Shown' : 'Hidden'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-tight">{item.desc}</p>
+                    </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300">
-                HSN / SAC Code (Software)
-              </label>
-              <input
-                type="text"
-                value={taxConfig.hsnSacCode}
-                onChange={(e) => {
-                  setTaxConfig(prev => ({ ...prev, hsnSacCode: e.target.value }));
-                  setIsFormDirty(true);
-                }}
-                placeholder="998313 (IT SaaS)"
-                className="glass-input h-11 w-full px-3.5 rounded-xl text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500/30"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300">
-                Registered Legal Entity Name
-              </label>
-              <input
-                type="text"
-                value={taxConfig.registeredLegalName || ''}
-                onChange={(e) => {
-                  setTaxConfig(prev => ({ ...prev, registeredLegalName: e.target.value }));
-                  setIsFormDirty(true);
-                }}
-                placeholder="ITLC INDIA PRIVATE LIMITED"
-                className="glass-input h-11 w-full px-3.5 rounded-xl text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500/30"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300">
-                Tax Invoice Prefix
-              </label>
-              <input
-                type="text"
-                value={taxConfig.taxInvoicePrefix || ''}
-                onChange={(e) => {
-                  setTaxConfig(prev => ({ ...prev, taxInvoicePrefix: e.target.value }));
-                  setIsFormDirty(true);
-                }}
-                placeholder="INV-ITLC"
-                className="glass-input h-11 w-full px-3.5 rounded-xl text-sm font-mono text-slate-100 focus:ring-2 focus:ring-indigo-500/30"
-              />
+                    <div className={`h-6 w-11 rounded-full transition-colors flex items-center p-0.5 shrink-0 ${
+                      item.val ? 'bg-emerald-500' : 'bg-slate-700'
+                    }`}>
+                      <div className={`h-5 w-5 rounded-full bg-white transition-transform ${
+                        item.val ? 'translate-x-5' : 'translate-x-0'
+                      }`} />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>5 Professional Payment Slip Designs Preview - ITLC HRMS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; padding: 0 !important; }
+      .print-shadow-none { box-shadow: none !important; border: 1px solid #ddd !important; }
+    }
+    .watermark {
+      background-image: radial-gradient(rgba(16, 185, 129, 0.06) 1px, transparent 0);
+      background-size: 24px 24px;
+    }
+    .bank-pattern {
+      background-image: repeating-linear-gradient(45deg, rgba(2, 132, 199, 0.03) 0, rgba(2, 132, 199, 0.03) 1px, transparent 0, transparent 10px);
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased p-3 md:p-8 min-h-screen">
+  
+  <!-- Control Bar (No Print) -->
+  <div class="no-print max-w-5xl mx-auto mb-6 bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-200">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 rounded-md bg-indigo-100 text-indigo-800 text-[11px] font-black uppercase tracking-wider">5 NEW DESIGNS</span>
+          <h1 class="text-lg font-bold text-slate-900">Payment Slip & Receipt Gallery</h1>
+        </div>
+        <p class="text-xs text-slate-500 mt-0.5">Apne pasand ka design select kijiye aur live amount switch karke dekhiye</p>
+      </div>
+
+      <!-- Amount Switcher & Print -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-xs font-bold text-slate-600 mr-1">Test Amount:</span>
+        <button onclick="setSample(1, 'Demo Trial Plan')" class="px-3 py-1.5 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 font-extrabold text-indigo-700 text-xs shadow-sm">
+          ₹1 (Demo)
+        </button>
+        <button onclick="setSample(499, 'Starter Growth Plan')" class="px-3 py-1.5 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 font-bold text-slate-700 text-xs">
+          ₹499 (Starter)
+        </button>
+        <button onclick="setSample(2499, 'Enterprise Pro Suite')" class="px-3 py-1.5 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 font-bold text-slate-700 text-xs">
+          ₹2,499 (Enterprise)
+        </button>
+
+        <button onclick="window.print()" class="ml-2 px-4 py-1.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition flex items-center gap-1.5 shadow-sm">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          Print / PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- Design Selector Tabs -->
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-4 pt-4 border-t border-slate-100">
+      <button id="tab-1" onclick="switchDesign(1)" class="p-2.5 rounded-xl border text-left text-xs font-bold transition bg-indigo-600 text-white border-indigo-600 shadow-sm">
+        <span class="block text-[10px] opacity-75 font-normal uppercase">Design 1</span>
+        🏛️ Corporate GST
+      </button>
+      <button id="tab-2" onclick="switchDesign(2)" class="p-2.5 rounded-xl border text-left text-xs font-bold transition bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100">
+        <span class="block text-[10px] text-slate-400 font-normal uppercase">Design 2</span>
+        ⚡ Modern SaaS
+      </button>
+      <button id="tab-3" onclick="switchDesign(3)" class="p-2.5 rounded-xl border text-left text-xs font-bold transition bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100">
+        <span class="block text-[10px] text-slate-400 font-normal uppercase">Design 3</span>
+        💎 Fintech Luxury
+      </button>
+      <button id="tab-4" onclick="switchDesign(4)" class="p-2.5 rounded-xl border text-left text-xs font-bold transition bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100">
+        <span class="block text-[10px] text-slate-400 font-normal uppercase">Design 4</span>
+        🏦 Banking Challan
+      </button>
+      <button id="tab-5" onclick="switchDesign(5)" class="p-2.5 rounded-xl border text-left text-xs font-bold transition bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 col-span-2 sm:col-span-1">
+        <span class="block text-[10px] text-slate-400 font-normal uppercase">Design 5</span>
+        🎫 Compact Voucher
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTAINER -->
+  <div class="max-w-5xl mx-auto">
+
+    <!-- ========================================================================= -->
+    <!-- DESIGN 1: EXECUTIVE CORPORATE GST TAX INVOICE -->
+    <!-- ========================================================================= -->
+    <div id="design-1-card" class="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 md:p-12 print-shadow-none relative">
+      <div class="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-6">
+        <div>
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-2xl shadow-md">IT</div>
+            <div>
+              <h1 class="text-2xl font-black text-slate-900 tracking-tight leading-tight">ITLC ENTERPRISE HRMS</h1>
+              <p class="text-[11px] text-slate-500 uppercase tracking-widest font-bold">Cloud SaaS & Workforce Operating Platform</p>
+            </div>
+          </div>
+          <div class="mt-4 text-xs text-slate-600 space-y-0.5">
+            <p><strong class="text-slate-800">Super Owner:</strong> ITLC Software Technologies Pvt Ltd</p>
+            <p><strong>GSTIN:</strong> 07AABCI8899K1Z4 • <strong>PAN:</strong> AABCI8899K</p>
+            <p><strong>HSN / SAC:</strong> 998313 (Cloud IT SaaS Hosting Services)</p>
+            <p>Cyber City Phase 2, DLF Tech Park, Gurugram, India</p>
+          </div>
+        </div>
+
+        <div class="text-right">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-full text-xs font-black uppercase tracking-wider mb-2">
+            ✓ 100% PAID & SETTLED
+          </span>
+          <h2 class="text-xl font-black text-slate-900 uppercase tracking-tight">ORIGINAL TAX INVOICE</h2>
+          <p class="text-xs text-slate-500 mt-1">Invoice No: <strong class="val-inv-no text-slate-900 font-mono">INV-2026-9812</strong></p>
+          <p class="text-xs text-slate-500">Date: <strong class="val-date text-slate-900">16 Sep 2026, 01:15 PM</strong></p>
+          <p class="text-xs text-slate-500">Place of Supply: <strong class="text-slate-900">07 - Delhi / NCR (Intra-State)</strong></p>
+        </div>
+      </div>
+
+      <!-- Bill To & Transaction Details -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 rounded-xl p-5 border border-slate-200 mb-6 text-xs">
+        <div>
+          <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">BILLED TO (CUSTOMER)</p>
+          <p class="text-sm font-bold text-slate-900 val-comp-name">TechNova Solutions Pvt Ltd</p>
+          <p class="text-slate-600 mt-0.5"><strong>Company ID:</strong> comp_876291</p>
+          <p class="text-slate-600"><strong>Admin:</strong> Priya Sharma (admin@technova.com)</p>
+          <p class="text-slate-600"><strong>GSTIN:</strong> 07AABCT1234F1Z8 (Verified)</p>
+        </div>
+        <div class="md:text-right">
+          <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">PAYMENT AUDIT</p>
+          <p class="text-slate-700"><strong>Gateway:</strong> <span class="capitalize font-semibold text-indigo-700">Razorpay Instant Settlement</span></p>
+          <p class="text-slate-700"><strong>Payment ID:</strong> <span class="font-mono text-slate-900">pay_Q8a92kLm01Z9x</span></p>
+          <p class="text-slate-700"><strong>Billing Cycle:</strong> <span class="font-semibold text-emerald-700">Monthly (30 Days Active)</span></p>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <table class="w-full text-left border-collapse mb-6 text-xs">
+        <thead>
+          <tr class="bg-slate-900 text-white">
+            <th class="py-3 px-4 rounded-l-lg font-bold">#</th>
+            <th class="py-3 px-4 font-bold">Service & Description</th>
+            <th class="py-3 px-4 font-bold">SAC</th>
+            <th class="py-3 px-4 font-bold text-center">Period</th>
+            <th class="py-3 px-4 font-bold text-right">Taxable Value</th>
+            <th class="py-3 px-4 rounded-r-lg font-bold text-right">Total Amount</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200">
+          <tr>
+            <td class="py-4 px-4 font-mono font-bold text-slate-400">01</td>
+            <td class="py-4 px-4">
+              <p class="font-bold text-slate-900 text-sm val-plan-title">Demo Trial Plan Subscription</p>
+              <p class="text-[11px] text-slate-500 mt-0.5">Full access to Payroll, Attendance, Multi-tenant CRM & Employee Portal</p>
+            </td>
+            <td class="py-4 px-4 font-mono text-slate-600">998313</td>
+            <td class="py-4 px-4 text-center font-medium text-slate-700">1 Month</td>
+            <td class="py-4 px-4 text-right font-mono font-semibold text-slate-800 val-amount">₹1.00</td>
+            <td class="py-4 px-4 text-right font-mono font-bold text-slate-900 val-amount">₹1.00</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Summary -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start mb-8">
+        <div class="text-xs space-y-2">
+          <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Amount in Words:</p>
+            <p class="font-bold text-slate-900 text-sm italic mt-0.5 val-in-words">One Indian Rupee Only</p>
+          </div>
+          <p class="text-[11px] text-slate-500">Electronically verified computer-generated invoice under CGST Act Rule 48.</p>
+        </div>
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 text-xs">
+          <div class="flex justify-between text-slate-600">
+            <span>Subtotal (Base Price):</span>
+            <span class="font-mono font-semibold val-amount">₹1.00</span>
+          </div>
+          <div class="flex justify-between text-slate-600">
+            <span>GST (0% Exempt / Input Credit Applicable):</span>
+            <span class="font-mono">₹0.00</span>
+          </div>
+          <div class="border-t-2 border-slate-900 pt-2.5 flex justify-between items-baseline">
+            <span class="text-sm font-black text-slate-900">TOTAL AMOUNT PAID</span>
+            <span class="text-2xl font-black text-indigo-700 font-mono val-amount">₹1.00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Sign -->
+      <div class="border-t border-slate-200 pt-6 flex justify-between items-end text-xs text-slate-600">
+        <div class="flex items-center gap-3">
+          <div class="w-14 h-14 bg-slate-900 text-white rounded-lg p-1 flex items-center justify-center font-mono text-[9px] text-center">
+            [QR CODE]
+          </div>
+          <div>
+            <p class="font-bold text-slate-900">Authenticated E-Invoice</p>
+            <p class="text-[10px] font-mono text-indigo-600">HASH: 981a2e-7492cf-b41982</p>
+          </div>
+        </div>
+        <div class="text-right">
+          <p class="font-serif italic font-bold text-indigo-900 text-sm border-b pb-1">Priya Sharma</p>
+          <p class="font-bold text-slate-900 mt-1">Authorized Signatory</p>
+          <p class="text-[10px] text-slate-500">ITLC Software Technologies Pvt Ltd</p>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ========================================================================= -->
+    <!-- DESIGN 2: MODERN SAAS DIGITAL PAYMENT RECEIPT -->
+    <!-- ========================================================================= -->
+    <div id="design-2-card" class="hidden bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden print-shadow-none">
+      <div class="bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-600 p-8 text-white relative">
+        <div class="flex justify-between items-start">
+          <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-bold mb-3">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              INSTANT PAYMENT RECEIPT
+            </div>
+            <h2 class="text-3xl font-black tracking-tight">Payment Succeeded</h2>
+            <p class="text-indigo-100 text-xs mt-1">Thank you for subscribing to ITLC Enterprise HRMS</p>
+          </div>
+          <div class="text-right bg-white/10 backdrop-blur-md p-3.5 rounded-2xl border border-white/20">
+            <p class="text-[10px] uppercase font-bold text-indigo-200 tracking-wider">Amount Paid</p>
+            <p class="text-3xl font-black font-mono mt-0.5 val-amount">₹1.00</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-8 space-y-6">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+          <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
+            <p class="text-slate-400 text-[10px] uppercase font-bold">RECEIPT NO</p>
+            <p class="font-mono font-bold text-slate-900 text-sm mt-1 val-inv-no">INV-2026-9812</p>
+          </div>
+          <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
+            <p class="text-slate-400 text-[10px] uppercase font-bold">DATE</p>
+            <p class="font-semibold text-slate-900 text-sm mt-1 val-date">16 Sep 2026</p>
+          </div>
+          <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
+            <p class="text-slate-400 text-[10px] uppercase font-bold">METHOD</p>
+            <p class="font-semibold text-indigo-600 text-sm mt-1">Razorpay / UPI</p>
+          </div>
+          <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
+            <p class="text-slate-400 text-[10px] uppercase font-bold">STATUS</p>
+            <p class="font-bold text-emerald-600 text-sm mt-1 flex items-center gap-1">✓ COMPLETED</p>
+          </div>
+        </div>
+
+        <div class="border border-slate-200 rounded-2xl p-6 bg-white space-y-4 text-xs">
+          <div class="flex justify-between items-center pb-4 border-b border-slate-100">
+            <div>
+              <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">SUBSCRIBER ACCOUNT</p>
+              <h3 class="text-base font-bold text-slate-900 mt-0.5 val-comp-name">TechNova Solutions Pvt Ltd</h3>
+            </div>
+            <span class="px-3 py-1 bg-emerald-50 text-emerald-700 font-bold rounded-xl text-xs border border-emerald-200">
+              Active Tenant
+            </span>
+          </div>
+
+          <div class="flex justify-between items-start pt-2">
+            <div>
+              <p class="font-bold text-slate-900 text-sm val-plan-title">Demo Trial Plan (Monthly)</p>
+              <p class="text-slate-500 text-[11px]">All modules auto-unlocked across company workspace</p>
+            </div>
+            <span class="font-mono font-bold text-slate-900 text-sm val-amount">₹1.00</span>
+          </div>
+
+          <div class="border-t border-slate-100 pt-4 space-y-2">
+            <div class="flex justify-between text-slate-600">
+              <span>Plan Base Price:</span>
+              <span class="font-mono font-semibold val-amount">₹1.00</span>
+            </div>
+            <div class="flex justify-between items-center text-slate-900 pt-2 border-t border-slate-200 font-bold">
+              <span class="text-sm">Total Paid:</span>
+              <span class="text-xl font-black text-indigo-600 font-mono val-amount">₹1.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ========================================================================= -->
+    <!-- DESIGN 3: FINTECH LUXURY / DARK ACCENT PLATINUM SLIP -->
+    <!-- ========================================================================= -->
+    <div id="design-3-card" class="hidden bg-slate-900 text-slate-100 rounded-3xl shadow-2xl border border-slate-800 p-8 md:p-12 print-shadow-none relative overflow-hidden watermark">
+      
+      <!-- Top Gold Badge -->
+      <div class="flex justify-between items-start border-b border-slate-800 pb-6 mb-6">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold tracking-wider mb-2">
+            ★ ITLC ENTERPRISE PLATINUM
+          </div>
+          <h2 class="text-2xl font-black text-white tracking-tight">Official Payment Voucher</h2>
+          <p class="text-xs text-slate-400 mt-1">Universal Multi-Tenant Settlement Record</p>
+        </div>
+
+        <div class="text-right">
+          <div class="p-3 bg-slate-800/80 rounded-2xl border border-slate-700/50">
+            <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-widest">TRANSACTION STATUS</span>
+            <span class="text-emerald-400 font-black text-sm tracking-wide flex items-center justify-end gap-1 mt-0.5">
+              ● SETTLED INSTANTLY
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Account & Gateway Dual Strip -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 text-xs">
+        <div class="p-4 bg-slate-800/40 rounded-2xl border border-slate-800">
+          <p class="text-[10px] text-indigo-400 font-bold uppercase tracking-wider">CLIENT WORKSPACE</p>
+          <p class="text-base font-bold text-white mt-1 val-comp-name">TechNova Solutions Pvt Ltd</p>
+          <p class="text-slate-400 mt-0.5">Admin: Priya Sharma • ID: comp_876291</p>
+        </div>
+        <div class="p-4 bg-slate-800/40 rounded-2xl border border-slate-800 md:text-right">
+          <p class="text-[10px] text-amber-400 font-bold uppercase tracking-wider">TRANSACTION AUDIT</p>
+          <p class="text-slate-300 mt-1">Invoice: <strong class="text-white font-mono val-inv-no">INV-2026-9812</strong></p>
+          <p class="text-slate-400 mt-0.5">Time: <span class="val-date text-slate-200">16 Sep 2026</span> • Via Razorpay Secure</p>
+        </div>
+      </div>
+
+      <!-- Plan Box -->
+      <div class="p-5 bg-gradient-to-r from-slate-800/80 to-slate-800/30 rounded-2xl border border-slate-700 mb-6 flex justify-between items-center">
+        <div>
+          <span class="text-[10px] uppercase tracking-wider font-bold text-slate-400">ACTIVATED LICENSE</span>
+          <p class="text-lg font-bold text-white mt-0.5 val-plan-title">Demo Trial Plan</p>
+          <p class="text-xs text-slate-400 mt-0.5">Unlimited HR & CRM Suite • 30 Days Auto-Renewal Cycle</p>
+        </div>
+        <div class="text-right">
+          <span class="text-[10px] uppercase tracking-wider font-bold text-slate-400">CHARGED AMOUNT</span>
+          <p class="text-3xl font-black text-amber-400 font-mono mt-0.5 val-amount">₹1.00</p>
+        </div>
+      </div>
+
+      <!-- Security Code & Verification -->
+      <div class="border-t border-slate-800 pt-6 flex flex-wrap justify-between items-center gap-4 text-xs text-slate-400">
+        <div>
+          <p class="text-slate-300 font-bold">Encrypted Financial Signature</p>
+          <p class="font-mono text-[11px] text-indigo-400 mt-0.5">SEC-TXN: 9481-8492-7491-0192-8419</p>
+        </div>
+        <div class="text-right">
+          <p class="text-slate-300 font-bold">ITLC Cloud Billing Node</p>
+          <p class="text-[11px] text-slate-500">Direct Super Owner Authorization</p>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ========================================================================= -->
+    <!-- DESIGN 4: BANKING CHALLAN & AUDIT SLIP (GOVERNMENT / CA AUDIT STYLE) -->
+    <!-- ========================================================================= -->
+    <div id="design-4-card" class="hidden bg-white rounded-2xl shadow-xl border-2 border-slate-400 p-8 md:p-10 print-shadow-none bank-pattern">
+      
+      <!-- Top Triple Stamp Header -->
+      <div class="border-b-2 border-slate-800 pb-4 mb-5 flex justify-between items-center">
+        <div>
+          <div class="inline-block px-2 py-0.5 border border-slate-800 text-[10px] font-bold uppercase tracking-wider bg-slate-100 mb-1">
+            ORIGINAL FOR RECIPIENT / AUDIT COPY
+          </div>
+          <h2 class="text-2xl font-serif font-black text-slate-900 tracking-tight">SUBSCRIPTION SETTLEMENT CHALLAN</h2>
+          <p class="text-xs text-slate-600 font-serif">Indian SaaS Services Tax Challan (GST Rule 46 Compliant)</p>
+        </div>
+
+        <div class="border-2 border-dashed border-emerald-600 p-2 text-center rounded-lg text-emerald-800 rotate-[-3deg]">
+          <p class="text-[9px] font-black uppercase tracking-widest">SUPER OWNER BANK STAMP</p>
+          <p class="text-xs font-black">SETTLED & CLEARED</p>
+          <p class="text-[8px] font-mono">CODE: 07-ITLC-RZP</p>
+        </div>
+      </div>
+
+      <!-- 3-Column Formal Meta -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border border-slate-300 bg-white p-4 rounded-lg mb-5 text-xs">
+        <div>
+          <strong class="text-slate-900 block font-serif">1. ISSUING ENTITY:</strong>
+          <p class="text-slate-700 mt-1 font-semibold">ITLC Software Tech Pvt Ltd</p>
+          <p class="text-slate-500">GSTIN: 07AABCI8899K1Z4</p>
+          <p class="text-slate-500">DLF Cyber City, Gurugram</p>
+        </div>
+        <div>
+          <strong class="text-slate-900 block font-serif">2. SUBSCRIBER DETAILS:</strong>
+          <p class="text-slate-700 mt-1 font-semibold val-comp-name">TechNova Solutions Pvt Ltd</p>
+          <p class="text-slate-500">GSTIN: 07AABCT1234F1Z8</p>
+          <p class="text-slate-500">Delhi State Code: 07</p>
+        </div>
+        <div>
+          <strong class="text-slate-900 block font-serif">3. CHALLAN IDENTIFIERS:</strong>
+          <p class="text-slate-700 mt-1">Challan No: <strong class="font-mono text-slate-900 val-inv-no">INV-2026-9812</strong></p>
+          <p class="text-slate-500">Generated: <span class="val-date">16 Sep 2026</span></p>
+          <p class="text-slate-500">Mode: Electronic Gateway (E-Transfer)</p>
+        </div>
+      </div>
+
+      <!-- Strict Audit Table -->
+      <table class="w-full text-left border-collapse border border-slate-300 text-xs mb-5">
+        <thead>
+          <tr class="bg-slate-100 text-slate-800 font-serif">
+            <th class="border border-slate-300 p-2.5">Item</th>
+            <th class="border border-slate-300 p-2.5">Accounting SAC Code</th>
+            <th class="border border-slate-300 p-2.5">Period</th>
+            <th class="border border-slate-300 p-2.5 text-right">Taxable Net</th>
+            <th class="border border-slate-300 p-2.5 text-right">CGST (9%)</th>
+            <th class="border border-slate-300 p-2.5 text-right">SGST (9%)</th>
+            <th class="border border-slate-300 p-2.5 text-right">Net Paid (₹)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="border border-slate-300 p-2.5 font-bold val-plan-title">Demo Trial Plan</td>
+            <td class="border border-slate-300 p-2.5 font-mono">998313</td>
+            <td class="border border-slate-300 p-2.5">30 Days</td>
+            <td class="border border-slate-300 p-2.5 text-right font-mono val-amount">₹1.00</td>
+            <td class="border border-slate-300 p-2.5 text-right font-mono">₹0.00</td>
+            <td class="border border-slate-300 p-2.5 text-right font-mono">₹0.00</td>
+            <td class="border border-slate-300 p-2.5 text-right font-mono font-bold val-amount">₹1.00</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- In Words & Sign -->
+      <div class="border border-slate-300 p-3 bg-white rounded-lg flex justify-between items-center text-xs">
+        <div>
+          <span class="text-slate-500 font-serif block">Amount in Words:</span>
+          <span class="font-bold text-slate-900 font-serif text-sm val-in-words">One Indian Rupee Only</span>
+        </div>
+        <div class="text-right">
+          <span class="text-slate-500 font-serif block">Grand Settlement Total:</span>
+          <span class="text-2xl font-bold font-mono text-slate-900 val-amount">₹1.00</span>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ========================================================================= -->
+    <!-- DESIGN 5: COMPACT DIGITAL VOUCHER SLIP (PERFORATED TICKET STYLE) -->
+    <!-- ========================================================================= -->
+    <div id="design-5-card" class="hidden max-w-lg mx-auto bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden print-shadow-none">
+      
+      <!-- Voucher Top -->
+      <div class="bg-indigo-600 text-white p-6 text-center relative">
+        <div class="w-12 h-12 bg-white text-indigo-600 rounded-2xl flex items-center justify-center font-black text-xl mx-auto shadow-md mb-2">
+          IT
+        </div>
+        <h3 class="text-xl font-black tracking-tight">Payment Confirmation</h3>
+        <p class="text-indigo-200 text-xs mt-0.5">ITLC Universal Platform License</p>
+        
+        <div class="mt-4 inline-block bg-white/20 backdrop-blur-md px-4 py-1 rounded-full text-xs font-bold text-white">
+          RECEIPT #<span class="val-inv-no font-mono">INV-2026-9812</span>
+        </div>
+      </div>
+
+      <!-- Perforated Tear Line -->
+      <div class="relative flex items-center justify-between px-2 bg-slate-50">
+        <div class="w-5 h-5 bg-slate-100 rounded-full -ml-4 border-r border-slate-200"></div>
+        <div class="flex-1 border-b-2 border-dashed border-slate-300 mx-2"></div>
+        <div class="w-5 h-5 bg-slate-100 rounded-full -mr-4 border-l border-slate-200"></div>
+      </div>
+
+      <!-- Voucher Body -->
+      <div class="p-6 bg-slate-50 space-y-4 text-xs">
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-3">
+          <div class="flex justify-between">
+            <span class="text-slate-500">Subscriber:</span>
+            <span class="font-bold text-slate-800 val-comp-name">TechNova Solutions</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">Plan Name:</span>
+            <span class="font-bold text-indigo-600 val-plan-title">Demo Trial Plan</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">Date & Time:</span>
+            <span class="font-medium text-slate-700 val-date">16 Sep 2026</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">Payment Gateway:</span>
+            <span class="font-semibold text-emerald-600">Razorpay Auto-Verified</span>
+          </div>
+          <div class="border-t border-slate-100 pt-3 flex justify-between items-baseline">
+            <span class="font-black text-slate-900 text-sm">TOTAL AMOUNT</span>
+            <span class="text-2xl font-black text-indigo-700 font-mono val-amount">₹1.00</span>
+          </div>
+        </div>
+
+        <!-- Barcode Simulation -->
+        <div class="text-center pt-2">
+          <div class="h-10 bg-slate-200 rounded-lg flex items-center justify-center font-mono text-xs tracking-widest text-slate-700 font-bold">
+            ||| | | |||| || ||| | ||| |||| | | |||
+          </div>
+          <p class="text-[10px] text-slate-400 mt-1 font-mono">AUTH-REF-9812039182</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Global Controller Script -->
+  <script>
+    let activeDesign = 1;
+    let currentAmount = 1;
+    let currentPlan = "Demo Trial Plan";
+
+    function switchDesign(num) {
+      activeDesign = num;
+      for (let i = 1; i <= 5; i++) {
+        const card = document.getElementById('design-' + i + '-card');
+        const tab = document.getElementById('tab-' + i);
+        if (i === num) {
+          card.classList.remove('hidden');
+          tab.className = "p-2.5 rounded-xl border text-left text-xs font-bold transition bg-indigo-600 text-white border-indigo-600 shadow-sm";
+        } else {
+          card.classList.add('hidden');
+          tab.className = "p-2.5 rounded-xl border text-left text-xs font-bold transition bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100";
+        }
+      }
+    }
+
+    function setSample(amt, plan) {
+      currentAmount = amt;
+      currentPlan = plan;
+      const formatted = "₹" + amt.toLocaleString('en-IN') + ".00";
+
+      // Update all elements with class .val-amount
+      document.querySelectorAll('.val-amount').forEach(el => el.textContent = formatted);
+      document.querySelectorAll('.val-plan-title').forEach(el => el.textContent = plan);
+
+      // Amount in words
+      let words = "One Indian Rupee Only";
+      if (amt === 499) words = "Four Hundred Ninety-Nine Indian Rupees Only";
+      else if (amt === 2499) words = "Two Thousand Four Hundred Ninety-Nine Indian Rupees Only";
+      document.querySelectorAll('.val-in-words').forEach(el => el.textContent = words);
+    }
+  </script>
+</body>
+</html>

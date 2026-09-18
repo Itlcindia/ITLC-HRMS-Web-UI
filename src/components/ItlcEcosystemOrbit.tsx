@@ -45,8 +45,8 @@ interface EcosystemProduct {
 }
 
 export const ItlcEcosystemOrbit: React.FC<ItlcEcosystemOrbitProps> = ({
-  onLaunchCrm = () => { window.location.hash = '#login'; },
-  onLaunchHrms = () => { window.location.hash = '#login'; },
+  onLaunchCrm = () => { window.history.pushState({}, '', '/login'); },
+  onLaunchHrms = () => { window.history.pushState({}, '', '/login'); },
   lang = 'en'
 }) => {
   const [isPaused, setIsPaused] = useState(false);

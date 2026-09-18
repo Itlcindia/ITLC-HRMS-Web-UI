@@ -9,6 +9,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, BarChart, Bar, Cell
 } from 'recharts';
+import { downloadPaymentSlip } from '../../../utils/PaymentSlip';
 
 export const RevenueTab: React.FC = () => {
   const { payments, companies, addToast, addLog, formatAmount, plans } = useDashboard();
@@ -24,18 +25,17 @@ export const RevenueTab: React.FC = () => {
     const monthlyRev = activeCompanies.reduce((sum, c) => sum + (planPrices[c.subscriptionPlanId] || 0), 0);
     const annualRev = monthlyRev * 12;
 
-    // Payments summary from seed data
-    const getAmountInUSD = (amount: number, currency: string) => {
-      if (currency && currency !== 'USD') {
-        const details = CURRENCY_DETAILS[currency];
-        const rate = details ? details.rate : 1.0;
-        return amount / rate;
-      }
-      return amount;
+    // Payments summary from seed data (base is INR)
+    const getAmountInINR = (amount: number, currency: string) => {
+      const cur = (currency || 'INR').toUpperCase();
+      if (cur === 'USD') return amount * 83.0;
+      if (cur === 'EUR') return (amount / 0.92) * 83.0;
+      if (cur === 'GBP') return (amount / 0.79) * 83.0;
+      return Number(amount) || 0;
     };
 
     const successfulPayments = payments.filter(p => p.status === 'successful');
-    const totalCollected = successfulPayments.reduce((sum, p) => sum + getAmountInUSD(p.amount, p.currency), 0);
+    const totalCollected = successfulPayments.reduce((sum, p) => sum + getAmountInINR(p.amount, p.currency), 0);
 
     const pendingCount = payments.filter(p => p.status === 'pending').length;
     const failedCount = payments.filter(p => p.status === 'failed').length;
@@ -53,7 +53,7 @@ export const RevenueTab: React.FC = () => {
             logo: comp?.logo || 'bg-indigo-500'
           };
         }
-        companyTotals[p.companyId].total += getAmountInUSD(p.amount, p.currency);
+        companyTotals[p.companyId].total += getAmountInINR(p.amount, p.currency);
       }
     });
 
@@ -80,9 +80,11 @@ export const RevenueTab: React.FC = () => {
     { week: 'Week 4', collected: stats.monthlyRev * 0.37 },
   ];
 
-  const handleDownloadInvoice = (invoiceNo: string) => {
-    addToast(`Downloading invoice ${invoiceNo} (PDF)...`, 'success');
-    addLog('Invoice Downloaded', `PDF copy of invoice ${invoiceNo} was generated and downloaded.`, 'payment');
+  const handleDownloadInvoice = (payment: any) => {
+    const comp = companies.find(c => c.id === payment.companyId);
+    downloadPaymentSlip(payment, comp || { name: payment.companyName });
+    addToast(`Downloading invoice ${payment.invoiceNumber} (PDF)...`, 'success');
+    addLog('Invoice Downloaded', `PDF copy of invoice ${payment.invoiceNumber} was generated and downloaded.`, 'payment');
   };
 
   const handleDownloadGST = () => {
@@ -318,7 +320,7 @@ export const RevenueTab: React.FC = () => {
                   <td className="py-3 px-4 text-xs text-slate-500">{new Date(p.timestamp).toLocaleString()}</td>
                   <td className="py-3 px-4 text-right">
                     <button
-                      onClick={() => handleDownloadInvoice(p.invoiceNumber)}
+                      onClick={() => handleDownloadInvoice(p)}
                       className="p-1 rounded bg-white/5 hover:bg-indigo-600 hover:text-white border border-white/5 text-slate-400 transition"
                       title="Download PDF Invoice"
                     >

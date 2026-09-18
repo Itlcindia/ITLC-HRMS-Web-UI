@@ -4,7 +4,7 @@ import { api } from '../../services/api';
 import { downloadPaymentSlip } from '../../utils/PaymentSlip';
 import { INITIAL_PLANS } from '../superowner/dashboardData';
 
-const RATES = { USD: 1, INR: 83, EUR: 0.92, GBP: 0.79 };
+const RATES = { USD: 1 / 83, INR: 1, EUR: 0.92 / 83, GBP: 0.79 / 83 };
 const SYMBOLS = { USD: '$', INR: '₹', EUR: '€', GBP: '£' };
 
 // Hook to load Razorpay script dynamically
@@ -24,9 +24,9 @@ export default function Subscription({ onSubscriptionUpdate }) {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [currency, setCurrency] = useState(() => localStorage.getItem('admin_subscription_currency') || 'INR');
+  const [currency, setCurrency] = useState(() => localStorage.getItem('hrms_billing_currency') || localStorage.getItem('admin_subscription_currency') || 'INR');
   const [gateway, setGateway] = useState('razorpay');
-  const [plans, setPlans] = useState(INITIAL_PLANS);
+  const [plans, setPlans] = useState([]);
 
   // Direct payment form states
   const [cardNumber, setCardNumber] = useState('');
@@ -38,6 +38,7 @@ export default function Subscription({ onSubscriptionUpdate }) {
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
+    localStorage.setItem('hrms_billing_currency', currency);
     localStorage.setItem('admin_subscription_currency', currency);
   }, [currency]);
 
@@ -50,7 +51,7 @@ export default function Subscription({ onSubscriptionUpdate }) {
       const emps = await api.getEmployees();
       setEmployeeCount(emps.length);
       try {
-        const fetchedPlans = await api.getAdminPlans();
+        const fetchedPlans = await api.getAdminPlans().catch(() => api.getPlans());
         if (fetchedPlans && fetchedPlans.length > 0) {
           setPlans(fetchedPlans);
         }
@@ -143,7 +144,8 @@ export default function Subscription({ onSubscriptionUpdate }) {
   const handleConfirmUpgrade = async () => {
     if (!selectedPlan) return;
     setIsProcessing(true);
-    const amount = Number((selectedPlan.price * RATES[currency]).toFixed(0));
+    const rawPrice = Number(selectedPlan.priceMonthly !== undefined ? selectedPlan.priceMonthly : (selectedPlan.price || 0));
+    const amount = currency === 'INR' ? rawPrice : Number((rawPrice * (RATES[currency] || 1)).toFixed(0));
 
     try {
       if (gateway === 'stripe') {
@@ -340,9 +342,11 @@ export default function Subscription({ onSubscriptionUpdate }) {
   const storagePct = Math.min(100, Math.max(0, Math.round((realStorageUsed / (realStorageLimit || 1)) * 100)));
   const employeePct = Math.min(100, Math.max(0, Math.round((employeeCount / (realMaxEmployees || 1)) * 100)));
 
-  const formatPrice = (usdPrice) => {
-    if (usdPrice === 0) return `${SYMBOLS[currency]}0`;
-    return `${SYMBOLS[currency]}${(usdPrice * RATES[currency]).toFixed(0)}`;
+  const formatPrice = (inrPrice) => {
+    const p = Number(inrPrice) || 0;
+    if (p === 0) return `${SYMBOLS[currency]}0`;
+    if (currency === 'INR') return `${SYMBOLS[currency]}${p.toLocaleString()}`;
+    return `${SYMBOLS[currency]}${(p * (RATES[currency] || 1)).toFixed(0)}`;
   };
 
   return (
@@ -621,7 +625,7 @@ export default function Subscription({ onSubscriptionUpdate }) {
                   <tr key={h.id} style={{ borderBottom: '1px solid #e2e8f0', color: '#0f172a' }}>
                     <td style={{ padding: '12px', fontWeight: 600, fontFamily: 'monospace' }}>{h.invoiceNumber}</td>
                     <td style={{ padding: '12px' }}>{new Date(h.date).toLocaleDateString()}</td>
-                    <td style={{ padding: '12px', fontWeight: 700 }}>{SYMBOLS[currency] || '$'}{(() => { const baseUSD = h.currency && h.currency !== 'USD' ? (h.amount / (RATES[h.currency] || 1)) : h.amount; return (baseUSD * (RATES[currency] || 1)).toFixed(0); })()}</td>
+                    <td style={{ padding: '12px', fontWeight: 700 }}>{SYMBOLS[currency] || '₹'}{(() => { const rawAmt = Number(h.amount) || 0; if (currency === 'INR') return rawAmt.toLocaleString(); return (rawAmt * (RATES[currency] || 1)).toFixed(0); })()}</td>
                     <td style={{ padding: '12px', textTransform: 'capitalize' }}>{h.gateway.replace('_', ' ')}</td>
                     <td style={{ padding: '12px' }}>
                       <span style={{
@@ -637,7 +641,12 @@ export default function Subscription({ onSubscriptionUpdate }) {
                     </td>
                     <td style={{ padding: '12px', textAlign: 'right' }}>
                       <button 
-                        onClick={() => downloadPaymentSlip(h, { name: profile?.companyName || 'Workspace' })}
+                        onClick={() => downloadPaymentSlip(h, { 
+                          name: profile?.companyName || h.companyName || 'Workspace',
+                          adminName: profile?.name,
+                          email: profile?.email,
+                          phone: profile?.phone
+                        })}
                         style={{ padding: '4px 10px', fontSize: '0.75rem', fontWeight: 600, color: '#4f46e5', border: '1px solid #4f46e5', background: 'transparent', borderRadius: '6px', cursor: 'pointer' }}
                       >
                         Download Slip

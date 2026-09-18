@@ -58,7 +58,13 @@ export const SecureAuthModal: React.FC<SecureAuthModalProps> = ({
       const deletedIdsRaw = localStorage.getItem('hrms_deleted_company_ids');
       if (deletedIdsRaw) {
         const parsed = JSON.parse(deletedIdsRaw);
-        if (Array.isArray(parsed)) deletedIds = new Set(parsed);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((x: any) => {
+            if (typeof x === 'string') deletedIds.add(x.toLowerCase().trim());
+            else if (x?.id) deletedIds.add(String(x.id).toLowerCase().trim());
+            if (x?.email) deletedIds.add(String(x.email).toLowerCase().trim());
+          });
+        }
       }
     } catch {}
 
@@ -68,13 +74,25 @@ export const SecureAuthModal: React.FC<SecureAuthModalProps> = ({
       if (saved !== null) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          list = parsed.filter((t: any) => t && t.id && (!deletedIds.has(t.id) || t.status === 'active' || t.status === 'trial'));
+          list = parsed.filter((t: any) => 
+            t && t.id && 
+            !deletedIds.has(String(t.id).toLowerCase().trim()) && 
+            !deletedIds.has(String(t.adminEmail || '').toLowerCase().trim()) && 
+            !deletedIds.has(String(t.email || '').toLowerCase().trim()) && 
+            t.status !== 'deleted'
+          );
         }
       }
     } catch {}
 
     if (list.length === 0 && Array.isArray(initialSeedTenants)) {
-      list = [...initialSeedTenants];
+      list = initialSeedTenants.filter((t: any) => 
+        t && t.id && 
+        !deletedIds.has(String(t.id).toLowerCase().trim()) && 
+        !deletedIds.has(String(t.adminEmail || '').toLowerCase().trim()) && 
+        !deletedIds.has(String(t.email || '').toLowerCase().trim()) && 
+        t.status !== 'deleted'
+      );
     }
 
     // Also include from itlc_registered_users
@@ -84,7 +102,9 @@ export const SecureAuthModal: React.FC<SecureAuthModalProps> = ({
         const parsedUsers = JSON.parse(regUsers);
         if (Array.isArray(parsedUsers)) {
           parsedUsers.forEach((u: any) => {
-            if (u.companyId && !list.some(t => t.id === u.companyId || t.adminEmail?.toLowerCase() === u.email?.toLowerCase())) {
+            const uCompId = String(u.companyId || '').toLowerCase().trim();
+            const uEmail = String(u.email || '').toLowerCase().trim();
+            if (u.companyId && !deletedIds.has(uCompId) && !deletedIds.has(uEmail) && u.status !== 'deleted' && !list.some(t => t.id === u.companyId || t.adminEmail?.toLowerCase() === uEmail)) {
               list.push({
                 id: u.companyId,
                 name: u.companyName || u.name || 'Enterprise Workspace',
@@ -177,45 +197,7 @@ export const SecureAuthModal: React.FC<SecureAuthModalProps> = ({
     const cleanEmail = email.trim().toLowerCase();
 
     // 1. Check SuperAdmin Master Access (STRICT VERIFICATION)
-    const superAdminEmails = [
-      'superowner@itlc.com',
-      'superowner@itlc.cloud',
-      'superadmin@itlc.cloud',
-      'superadmin@itlccrm.com',
-      'owner@itlc.cloud',
-      'priyanshupushkar263@gmail.com'
-    ];
-
-    let customSuperUser: any = null;
-    try {
-      const soUsersRaw = localStorage.getItem('hrms_superowner_users');
-      if (soUsersRaw) {
-        const soUsers = JSON.parse(soUsersRaw);
-        if (Array.isArray(soUsers)) {
-          customSuperUser = soUsers.find((u: any) => {
-            if (!u || !u.email) return false;
-            const r = (u.role || '').toLowerCase().trim();
-            const isSuper = r.includes('super');
-            return isSuper && u.email.toLowerCase().trim() === cleanEmail;
-          });
-        }
-      }
-      if (!customSuperUser) {
-        const addRaw = localStorage.getItem('hrms_additional_superowners');
-        if (addRaw) {
-          const addList = JSON.parse(addRaw);
-          if (Array.isArray(addList)) {
-            customSuperUser = addList.find((so: any) => so && so.email && so.email.toLowerCase().trim() === cleanEmail);
-          }
-        }
-      }
-    } catch {}
-
-    const isSuperAdminEmail = 
-      superAdminEmails.includes(cleanEmail) || 
-      cleanEmail.includes('superowner') || 
-      cleanEmail.includes('superadmin') ||
-      !!customSuperUser;
+    const isSuperAdminEmail = cleanEmail === 'priyanshupushkar263@gmail.com';
 
     if (isSuperAdminEmail) {
       try {
@@ -226,15 +208,15 @@ export const SecureAuthModal: React.FC<SecureAuthModalProps> = ({
           localStorage.setItem('hrms_jwt_token', token);
         }
         const profileObj = {
-          id: userObj?.id || customSuperUser?.id || 'usr_superowner_master',
-          name: userObj?.name || customSuperUser?.name || 'Super Owner ITLC',
-          fullName: userObj?.name || customSuperUser?.name || 'Super Owner ITLC',
-          email: cleanEmail,
+          id: 'SUP_PAPZ0YC',
+          name: 'Priyanshu Pushkar',
+          fullName: 'Priyanshu Pushkar',
+          email: 'priyanshupushkar263@gmail.com',
           role: 'Super Owner',
           status: 'Active',
           companyName: 'SUPEROWNER Platform HQ',
           companyId: null,
-          avatar: 'SO'
+          avatar: 'PP'
         };
         localStorage.setItem('hrms_user_profile', JSON.stringify(profileObj));
         localStorage.setItem('crm_auth_session', 'true');
@@ -338,26 +320,19 @@ export const SecureAuthModal: React.FC<SecureAuthModalProps> = ({
         const token = userObj.token || `token-${Date.now()}`;
         localStorage.setItem('hrms_jwt_token', token);
 
-        const isSuper = (
-          userObj.role === 'Super Owner' ||
-          String(userObj.role).toLowerCase().includes('super') ||
-          cleanEmail === 'superowner@itlc.com' ||
-          cleanEmail === 'priyanshupushkar263@gmail.com' ||
-          cleanEmail.includes('superowner') ||
-          cleanEmail.includes('superadmin')
-        );
+        const isSuper = cleanEmail === 'priyanshupushkar263@gmail.com';
 
         if (isSuper) {
           const profileObj = {
-            id: userObj.id || 'usr_superowner_master',
-            name: userObj.name || userObj.fullName || 'Super Owner ITLC',
-            fullName: userObj.name || userObj.fullName || 'Super Owner ITLC',
-            email: cleanEmail,
+            id: 'SUP_PAPZ0YC',
+            name: 'Priyanshu Pushkar',
+            fullName: 'Priyanshu Pushkar',
+            email: 'priyanshupushkar263@gmail.com',
             role: 'Super Owner',
             status: 'Active',
             companyName: 'SUPEROWNER Platform HQ',
             companyId: null,
-            avatar: 'SO'
+            avatar: 'PP'
           };
           localStorage.setItem('hrms_user_profile', JSON.stringify(profileObj));
           localStorage.setItem('crm_auth_session', 'true');

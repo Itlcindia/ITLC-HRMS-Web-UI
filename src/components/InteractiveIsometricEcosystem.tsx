@@ -31,6 +31,8 @@ export const InteractiveIsometricEcosystem: React.FC<InteractiveIsometricEcosyst
       id: 'employees',
       title: 'Employee Management',
       subtitle: 'Onboard • Manage • Grow',
+      metric: '1-click onboarding',
+      status: 'Live',
       position: 'top-left',
       color: '#0284c7',
       glowColor: 'rgba(2, 132, 199, 0.45)',
@@ -48,6 +50,8 @@ export const InteractiveIsometricEcosystem: React.FC<InteractiveIsometricEcosyst
       id: 'attendance',
       title: 'Attendance & Leave',
       subtitle: 'Track • Approve • Stay Compliant',
+      metric: 'Geo attendance',
+      status: 'Auto sync',
       position: 'mid-left',
       color: '#8b5cf6',
       glowColor: 'rgba(139, 92, 246, 0.45)',
@@ -65,6 +69,8 @@ export const InteractiveIsometricEcosystem: React.FC<InteractiveIsometricEcosyst
       id: 'payroll',
       title: 'Payroll & Tax',
       subtitle: 'Accurate • Secure • Automated',
+      metric: 'PF/ESI ready',
+      status: 'Secure',
       position: 'bottom-left',
       color: '#10b981',
       glowColor: 'rgba(16, 185, 129, 0.45)',
@@ -82,6 +88,8 @@ export const InteractiveIsometricEcosystem: React.FC<InteractiveIsometricEcosyst
       id: 'performance',
       title: 'Performance Management',
       subtitle: 'Set Goals • Track • Appraisals',
+      metric: 'KPI radar',
+      status: 'Smart',
       position: 'top-right',
       color: '#3b82f6',
       glowColor: 'rgba(59, 130, 246, 0.45)',
@@ -99,6 +107,8 @@ export const InteractiveIsometricEcosystem: React.FC<InteractiveIsometricEcosyst
       id: 'reports',
       title: 'Reports & Analytics',
       subtitle: 'Deposit • Audit • Insights',
+      metric: 'Live dashboards',
+      status: 'Realtime',
       position: 'mid-right',
       color: '#06b6d4',
       glowColor: 'rgba(6, 182, 212, 0.45)',
@@ -116,6 +126,8 @@ export const InteractiveIsometricEcosystem: React.FC<InteractiveIsometricEcosyst
       id: 'security',
       title: 'Settings & Security',
       subtitle: 'Rules • Policies • Compliance',
+      metric: 'SOC-2 aligned',
+      status: 'Protected',
       position: 'bottom-right',
       color: '#f59e0b',
       glowColor: 'rgba(245, 158, 11, 0.45)',
@@ -182,13 +194,55 @@ export const InteractiveIsometricEcosystem: React.FC<InteractiveIsometricEcosyst
           50% { opacity: 1; transform: scale(1.2) translateY(-6px); }
         }
 
+        @keyframes meshDrift {
+          0% { transform: translate3d(-10px, -8px, 0); }
+          50% { transform: translate3d(10px, 8px, 0); }
+          100% { transform: translate3d(-10px, -8px, 0); }
+        }
+
+        @keyframes cardScan {
+          0% { transform: translateX(-120%); opacity: 0; }
+          35% { opacity: 0.68; }
+          100% { transform: translateX(180%); opacity: 0; }
+        }
+
+        @keyframes haloBreathe {
+          0%, 100% { opacity: 0.44; transform: translate(-50%, -46%) scaleY(0.48) scale(0.97); }
+          50% { opacity: 0.9; transform: translate(-50%, -46%) scaleY(0.48) scale(1.05); }
+        }
+
         .iso-module-card {
-          transition: border-color 0.2s ease, box-shadow 0.2s ease;
-          box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.09), 0 4px 12px rgba(0, 0, 0, 0.03);
+          position: relative;
+          overflow: hidden;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+          box-shadow: 0 18px 38px -10px rgba(15, 23, 42, 0.14), 0 5px 16px rgba(2, 132, 199, 0.06);
         }
 
         .iso-module-card:hover {
-          box-shadow: 0 20px 40px -8px rgba(15, 23, 42, 0.16), 0 0 20px rgba(2, 132, 199, 0.25) !important;
+          transform: translateY(-3px);
+          box-shadow: 0 26px 50px -10px rgba(15, 23, 42, 0.22), 0 0 24px rgba(2, 132, 199, 0.28) !important;
+        }
+
+        .iso-module-card::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          width: 45%;
+          background: linear-gradient(105deg, transparent 0%, rgba(255,255,255,0.8) 45%, transparent 70%);
+          animation: cardScan 5.8s ease-in-out infinite;
+          pointer-events: none;
+        }
+
+        .iso-module-card::after {
+          content: "";
+          position: absolute;
+          left: 14px;
+          right: 14px;
+          bottom: 7px;
+          height: 3px;
+          border-radius: 999px;
+          background: var(--node-gradient);
+          opacity: 0.62;
         }
 
         .hrms-monolith-card {
@@ -201,10 +255,50 @@ export const InteractiveIsometricEcosystem: React.FC<InteractiveIsometricEcosyst
         style={{
           position: 'relative',
           width: '100%',
-          minHeight: '540px',
-          height: '540px'
+          minHeight: '600px',
+          height: '600px'
         }}
       >
+        {/* Subtle enterprise mesh background for depth */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: '-20px -40px',
+            backgroundImage: 'linear-gradient(rgba(2,132,199,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(2,132,199,0.08) 1px, transparent 1px)',
+            backgroundSize: '64px 64px',
+            maskImage: 'radial-gradient(circle at center, black 0%, black 38%, transparent 78%)',
+            WebkitMaskImage: 'radial-gradient(circle at center, black 0%, black 38%, transparent 78%)',
+            opacity: 0.55,
+            animation: 'meshDrift 14s ease-in-out infinite',
+            pointerEvents: 'none',
+            zIndex: 0
+          }}
+        />
+
+        <div
+          style={{
+            position: 'absolute',
+            top: '28px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '8px 16px',
+            borderRadius: '999px',
+            background: 'rgba(255,255,255,0.78)',
+            border: '1px solid rgba(14,165,233,0.22)',
+            boxShadow: '0 12px 30px rgba(14, 165, 233, 0.08)',
+            backdropFilter: 'blur(16px)',
+            zIndex: 9
+          }}
+        >
+          <span style={{ width: 8, height: 8, borderRadius: 999, background: '#10b981', boxShadow: '0 0 12px #10b981' }} />
+          <span style={{ color: '#0f3c6d', fontSize: 12, fontWeight: 900, letterSpacing: '0.7px', textTransform: 'uppercase' }}>
+            Live HRMS Intelligence Mesh
+          </span>
+        </div>
+
         
         {/* ============================================================ */}
         {/* LAYER 1: 3D ISOMETRIC CYBER PEDESTAL BASE & EMITTING RINGS */}
@@ -218,7 +312,7 @@ export const InteractiveIsometricEcosystem: React.FC<InteractiveIsometricEcosyst
             width: '760px',
             height: '430px',
             borderRadius: '50%',
-            background: 'radial-gradient(ellipse at center, rgba(14, 165, 233, 0.18) 0%, rgba(99, 102, 241, 0.11) 40%, rgba(241, 245, 249, 0) 72%)',
+            background: 'radial-gradient(ellipse at center, rgba(14, 165, 233, 0.25) 0%, rgba(99, 102, 241, 0.14) 36%, rgba(16, 185, 129, 0.08) 58%, rgba(241, 245, 249, 0) 75%)',
             filter: 'blur(38px)',
             pointerEvents: 'none',
             zIndex: 1
@@ -237,6 +331,22 @@ export const InteractiveIsometricEcosystem: React.FC<InteractiveIsometricEcosyst
             border: '2px dashed rgba(2, 132, 199, 0.4)',
             boxShadow: '0 0 35px rgba(2, 132, 199, 0.25), inset 0 0 30px rgba(56, 189, 248, 0.2)',
             animation: 'pulseConcentricRings 26s linear infinite',
+            pointerEvents: 'none',
+            zIndex: 2
+          }}
+        />
+
+        <div
+          style={{
+            position: 'absolute',
+            top: '52%',
+            left: '50%',
+            width: '610px',
+            height: '610px',
+            borderRadius: '50%',
+            border: '1px solid rgba(125, 211, 252, 0.28)',
+            boxShadow: 'inset 0 0 45px rgba(14, 165, 233, 0.08)',
+            animation: 'haloBreathe 4.8s ease-in-out infinite',
             pointerEvents: 'none',
             zIndex: 2
           }}
@@ -393,7 +503,7 @@ export const InteractiveIsometricEcosystem: React.FC<InteractiveIsometricEcosyst
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   filter="url(#laser-glow)"
-                  style={{ transition: 'all 0.3s ease' }}
+                  style={{ transition: 'all 0.3s ease', mixBlendMode: 'multiply' }}
                 />
 
                 {/* 2. Inner Sharp Neon Fiber Line with Smooth Slow Flow */}
@@ -402,13 +512,25 @@ export const InteractiveIsometricEcosystem: React.FC<InteractiveIsometricEcosyst
                   fill="none" 
                   stroke={`url(#grad-${node.position})`}
                   strokeWidth={isHovered ? '3.5' : '2.4'}
-                  strokeDasharray="12 10"
+                  strokeDasharray={isHovered ? '18 8' : '12 10'}
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   style={{
                     animation: isHovered ? 'laserEnergyFlow 4s linear infinite' : 'laserEnergyFlow 8s linear infinite',
                     transition: 'all 0.3s ease'
                   }}
+                />
+
+                {/* 2b. Fine white data pulse riding inside each conduit */}
+                <path 
+                  d={node.circuitPath} 
+                  fill="none" 
+                  stroke="#ffffff"
+                  strokeOpacity="0.58"
+                  strokeWidth="1"
+                  strokeDasharray="2 14"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 />
 
                 {/* 3. Primary Slower, Smoother Traveling Energy Orb */}
@@ -457,12 +579,13 @@ export const InteractiveIsometricEcosystem: React.FC<InteractiveIsometricEcosyst
                       backdropFilter: 'blur(16px)',
                       borderRadius: '20px',
                       border: isHovered ? `2px solid ${node.color}` : '1.5px solid rgba(226, 232, 240, 0.95)',
-                      padding: '10px 14px',
+                      padding: '10px 14px 13px',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '12px',
                       cursor: 'pointer',
-                      boxSizing: 'border-box'
+                      boxSizing: 'border-box',
+                      ['--node-gradient' as any]: node.gradient
                     }}
                     onClick={node.action}
                     onMouseEnter={() => setActiveNode(node.id)}
@@ -493,9 +616,20 @@ export const InteractiveIsometricEcosystem: React.FC<InteractiveIsometricEcosyst
                       <div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 600, marginTop: '2px', whiteSpace: 'nowrap' }}>
                         {node.subtitle}
                       </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '5px' }}>
+                        <span style={{ width: 6, height: 6, borderRadius: 999, background: node.color, boxShadow: `0 0 8px ${node.color}` }} />
+                        <span style={{ fontSize: '9.5px', color: node.color, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                          {node.metric}
+                        </span>
+                      </div>
                     </div>
 
-                    <ChevronRight size={17} style={{ color: '#94a3b8', flexShrink: 0 }} />
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '7px', flexShrink: 0 }}>
+                      <span style={{ fontSize: 8.5, fontWeight: 900, color: '#64748b', background: '#f1f5f9', borderRadius: 999, padding: '3px 6px', whiteSpace: 'nowrap' }}>
+                        {node.status}
+                      </span>
+                      <ChevronRight size={17} style={{ color: node.color }} />
+                    </div>
                   </div>
                 </foreignObject>
               </g>
@@ -526,7 +660,7 @@ export const InteractiveIsometricEcosystem: React.FC<InteractiveIsometricEcosyst
             style={{
               position: 'relative',
               width: '190px',
-              padding: '22px 18px 20px',
+              padding: '24px 18px 18px',
               borderRadius: '26px',
               background: 'linear-gradient(155deg, rgba(15, 23, 42, 0.94) 0%, rgba(30, 58, 138, 0.92) 50%, rgba(2, 132, 199, 0.9) 100%)',
               backdropFilter: 'blur(24px)',
@@ -536,6 +670,28 @@ export const InteractiveIsometricEcosystem: React.FC<InteractiveIsometricEcosyst
               textAlign: 'center'
             }}
           >
+            <div
+              style={{
+                position: 'absolute',
+                top: 10,
+                right: 12,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '3px 7px',
+                borderRadius: 999,
+                background: 'rgba(16,185,129,0.16)',
+                border: '1px solid rgba(16,185,129,0.35)',
+                color: '#bbf7d0',
+                fontSize: 8,
+                fontWeight: 900,
+                letterSpacing: 0.4
+              }}
+            >
+              <span style={{ width: 5, height: 5, borderRadius: 999, background: '#22c55e', boxShadow: '0 0 8px #22c55e' }} />
+              LIVE
+            </div>
+
             {/* Top Glossy Reflection Sheen */}
             <div 
               style={{
@@ -652,6 +808,22 @@ export const InteractiveIsometricEcosystem: React.FC<InteractiveIsometricEcosyst
               <Zap size={11} style={{ color: '#38bdf8' }} />
               <span>Unified Cloud 3.0</span>
             </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: 7,
+                marginTop: 13
+              }}
+            >
+              <span style={{ padding: '6px 4px', borderRadius: 10, background: 'rgba(255,255,255,0.12)', color: '#e0f2fe', fontSize: 8.5, fontWeight: 900, border: '1px solid rgba(255,255,255,0.14)' }}>
+                6 Modules
+              </span>
+              <span style={{ padding: '6px 4px', borderRadius: 10, background: 'rgba(255,255,255,0.12)', color: '#e0f2fe', fontSize: 8.5, fontWeight: 900, border: '1px solid rgba(255,255,255,0.14)' }}>
+                99.9 SLA
+              </span>
+            </div>
           </div>
         </div>
 
@@ -663,24 +835,40 @@ export const InteractiveIsometricEcosystem: React.FC<InteractiveIsometricEcosyst
       <div 
         style={{
           textAlign: 'center',
-          marginTop: '5px',
+          marginTop: '-10px',
           position: 'relative',
           zIndex: 8
         }}
       >
-        <span 
+        <div
           style={{
-            fontFamily: 'Georgia, serif, cursive',
-            fontStyle: 'italic',
-            fontSize: '25px',
-            fontWeight: 700,
-            color: '#334155',
-            letterSpacing: '0.2px',
-            textShadow: '0 2px 10px rgba(15, 23, 42, 0.06)'
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 12,
+            padding: '12px 22px',
+            borderRadius: 999,
+            background: 'rgba(255,255,255,0.86)',
+            border: '1px solid rgba(226,232,240,0.92)',
+            boxShadow: '0 14px 34px rgba(15,23,42,0.07)',
+            backdropFilter: 'blur(18px)'
           }}
         >
-          Build a Better Workplace
-        </span>
+          <Sparkles size={18} style={{ color: '#0284c7' }} />
+          <span 
+            style={{
+              fontFamily: 'Georgia, serif, cursive',
+              fontStyle: 'italic',
+              fontSize: '25px',
+              fontWeight: 700,
+              color: '#334155',
+              letterSpacing: '0.2px',
+              textShadow: '0 2px 10px rgba(15, 23, 42, 0.06)'
+            }}
+          >
+            Build a Better Workplace
+          </span>
+          <Zap size={17} style={{ color: '#10b981' }} />
+        </div>
       </div>
     </div>
   );

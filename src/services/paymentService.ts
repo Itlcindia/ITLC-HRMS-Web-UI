@@ -43,7 +43,7 @@ export const paymentService = {
   async createOrder(params: PaymentOrderParams) {
     try {
       const endpoints = [
-        'https://gold-stork-993357.hostingersite.com/api/payments/create-order',
+        'https://lemonchiffon-mink-999414.hostingersite.com/api/payments/create-order',
         '/api/create-order.php',
         '/api/payments/create-order'
       ];

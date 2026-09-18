@@ -7,6 +7,7 @@ import {
   Building2, Phone, Check, Globe, MapPin 
 } from 'lucide-react';
 import { api } from '../services/api';
+import { paymentService } from '../../services/paymentService';
 
 const slides = [
   { id: 2, title: "HRMS Employee Hub", image: "/dashboards/hrms_employee.png" },
@@ -121,15 +122,66 @@ const FloatingPasswordInput = ({
 export default function LoginForm({
   onSuccessLogin,
   isSuperownerMode = false,
-  onOpenRegister
+  onOpenRegister,
+  initialPlanId,
+  initialSignUp = false
 }: {
   onSuccessLogin?: (email: string, pass: string) => void;
   isSuperownerMode?: boolean;
   onOpenRegister?: () => void;
+  initialPlanId?: string;
+  initialSignUp?: boolean;
 }) {
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(() => {
+    if (initialSignUp) return true;
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const hash = window.location.hash.toLowerCase();
+      return urlParams.get('mode') === 'signup' || urlParams.get('mode') === 'register' || hash === '#signup' || hash === '#register';
+    } catch {
+      return false;
+    }
+  });
   const [setupRequired, setSetupRequired] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
+  // Live Subscription Plans from Super Owner
+  const [availablePlans, setAvailablePlans] = useState<any[]>([
+    { id: 'starter', name: 'STARTER', priceMonthly: 499, seatLimit: 50 },
+    { id: 'premium', name: 'PREMIUM', priceMonthly: 999, seatLimit: 100 },
+    { id: 'demo', name: 'DEMO', priceMonthly: 199, seatLimit: 10 }
+  ]);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>(() => {
+    if (initialPlanId) return initialPlanId;
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('plan') || localStorage.getItem('itlc_selected_onboarding_plan') || 'starter';
+    } catch {
+      return 'starter';
+    }
+  });
+  const [registeredCompanyData, setRegisteredCompanyData] = useState<any>(null);
+  const [showPaymentPrompt, setShowPaymentPrompt] = useState(false);
+
+  useEffect(() => {
+    if (initialPlanId) setSelectedPlanId(initialPlanId);
+  }, [initialPlanId]);
+
+  useEffect(() => {
+    if (initialSignUp !== undefined) setIsSignUp(initialSignUp);
+  }, [initialSignUp]);
+
+  useEffect(() => {
+    api.getPlans().then((plans: any) => {
+      if (Array.isArray(plans) && plans.length > 0) {
+        setAvailablePlans(plans);
+        if (!initialPlanId) {
+          const pop = plans.find((p: any) => p.badge?.toLowerCase().includes('popular') || p.id === 'starter');
+          if (pop) setSelectedPlanId(pop.id);
+        }
+      }
+    }).catch(() => {});
+  }, [initialPlanId]);
 
   const handleCreateAccountClick = () => {
     if (onOpenRegister) {
@@ -423,7 +475,11 @@ export default function LoginForm({
 
     setIsLoading(true);
     try {
-      await api.registerCompany({
+      const selectedPlan = availablePlans.find((p: any) => p.id === selectedPlanId);
+      const planPrice = Number(selectedPlan?.priceMonthly || selectedPlan?.price || 499);
+
+      // Direct registration without subscription plan: created as unpaid preview
+      const regRes = await api.registerCompany({
         companyName,
         companyEmail,
         companyPhone,
@@ -431,15 +487,24 @@ export default function LoginForm({
         country,
         stateName,
         cityName,
-        ownerName: companyName + ' Owner'
+        ownerName: companyName + ' Admin',
+        subscriptionPlanId: 'none',
+        planId: 'none',
+        plan: null,
+        seatLimit: 10,
+        maxEmployees: 10,
+        storageLimitGb: 10,
+        email: companyEmail,
+        subscriptionStatus: 'unpaid',
+        status: 'active'
       });
+
       setSuccess(true);
-      setSuccessMsg(`Welcome! Your registration for ${companyName} has been successfully completed. You can now log in!`);
+      setSuccessMsg(`Workspace "${companyName}" created successfully! Logging you into your dashboard...`);
       setTimeout(() => {
-        setIsLoading(false);
-        setIsSignUp(false);
-        setSuccess(false);
-      }, 2500);
+        if (onSuccessLogin) onSuccessLogin(companyEmail, password);
+      }, 1000);
+      setIsLoading(false);
     } catch (err: any) {
       setIsLoading(false);
       setError(err.message || 'Registration failed.');
@@ -1010,7 +1075,6 @@ export default function LoginForm({
                 </div>
               )}
             </form>
-
 
           </motion.div>
 

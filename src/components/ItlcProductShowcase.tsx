@@ -104,10 +104,10 @@ const DEFAULT_SCREENS_IMAGES: Record<string, string[]> = {
 };
 
 export const ItlcProductShowcase: React.FC<ItlcProductShowcaseProps> = ({
-  onLaunchCrm = () => { window.location.hash = '#login'; },
-  onLaunchHrms = () => { window.location.hash = '#login'; },
-  onOpenSuperAdmin = () => { window.location.hash = '#login'; },
-  onOpenOnboarding = () => { window.location.hash = '#register'; }
+  onLaunchCrm = () => { window.history.pushState({}, '', '/login'); },
+  onLaunchHrms = () => { window.history.pushState({}, '', '/login'); },
+  onOpenSuperAdmin = () => { window.history.pushState({}, '', '/login'); },
+  onOpenOnboarding = () => { window.history.pushState({}, '', '/register'); }
 }) => {
   const [activeTabId, setActiveTabId] = useState<string>('hrms_dashboard');
   const [customImages, setCustomImages] = useState<Record<string, string[]>>(() => {

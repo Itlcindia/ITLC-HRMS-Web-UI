@@ -99,7 +99,7 @@ const recentActivities = [
   { type: 'job', title: 'Senior Product Designer vacancy published', time: '3 days ago', desc: 'Active hiring post listed on LinkedIn.', color: '#EC4899' },
 ];
 
-export default function DashboardOverview({ employeesList = [], notifications = [], setActiveTab, currency = 'USD', onSwitchToCRM }) {
+export default function DashboardOverview({ employeesList = [], notifications = [], setActiveTab, currency = 'USD', onSwitchToCRM, isSubscriptionActive = true, onOpenSubscriptionModal }) {
   const [loading, setLoading] = useState(true);
   const [company, setCompany] = useState(null);
   const [activities, setActivities] = useState([]);
@@ -269,8 +269,61 @@ export default function DashboardOverview({ employeesList = [], notifications = 
         </motion.div>
       )}
       
+      {/* Free Preview / Inactive Subscription Alert Banner */}
+      {!isSubscriptionActive && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{
+            background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%)',
+            borderRadius: '16px',
+            padding: '18px 24px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            boxShadow: '0 10px 25px -5px rgba(79, 70, 229, 0.3)',
+            gap: 16,
+            flexWrap: 'wrap',
+            color: '#ffffff',
+            marginBottom: 8
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <span style={{ fontSize: '2rem' }}>🚀</span>
+            <div>
+              <h4 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0, color: '#ffffff' }}>
+                Free Preview Mode Active
+              </h4>
+              <p style={{ fontSize: '0.85rem', margin: '4px 0 0 0', opacity: 0.9, color: '#f1f5f9' }}>
+                All modules (People, Attendance, Leave, Payroll, Recruitment & Settings) are currently locked. Choose a plan to unlock all features.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => onOpenSubscriptionModal ? onOpenSubscriptionModal() : (setActiveTab && setActiveTab('subscription'))}
+            style={{
+              padding: '10px 22px',
+              fontSize: '0.88rem',
+              fontWeight: 800,
+              background: '#ffffff',
+              color: '#4f46e5',
+              border: 'none',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              transition: 'transform 0.15s ease'
+            }}
+          >
+            <span>⚡ Buy Subscription Now</span>
+          </button>
+        </motion.div>
+      )}
+
       {/* Subscription Limit Warning Alert Banner */}
-      {company && totalEmployees >= company.maxEmployees && (
+      {company && totalEmployees >= (company.seatLimit || company.maxEmployees) && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
