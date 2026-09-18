@@ -253,6 +253,12 @@ export default function Sidebar({
   };
 
   const hasValidLogo = companyLogo && (companyLogo.startsWith('data:image/') || companyLogo.startsWith('http://') || companyLogo.startsWith('https://'));
+  const effectiveCompanyName = companyName || (() => {
+    try {
+      const t = JSON.parse(localStorage.getItem('itlc_active_tenant') || '{}');
+      return t.name || t.companyName || '';
+    } catch(e) { return ''; }
+  })() || 'Company';
 
   return (
     <aside
@@ -263,39 +269,39 @@ export default function Sidebar({
         padding: '24px 20px', 
         display: 'flex', 
         alignItems: 'center', 
-        justifyContent: collapsed ? 'center' : 'space-between',
-        borderBottom: '1px solid rgba(226, 232, 240, 0.6)',
-        flexShrink: 0
+        justifyContent: 'space-between',
+        borderBottom: '1px solid var(--sidebar-border)'
       }}>
         {!collapsed && (
           <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{ display: 'flex', alignItems: 'center', gap: 10 }}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 12, overflow: 'hidden' }}
           >
             <div style={{
-              width: 36,
-              height: 36,
-              borderRadius: 10,
-              background: hasValidLogo ? 'rgba(0,0,0,0.02)' : 'linear-gradient(135deg, #4F46E5 0%, #06B6D4 100%)',
+              width: 38,
+              height: 38,
+              borderRadius: 12,
+              background: 'linear-gradient(135deg, rgba(79,70,229,0.1) 0%, rgba(6,182,212,0.1) 100%)',
+              border: '1px solid rgba(79,70,229,0.2)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'white',
+              fontSize: '1.2rem',
               fontWeight: 800,
-              fontSize: 18,
+              color: 'var(--color-primary)',
+              flexShrink: 0,
               boxShadow: hasValidLogo ? 'none' : '0 4px 10px rgba(79, 70, 229, 0.3)',
               overflow: 'hidden'
             }}>
               {hasValidLogo ? (
                 <img src={companyLogo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               ) : (
-                companyName ? companyName[0].toUpperCase() : 'A'
+                effectiveCompanyName ? effectiveCompanyName[0].toUpperCase() : 'C'
               )}
             </div>
             <div>
-              <span style={{ fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.02em', background: 'linear-gradient(90deg, #0F172A 0%, #475569 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{companyName || 'Antigravity'}</span>
+              <span style={{ fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.02em', background: 'linear-gradient(90deg, #0F172A 0%, #475569 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{effectiveCompanyName}</span>
               <div style={{ fontSize: 9, color: 'var(--color-accent)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: -2 }}>HRMS Enterprise</div>
             </div>
           </motion.div>

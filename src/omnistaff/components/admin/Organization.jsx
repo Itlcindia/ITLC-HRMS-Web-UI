@@ -153,6 +153,35 @@ export default function Organization({ employees = [], setEmployees, setActiveTa
   const [showAddForm, setShowAddForm] = useState(false);
   const [viewMode, setViewMode] = useState('overview'); // 'overview', 'chart', 'working-info'
 
+  const [companyInfo, setCompanyInfo] = useState(() => {
+    try {
+      const activeTenant = JSON.parse(localStorage.getItem('itlc_active_tenant') || '{}');
+      return {
+        name: activeTenant.name || activeTenant.companyName || 'Company',
+        logo: activeTenant.logo || '',
+        gstin: activeTenant.gstin || '27AAACA1248Q1Z1'
+      };
+    } catch(e) {
+      return { name: 'Company', logo: '', gstin: '27AAACA1248Q1Z1' };
+    }
+  });
+
+  useEffect(() => {
+    const fetchCompany = async () => {
+      try {
+        const prof = await api.getProfile();
+        if (prof?.companyName) {
+          setCompanyInfo(prev => ({
+            ...prev,
+            name: prof.companyName,
+            logo: prof.companyLogo || prev.logo
+          }));
+        }
+      } catch (e) {}
+    };
+    fetchCompany();
+  }, []);
+
   // Editing state variables
   const [editingBranch, setEditingBranch] = useState(null);
   const [editingEmployeeNode, setEditingEmployeeNode] = useState(null);
@@ -357,10 +386,17 @@ export default function Organization({ employees = [], setEmployees, setActiveTa
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: 'white',
-                    fontWeight: 800
-                  }}>A</div>
+                    fontWeight: 800,
+                    overflow: 'hidden'
+                  }}>
+                    {companyInfo.logo ? (
+                      <img src={companyInfo.logo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    ) : (
+                      companyInfo.name ? companyInfo.name[0]?.toUpperCase() : 'C'
+                    )}
+                  </div>
                   <div>
-                    <h3 style={{ fontSize: '0.85rem', fontWeight: 800 }}>Antigravity Solutions</h3>
+                    <h3 style={{ fontSize: '0.85rem', fontWeight: 800 }}>{companyInfo.name}</h3>
                     <span style={{ fontSize: '0.65rem', color: 'var(--color-text-tertiary)' }}>Software & HR Solutions</span>
                   </div>
                 </div>
