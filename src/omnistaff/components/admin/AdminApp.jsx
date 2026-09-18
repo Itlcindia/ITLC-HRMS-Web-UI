@@ -375,7 +375,13 @@ export default function App({ onLogout, loggedInEmail, onSwitchToCRM }) {
         response = `Burnout analysis: Sarah Jenkins (Senior UX Designer) shows an elevated burnout risk score of 84% due to high task workload. The rest of the ${engineeringCount} engineering staff are at a stable workload rating.`;
       }
       else if (query.includes('brand') || query.includes('itlc') || query.includes('company name') || query.includes('workspace name') || query.includes('name')) {
-        response = `Your workspace brand name is currently set to "${profile.companyName || 'Antigravity'}". You can update this brand name at any time by navigating to "Company Settings" under the Settings tab.`;
+        const activeCompName = profile.companyName || (() => {
+          try {
+            const activeTenant = JSON.parse(localStorage.getItem('itlc_active_tenant') || '{}');
+            return activeTenant.name || activeTenant.companyName || '';
+          } catch(e) { return ''; }
+        })() || 'Company';
+        response = `Your workspace brand name is currently set to "${activeCompName}". You can update this brand name at any time by navigating to "Company Settings" under the Settings tab.`;
       }
       else {
         const matchedEmp = employees.find(emp => query.includes(emp.name.toLowerCase()) || emp.name.toLowerCase().split(' ').some(w => w.length > 2 && query.includes(w)));

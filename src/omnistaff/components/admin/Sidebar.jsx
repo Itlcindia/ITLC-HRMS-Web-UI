@@ -252,6 +252,12 @@ export default function Sidebar({
   };
 
   const hasValidLogo = companyLogo && (companyLogo.startsWith('data:image/') || companyLogo.startsWith('http://') || companyLogo.startsWith('https://'));
+  const effectiveCompanyName = companyName || (() => {
+    try {
+      const t = JSON.parse(localStorage.getItem('itlc_active_tenant') || '{}');
+      return t.name || t.companyName || '';
+    } catch(e) { return ''; }
+  })() || 'Company';
 
   return (
     <aside
@@ -290,11 +296,11 @@ export default function Sidebar({
               {hasValidLogo ? (
                 <img src={companyLogo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               ) : (
-                companyName ? companyName[0].toUpperCase() : 'A'
+                effectiveCompanyName ? effectiveCompanyName[0].toUpperCase() : 'C'
               )}
             </div>
             <div>
-              <span style={{ fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.02em', background: 'linear-gradient(90deg, #0F172A 0%, #475569 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{companyName || 'Antigravity'}</span>
+              <span style={{ fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.02em', background: 'linear-gradient(90deg, #0F172A 0%, #475569 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{effectiveCompanyName}</span>
               <div style={{ fontSize: 9, color: 'var(--color-accent)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: -2 }}>HRMS Enterprise</div>
             </div>
           </motion.div>
