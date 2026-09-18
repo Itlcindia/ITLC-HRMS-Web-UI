@@ -48,6 +48,8 @@ const getFooterColumns = (onOpenSuperowner?: () => void) => [
       { label: 'About ITLC India', href: '/' },
       { label: 'Workspaces Central Hub', href: '/workspaces' },
       { label: 'Contact Support', href: 'mailto:support@itlcindia.com' },
+      { label: 'Contact Us', href: 'https://itlcindia.com/contact' },
+      { label: 'About Us', href: 'https://itlcindia.com/about' },
       ...(onOpenSuperowner ? [{ label: '⚡ Super Owner Portal', onClick: onOpenSuperowner }] : [])
     ]
   },
@@ -80,6 +82,9 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({
       return;
     }
     if (!href) return;
+    if (href.startsWith('http') || href.startsWith('mailto:')) {
+      return;
+    }
     if (onNavigate) {
       if (href === '/' || href === '/home') {
         e.preventDefault();
@@ -139,6 +144,8 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({
                     ) : (
                       <a
                         href={link.href}
+                        target={link.href.startsWith('http') ? '_blank' : undefined}
+                        rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
                         onClick={(e) => handleLinkClick(e, link.href)}
                       >
                         {link.label}
