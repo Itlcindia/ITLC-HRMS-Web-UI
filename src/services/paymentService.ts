@@ -205,7 +205,11 @@ export const paymentService = {
             await this.verifyPayment({
               orderId: response.razorpay_order_id || order.id,
               paymentId: response.razorpay_payment_id,
-              signature: response.razorpay_signature
+              signature: response.razorpay_signature,
+              planId: params.planId,
+              companyName: params.companyName,
+              amount: params.amount,
+              currency: params.currency
             });
           } catch (e) {
             console.warn('Payment verification log warning:', e);
@@ -232,7 +236,7 @@ export const paymentService = {
   },
 
   // 3. Verify Payment
-  async verifyPayment(data: { orderId: string; paymentId: string; signature?: string }) {
+  async verifyPayment(data: { orderId: string; paymentId: string; signature?: string; planId?: string; companyName?: string; companyId?: string; amount?: number; currency?: string }) {
     try {
       const res = await fetch(`${API_URL}/payments/verify`, {
         method: 'POST',
@@ -240,7 +244,8 @@ export const paymentService = {
         body: JSON.stringify({
           razorpay_order_id: data.orderId,
           razorpay_payment_id: data.paymentId,
-          razorpay_signature: data.signature
+          razorpay_signature: data.signature,
+          ...data
         })
       });
       return await res.json();
