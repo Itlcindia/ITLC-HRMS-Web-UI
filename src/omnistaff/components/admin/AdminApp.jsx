@@ -138,10 +138,10 @@ export default function App({ onLogout, loggedInEmail, onSwitchToCRM }) {
         const comp = await api.getAdminCompany();
         const normalizedComp = comp ? {
           ...comp,
-          subscriptionStatus: comp.subscriptionStatus || comp.status || 'active',
-          subscriptionPlanId: comp.subscriptionPlanId || comp.planId || comp.plan || 'demo',
-          planId: comp.subscriptionPlanId || comp.planId || comp.plan || 'demo',
-          plan: comp.subscriptionPlanId || comp.planId || comp.plan || 'demo'
+          subscriptionStatus: comp.subscriptionStatus || (comp.paidAt || comp.lastPayment || comp.transactionId ? 'active' : 'unpaid'),
+          subscriptionPlanId: comp.subscriptionPlanId || comp.planId || comp.plan || 'starter',
+          planId: comp.subscriptionPlanId || comp.planId || comp.plan || 'starter',
+          plan: comp.subscriptionPlanId || comp.planId || comp.plan || 'starter'
         } : comp;
         setCompany(normalizedComp);
         try {
@@ -406,7 +406,10 @@ export default function App({ onLogout, loggedInEmail, onSwitchToCRM }) {
 
   const isSubscriptionActive = Boolean(
     company &&
-    (company.subscriptionStatus === 'active' || company.status === 'active') &&
+    company.subscriptionStatus === 'active' &&
+    company.status !== 'suspended' &&
+    company.status !== 'deleted' &&
+    company.status !== 'expired' &&
     (company.subscriptionPlanId || company.planId || company.plan) &&
     (company.subscriptionPlanId !== 'none' && company.planId !== 'none' && company.plan !== 'none') &&
     (company.subscriptionPlanId !== 'unselected' && company.planId !== 'unselected')
@@ -692,7 +695,7 @@ export default function App({ onLogout, loggedInEmail, onSwitchToCRM }) {
         return;
       }
 
-      let activeKey = 'rzp_live_Tb2olLw1YkeJRm';
+      let activeKey = import.meta.env?.VITE_RAZORPAY_KEY_ID || 'rzp_live_TZtOW3aeVNZT0s';
       try {
         const s = localStorage.getItem('hrms_global_settings');
         if (s) {
@@ -701,15 +704,26 @@ export default function App({ onLogout, loggedInEmail, onSwitchToCRM }) {
         }
       } catch {}
 
+      const payerEmail = (company?.adminEmail || company?.email || loggedInEmail || profile?.email || '').trim();
+      const rawPhone = String(company?.phone || company?.adminPhone || profile?.phone || profile?.contact || '').trim();
+      const payerPhone = rawPhone.replace(/[^0-9+]/g, '');
+      const payerName = (company?.adminName || profile?.name || company?.name || company?.companyName || "Company Admin").trim();
+      const companyTitle = company?.companyName || company?.name || profile?.companyName || "ITLC HRMS Workspace";
+
       let orderId = undefined;
       try {
         const orderRes = await api.createRazorpayOrder({
           amount: Math.max(1, price),
-          currency: selectedCurrency === 'INR' ? 'INR' : 'USD'
+          currency: selectedCurrency === 'INR' ? 'INR' : 'USD',
+          planId: plan.id,
+          companyName: companyTitle,
+          customerEmail: payerEmail,
+          customerPhone: payerPhone,
+          customerName: payerName
         });
         if (orderRes && orderRes.success) {
           if (orderRes.key) activeKey = orderRes.key;
-          if (orderRes.orderId && !orderRes.orderId.includes('mock') && !orderRes.orderId.includes('order_local_')) {
+          if (orderRes.orderId && typeof orderRes.orderId === 'string' && orderRes.orderId.startsWith('order_') && !orderRes.orderId.includes('mock') && !orderRes.orderId.includes('order_local_')) {
             orderId = orderRes.orderId;
           }
         }
@@ -721,9 +735,9 @@ export default function App({ onLogout, loggedInEmail, onSwitchToCRM }) {
         key: activeKey,
         amount: Math.max(1, price) * 100,
         currency: selectedCurrency === 'INR' ? 'INR' : 'USD',
-        name: profile.companyName || "ITLC HRMS Workspace",
+        name: companyTitle,
         description: `Subscription: ${plan.name}`,
-        order_id: orderId,
+        ...(orderId ? { order_id: orderId } : {}),
         handler: async function (response) {
           try {
             const compId = company?.id || company?.tenantId || profile?.companyId;
@@ -819,8 +833,9 @@ export default function App({ onLogout, loggedInEmail, onSwitchToCRM }) {
           }
         },
         prefill: {
-          name: profile.name,
-          email: loggedInEmail || profile.email || ''
+          name: payerName,
+          email: payerEmail,
+          contact: payerPhone
         },
         theme: {
           color: "#4F46E5"

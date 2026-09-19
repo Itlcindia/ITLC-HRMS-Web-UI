@@ -18,7 +18,6 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { api } from '../services/api';
-import { initialSeedTenants, getLiveSubscriptionPlans, type TenantCompany } from '../types/multiTenant';
 
 interface SecureAuthModalProps {
   isOpen: boolean;
@@ -50,138 +49,6 @@ export const SecureAuthModal: React.FC<SecureAuthModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [subscriptionBlocked, setSubscriptionBlocked] = useState(false);
-
-  // Helper to get all live tenant companies with active subscriptions
-  const getRegisteredTenants = (): TenantCompany[] => {
-    let deletedIds = new Set<string>();
-    try {
-      const deletedIdsRaw = localStorage.getItem('hrms_deleted_company_ids');
-      if (deletedIdsRaw) {
-        const parsed = JSON.parse(deletedIdsRaw);
-        if (Array.isArray(parsed)) {
-          parsed.forEach((x: any) => {
-            if (typeof x === 'string') deletedIds.add(x.toLowerCase().trim());
-            else if (x?.id) deletedIds.add(String(x.id).toLowerCase().trim());
-            if (x?.email) deletedIds.add(String(x.email).toLowerCase().trim());
-          });
-        }
-      }
-    } catch {}
-
-    let list: TenantCompany[] = [];
-    try {
-      const saved = localStorage.getItem('itlc_multi_tenants') || localStorage.getItem('multi_tenants_data') || localStorage.getItem('tenants');
-      if (saved !== null) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          list = parsed.filter((t: any) => 
-            t && t.id && 
-            !deletedIds.has(String(t.id).toLowerCase().trim()) && 
-            !deletedIds.has(String(t.adminEmail || '').toLowerCase().trim()) && 
-            !deletedIds.has(String(t.email || '').toLowerCase().trim()) && 
-            t.status !== 'deleted'
-          );
-        }
-      }
-    } catch {}
-
-    if (list.length === 0 && Array.isArray(initialSeedTenants)) {
-      list = initialSeedTenants.filter((t: any) => 
-        t && t.id && 
-        !deletedIds.has(String(t.id).toLowerCase().trim()) && 
-        !deletedIds.has(String(t.adminEmail || '').toLowerCase().trim()) && 
-        !deletedIds.has(String(t.email || '').toLowerCase().trim()) && 
-        t.status !== 'deleted'
-      );
-    }
-
-    // Also include from itlc_registered_users
-    try {
-      const regUsers = localStorage.getItem('itlc_registered_users');
-      if (regUsers) {
-        const parsedUsers = JSON.parse(regUsers);
-        if (Array.isArray(parsedUsers)) {
-          parsedUsers.forEach((u: any) => {
-            const uCompId = String(u.companyId || '').toLowerCase().trim();
-            const uEmail = String(u.email || '').toLowerCase().trim();
-            if (u.companyId && !deletedIds.has(uCompId) && !deletedIds.has(uEmail) && u.status !== 'deleted' && !list.some(t => t.id === u.companyId || t.adminEmail?.toLowerCase() === uEmail)) {
-              list.push({
-                id: u.companyId,
-                name: u.companyName || u.name || 'Enterprise Workspace',
-                domain: (u.companyName || 'workspace').toLowerCase().replace(/[^a-z0-9]/g, ''),
-                industry: 'IT & Enterprise Services',
-                adminName: u.name || 'Company Admin',
-                adminEmail: u.email || 'admin@workspace.com',
-                adminPhone: u.phone || '+91 95323 41000',
-                password: u.password || u.adminPassword || 'Admin@123',
-                adminPassword: u.password || u.adminPassword || 'Admin@123',
-                planId: u.planId || 'growth',
-                suites: ['crm', 'hrms'],
-                status: 'active',
-                onboardDate: '2026-09-01',
-                renewalDate: '2026-10-01',
-                billingCycle: 'monthly',
-                mrrAmount: 1999,
-                userSeatLimit: 50,
-                activeUsersCount: 10,
-                features: {
-                  crmKanban: true, crmGstInvoicing: true, crmGpsFieldTracking: true,
-                  crmAiCopilot: true, crmWhatsAppBroadcast: true, crmReports: true,
-                  hrmsBiometricRadar: true, hrmsGeofenceAttendance: true, hrmsPayrollPayslips: true,
-                  hrmsShiftLeaveManagement: true, hrmsAssetTraining: true, apiWebhooks: true,
-                  customDomain: true, prioritySlaSupport: true
-                }
-              } as any);
-            }
-          });
-        }
-      }
-    } catch {}
-
-    // Also include from hrms_companies_data
-    try {
-      const compsRaw = localStorage.getItem('hrms_companies_data');
-      if (compsRaw) {
-        const parsedComps = JSON.parse(compsRaw);
-        if (Array.isArray(parsedComps)) {
-          parsedComps.forEach((c: any) => {
-            if (c.id && (!deletedIds.has(c.id) || c.status === 'active' || c.status === 'trial') && !list.some(t => t.id === c.id || t.adminEmail?.toLowerCase() === c.email?.toLowerCase())) {
-              list.push({
-                id: c.id,
-                name: c.name,
-                domain: (c.name || 'company').toLowerCase().replace(/[^a-z0-9]/g, ''),
-                industry: 'General Enterprise',
-                adminName: c.ownerName || c.name,
-                adminEmail: c.email || c.adminEmail,
-                adminPhone: c.phone || '+91 98765 43210',
-                password: c.password || c.adminPassword || 'Admin@123',
-                adminPassword: c.password || c.adminPassword || 'Admin@123',
-                planId: c.subscriptionPlanId || 'growth',
-                suites: ['crm', 'hrms'],
-                status: c.status || 'active',
-                onboardDate: c.createdDate || new Date().toISOString().split('T')[0],
-                renewalDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
-                billingCycle: 'monthly',
-                mrrAmount: 999,
-                userSeatLimit: c.maxEmployees || c.employeesCount || 50,
-                activeUsersCount: 1,
-                storageLimitGb: c.storageLimit || 50,
-                features: {
-                  crmKanban: true, crmGstInvoicing: true, crmGpsFieldTracking: true,
-                  crmAiCopilot: true, crmWhatsAppBroadcast: true, crmReports: true,
-                  hrmsBiometricRadar: true, hrmsGeofenceAttendance: true, hrmsPayrollPayslips: true,
-                  hrmsShiftLeaveManagement: true, hrmsAssetTraining: true, apiWebhooks: true,
-                  customDomain: true, prioritySlaSupport: true
-                }
-              } as any);
-            }
-          });
-        }
-      }
-    } catch {}
-
-    return list;
-  };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -233,91 +100,12 @@ export const SecureAuthModal: React.FC<SecureAuthModalProps> = ({
       }
     }
 
-    // 2. Strict Subscription Verification Engine
-    const allTenants = getRegisteredTenants();
-    
-    // Check if user is registered in itlc_registered_users
-    let registeredUser: any = null;
+    // 2. Direct Authentication via Backend API
     try {
-      const regUsers = localStorage.getItem('itlc_registered_users');
-      if (regUsers) {
-        const parsedUsers = JSON.parse(regUsers);
-        if (Array.isArray(parsedUsers)) {
-          registeredUser = parsedUsers.find((u: any) => u.email?.toLowerCase().trim() === cleanEmail);
-        }
-      }
-    } catch {}
-
-    // Check if email matches any tenant admin or employee domain
-    const cleanDomainSlug = cleanEmail.includes('@') ? cleanEmail.split('@')[1].split('.')[0] : cleanEmail;
-    const matchingTenant = allTenants.find(t => 
-      t.adminEmail?.toLowerCase().trim() === cleanEmail ||
-      (t as any).email?.toLowerCase().trim() === cleanEmail ||
-      (t as any).ownerEmail?.toLowerCase().trim() === cleanEmail ||
-      (t as any).companyEmail?.toLowerCase().trim() === cleanEmail ||
-      (registeredUser && registeredUser.companyId && t.id === registeredUser.companyId) ||
-      (t.id && t.id.toLowerCase() === cleanEmail) ||
-      (t.name && t.name.toLowerCase().trim() === cleanEmail) ||
-      (t.domain && (
-        cleanEmail === t.domain.toLowerCase() ||
-        cleanDomainSlug === t.domain.toLowerCase() ||
-        cleanEmail.endsWith(`@${t.domain.toLowerCase()}.com`) || 
-        cleanEmail.endsWith(`@${t.domain.toLowerCase()}.in`) || 
-        cleanEmail.endsWith(`@${t.domain.toLowerCase()}`)
-      ))
-    );
-
-    // Check crm registered users
-    let isRegisteredCrmUser = false;
-    try {
-      const savedUsers = localStorage.getItem('crm_users');
-      if (savedUsers) {
-        const parsedUsers = JSON.parse(savedUsers);
-        if (Array.isArray(parsedUsers)) {
-          isRegisteredCrmUser = parsedUsers.some((u: any) => u.email?.toLowerCase() === cleanEmail);
-        }
-      }
-    } catch {}
-
-    // IF NOT A SUBSCRIBED COMPANY / USER -> BLOCK LOGIN!
-    if (!matchingTenant && !registeredUser && !isRegisteredCrmUser) {
-      setTimeout(() => {
-        setIsLoading(false);
-        setSubscriptionBlocked(true);
-        setErrorMessage('Access Restricted: No active corporate subscription found for this account. Please subscribe to a plan to activate and access your workspace.');
-      }, 500);
-      return;
-    }
-
-    // Verify Password if registered user has specific password
-    if (registeredUser && registeredUser.password) {
-      const uPass = String(registeredUser.password).trim();
-      const isPassOk = password === uPass || password.toLowerCase() === uPass.toLowerCase();
-      if (!isPassOk) {
-        setTimeout(() => {
-          setIsLoading(false);
-          setErrorMessage('❌ Invalid email or password. Access Denied.');
-        }, 400);
-        return;
-      }
-    }
-
-    // If company exists, check if subscription is active
-    if (matchingTenant && (matchingTenant.status === 'expired' || matchingTenant.status === 'suspended')) {
-      setTimeout(() => {
-        setIsLoading(false);
-        setSubscriptionBlocked(true);
-        setErrorMessage(`Subscription Expired: The corporate subscription for "${matchingTenant.name}" has expired. Please renew your plan to log in.`);
-      }, 500);
-      return;
-    }
-
-    // 3. Login through api.login
-    try {
-      const result = await api.login({ email: email.trim(), password: password.trim() });
+      const result = await api.login({ email: cleanEmail, password: password.trim() });
       const userObj = (result as any)?.user || result;
-      if (userObj && (userObj.token || userObj.email)) {
-        const token = userObj.token || `token-${Date.now()}`;
+      if (userObj && (userObj.token || userObj.email || (result as any)?.token)) {
+        const token = (result as any)?.token || userObj.token || `token-${Date.now()}`;
         localStorage.setItem('hrms_jwt_token', token);
 
         const isSuper = cleanEmail === 'priyanshupushkar263@gmail.com';
@@ -344,17 +132,44 @@ export const SecureAuthModal: React.FC<SecureAuthModalProps> = ({
           return;
         }
 
+        // Sync local storage so subsequent client reads have this updated user
+        try {
+          const regUsersRaw = localStorage.getItem('itlc_registered_users');
+          const regList = regUsersRaw ? JSON.parse(regUsersRaw) : [];
+          const idx = regList.findIndex((u: any) => u.email?.toLowerCase().trim() === cleanEmail);
+          const uEntry = {
+            id: userObj.id || Date.now(),
+            email: userObj.email || email.trim(),
+            password: password.trim(),
+            name: userObj.name || userObj.fullName || 'Authorized User',
+            role: userObj.role || 'Company Admin',
+            companyId: userObj.companyId || userObj.tenantId,
+            companyName: userObj.companyName || (result as any)?.company?.name || 'Enterprise Workspace',
+            status: 'active'
+          };
+          if (idx >= 0) regList[idx] = { ...regList[idx], ...uEntry };
+          else regList.unshift(uEntry);
+          localStorage.setItem('itlc_registered_users', JSON.stringify(regList));
+        } catch {}
+
         localStorage.setItem('hrms_user_profile', JSON.stringify(userObj));
         localStorage.setItem('crm_auth_session', 'true');
         sessionStorage.setItem('crm_auth_session', 'true');
 
+        if ((result as any)?.company || (result as any)?.tenant) {
+          try {
+            const comp = (result as any)?.company || (result as any)?.tenant;
+            localStorage.setItem('itlc_active_tenant', JSON.stringify(comp));
+          } catch {}
+        }
+
         setIsLoading(false);
         onSuccess({
           id: userObj.id || 1,
-          name: userObj.fullName || userObj.name || (matchingTenant?.adminName || registeredUser?.name || 'Authorized User'),
+          name: userObj.fullName || userObj.name || 'Authorized User',
           email: userObj.email || email.trim(),
           role: userObj.role || 'Company Admin',
-          companyName: userObj.companyName || userObj.companyDetails?.name || matchingTenant?.name || registeredUser?.companyName || 'Enterprise Workspace',
+          companyName: userObj.companyName || userObj.companyDetails?.name || (result as any)?.company?.name || 'Enterprise Workspace',
           avatar: (userObj.name || userObj.fullName || 'AU').slice(0, 2).toUpperCase()
         });
         return;
@@ -364,7 +179,7 @@ export const SecureAuthModal: React.FC<SecureAuthModalProps> = ({
       setErrorMessage('❌ Invalid email or password. Access Denied.');
     } catch (err: any) {
       setIsLoading(false);
-      if (err.message && (err.message.includes('Subscription') || err.message.includes('Restricted'))) {
+      if (err.message && (err.message.includes('Subscription') || err.message.includes('Restricted') || err.message.includes('Revoked') || err.message.includes('expired'))) {
         setSubscriptionBlocked(true);
       }
       setErrorMessage(err.message || '❌ Invalid email or password. Access Denied.');

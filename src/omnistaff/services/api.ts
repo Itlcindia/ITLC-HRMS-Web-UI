@@ -376,6 +376,9 @@ export const api = {
     const resolvedSeats = Number(data.userSeatLimit || data.maxEmployees || data.seatLimit || data.employeesCount || planDef?.seatLimit || (planKeyLower.includes('demo') || planKeyLower.includes('trial') ? 10 : planKeyLower.includes('premium') || planKeyLower.includes('enterprise') ? 100 : 50));
     const resolvedStorage = Number(data.storageLimitGb || data.storageLimit || planDef?.storageLimitGb || (planKeyLower.includes('demo') || planKeyLower.includes('trial') ? 10 : planKeyLower.includes('premium') || planKeyLower.includes('enterprise') ? 100 : 50));
 
+    const isPaidRegistration = Boolean(data.subscriptionStatus === 'active' || data.paidAt || data.transactionId);
+    const regSubStatus = isPaidRegistration ? 'active' : 'unpaid';
+
     // 1. Sync multi-tenant registry
     syncCompanySubscriptionChange({
       companyId: randomId,
@@ -385,6 +388,7 @@ export const api = {
       adminPassword: password,
       planId: planId,
       status: 'active',
+      subscriptionStatus: regSubStatus,
       billingCycle: data.billingCycle || 'monthly',
       maxSeats: resolvedSeats,
       storageLimitGb: resolvedStorage,
@@ -430,6 +434,7 @@ export const api = {
         planId: planId,
         suites: ['crm', 'hrms'],
         status: 'active',
+        subscriptionStatus: regSubStatus,
         onboardDate: new Date().toISOString().split('T')[0],
         renewalDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
         billingCycle: data.billingCycle || 'monthly',
@@ -474,6 +479,7 @@ export const api = {
         subscriptionPlanId: planId,
         storageUsed: 1.0,
         status: 'active',
+        subscriptionStatus: regSubStatus,
         password: password,
         adminPassword: password,
         createdDate: new Date().toISOString().split('T')[0]
@@ -540,11 +546,12 @@ export const api = {
       companyName: compName,
       companyLogo: '/itlc_logo.png',
       subscriptionPlanId: planId,
-      subscriptionStatus: 'active',
+      subscriptionStatus: regSubStatus,
       companyDetails: {
         id: randomId,
         name: compName,
         status: 'active',
+        subscriptionStatus: regSubStatus,
         themeColor: '#4f46e5',
         modulesEnabled: {
           dashboard: true, attendance: true, leave: true, payroll: true,
@@ -575,7 +582,8 @@ export const api = {
           phone: data.companyPhone || data.phone || '',
           userSeatLimit: resolvedSeats,
           maxEmployees: resolvedSeats,
-          storageLimitGb: resolvedStorage
+          storageLimitGb: resolvedStorage,
+          subscriptionStatus: regSubStatus
         })
       }, 5000);
       const resData = await handleResponse(res);
@@ -3819,8 +3827,8 @@ export const api = {
       razorpayEnabled: true,
       paypalEnabled: true,
       stripeSecretKey: '',
-      razorpayKeyId: 'rzp_live_Tb2olLw1YkeJRm',
-      razorpaySecret: 'giWCJ9bxC3NcUSfvQvr5dp2i',
+      razorpayKeyId: 'rzp_live_TZtOW3aeVNZT0s',
+      razorpaySecret: '6rG2BpqWUfYt7Buiz492jNCl',
       realUpiId: 'itlc@upi'
     };
   },
@@ -6090,10 +6098,12 @@ export const api = {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(data)
-      }, 2500);
+      }, 10000);
       const resData = await handleResponse(res);
-      if (resData && (resData.orderId || resData.id)) return resData;
-    } catch {}
+      if (resData && (resData.orderId || resData.id || resData.order)) return resData;
+    } catch (e) {
+      console.warn("Backend createRazorpayOrder call failed, using client checkout:", e);
+    }
 
     let liveKey = '';
     try {
@@ -6124,7 +6134,7 @@ export const api = {
     return {
       success: true,
       key: liveKey,
-      orderId: `order_local_${Date.now()}`,
+      orderId: null, // Omit orderId in fallback to allow Razorpay direct client checkout
       amount: amountInPaise,
       currency: data.currency || 'INR'
     };
