@@ -31,15 +31,20 @@ export const IntegrationsTab: React.FC = () => {
   React.useEffect(() => {
     const fetchData = async () => {
       try {
-        const [ints, whs, apiTokenData] = await Promise.all([
+        const [ints, whs, apiTokenData, globalSettings] = await Promise.all([
           api.getIntegrations(),
           api.getWebhooks(),
-          api.getApiToken()
+          api.getApiToken(),
+          api.getGlobalSettings().catch(() => null)
         ]);
         setIntegrations(ints || []);
         setWebhooks(whs || []);
         if (apiTokenData && apiTokenData.token) {
           setApiKey(apiTokenData.token);
+        }
+        if (globalSettings) {
+          if (globalSettings.razorpayKeyId) setRzpKeyId(globalSettings.razorpayKeyId);
+          if (globalSettings.razorpaySecret) setRzpKeySecret(globalSettings.razorpaySecret);
         }
       } catch (e) {
         addToast('Failed to load integrations', 'error');
@@ -121,21 +126,21 @@ export const IntegrationsTab: React.FC = () => {
   // Razorpay Gateway Config State
   const [rzpKeyId, setRzpKeyId] = useState(() => {
     try {
-      const saved = localStorage.getItem('razorpay_config');
-      if (saved && JSON.parse(saved).keyId) return JSON.parse(saved).keyId;
       const g = localStorage.getItem('hrms_global_settings');
       if (g && JSON.parse(g).razorpayKeyId) return JSON.parse(g).razorpayKeyId;
+      const saved = localStorage.getItem('razorpay_config');
+      if (saved && JSON.parse(saved).keyId) return JSON.parse(saved).keyId;
     } catch {}
-    return 'rzp_live_Tb2olLw1YkeJRm';
+    return '';
   });
   const [rzpKeySecret, setRzpKeySecret] = useState(() => {
     try {
-      const saved = localStorage.getItem('razorpay_config');
-      if (saved && JSON.parse(saved).keySecret) return JSON.parse(saved).keySecret;
       const g = localStorage.getItem('hrms_global_settings');
       if (g && JSON.parse(g).razorpaySecret) return JSON.parse(g).razorpaySecret;
+      const saved = localStorage.getItem('razorpay_config');
+      if (saved && JSON.parse(saved).keySecret) return JSON.parse(saved).keySecret;
     } catch {}
-    return 'giWCJ9bxC3NcUSfvQvr5dp2i';
+    return '';
   });
   const [rzpMode, setRzpMode] = useState<'live' | 'test'>('live');
   const [rzpShowSecret, setRzpShowSecret] = useState(false);

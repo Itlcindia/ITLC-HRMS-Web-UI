@@ -98,7 +98,7 @@ export const CompanyRegisterPage: React.FC<CompanyRegisterPageProps> = ({
 
   const taxConfig = getLiveSuperOwnerTaxConfig();
 
-  const getPlatformUpiId = (): string => {
+  const [platformUpi, setPlatformUpi] = useState<string>(() => {
     try {
       const saved = localStorage.getItem('hrms_global_settings');
       if (saved) {
@@ -107,7 +107,19 @@ export const CompanyRegisterPage: React.FC<CompanyRegisterPageProps> = ({
       }
     } catch {}
     return 'itlc@upi';
+  });
+
+  const getPlatformUpiId = (): string => {
+    return platformUpi;
   };
+
+  useEffect(() => {
+    api.getGlobalSettings().then((gs: any) => {
+      if (gs && gs.realUpiId && gs.realUpiId.trim()) {
+        setPlatformUpi(gs.realUpiId.trim());
+      }
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (initialPlanId) {
@@ -2004,13 +2016,14 @@ export const CompanyRegisterPage: React.FC<CompanyRegisterPageProps> = ({
               }}
             >
               <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data=${encodeURIComponent(`upi://pay?pa=${getPlatformUpiId()}&pn=ITLC%20INDIA&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('Plan ' + currentPlan.name + ' ' + companyName)}`)}`} 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=4&format=svg&data=${encodeURIComponent(`upi://pay?pa=${getPlatformUpiId()}&pn=ITLC%20INDIA&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('Plan ' + currentPlan.name + ' ' + companyName)}`)}`} 
                 alt="UPI QR Code"
                 style={{
-                  width: '200px',
-                  height: '200px',
+                  width: '220px',
+                  height: '220px',
                   display: 'block',
-                  borderRadius: '10px'
+                  imageRendering: 'pixelated',
+                  background: '#ffffff'
                 }}
               />
             </div>

@@ -164,17 +164,19 @@ export default function Subscription({ onSubscriptionUpdate }) {
           currency: currency
         });
 
-        // Dynamic Key from SuperOwner settings, razorpay_config or fallback
-        let activeKey = result?.key || '';
-        try {
-          const s = localStorage.getItem('hrms_global_settings');
-          if (s) {
-            const parsed = JSON.parse(s);
-            if (parsed.razorpayKeyId && parsed.razorpayKeyId.trim()) {
-              activeKey = parsed.razorpayKeyId.trim();
+        // Dynamic Key strictly from SuperOwner settings via backend order or saved config
+        let activeKey = (result?.key && result.key.trim()) ? result.key.trim() : '';
+        if (!activeKey) {
+          try {
+            const s = localStorage.getItem('hrms_global_settings');
+            if (s) {
+              const parsed = JSON.parse(s);
+              if (parsed.razorpayKeyId && parsed.razorpayKeyId.trim()) {
+                activeKey = parsed.razorpayKeyId.trim();
+              }
             }
-          }
-        } catch {}
+          } catch {}
+        }
         if (!activeKey) {
           try {
             const c = localStorage.getItem('razorpay_config');
@@ -187,7 +189,13 @@ export default function Subscription({ onSubscriptionUpdate }) {
           } catch {}
         }
         if (!activeKey) {
-          activeKey = import.meta.env?.VITE_RAZORPAY_KEY_ID || 'rzp_live_TZtOW3aeVNZT0s';
+          activeKey = (import.meta.env?.VITE_RAZORPAY_KEY_ID || '').trim();
+        }
+
+        if (!activeKey) {
+          alert("Payment Gateway Error: Razorpay API Key ID is not configured by the Super Owner in the Settings panel yet.");
+          setIsProcessing(false);
+          return;
         }
 
         const compPhone = company?.adminPhone || company?.phone || profile?.phone || profile?.adminPhone || '';
@@ -217,7 +225,12 @@ export default function Subscription({ onSubscriptionUpdate }) {
             email: compEmail,
             contact: cleanContact
           },
-          theme: { color: '#4f46e5' }
+          theme: { color: '#4f46e5' },
+          modal: {
+            ondismiss: function () {
+              setIsModalOpen(true);
+            }
+          }
         };
 
         if (typeof window.Razorpay === 'undefined') {
@@ -225,8 +238,11 @@ export default function Subscription({ onSubscriptionUpdate }) {
           setIsProcessing(false);
           return;
         }
+        // Temporarily close blur modal before opening checkout to prevent backdrop filter from blurring Razorpay iframe/QR code
+        setIsModalOpen(false);
         const rzp = new window.Razorpay(options);
         rzp.on('payment.failed', function (resp) {
+          setIsModalOpen(true);
           alert(`Payment failed: ${resp.error?.description || 'Transaction was declined.'}`);
           setIsProcessing(false);
         });

@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@700;800&family=Space+Grotesk:wght@600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@700;800&family=Space+Grotesk:wght@600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -11611,3 +11611,25 @@ input:checked + .slider:before {
     flex-direction: column !important;
   }
 }
+
+/* ==========================================================================
+   ULTRA-SHARP QR CODE & RAZORPAY CHECKOUT OVERRIDES (ZERO BLUR)
+   ========================================================================== */
+.razorpay-checkout-frame,
+iframe[name^="razorpay"],
+.razorpay-container,
+.razorpay-container iframe,
+.upi-qr-image,
+.invoice-upi-qr-img,
+img[alt*="QR"],
+img[src*="create-qr-code"],
+img[src*="qr"] {
+  image-rendering: -webkit-optimize-contrast !important;
+  image-rendering: crisp-edges !important;
+  image-rendering: pixelated !important;
+  transform: translateZ(0) !important;
+  backface-visibility: hidden !important;
+  filter: none !important;
+  -webkit-font-smoothing: antialiased !important;
+}
+

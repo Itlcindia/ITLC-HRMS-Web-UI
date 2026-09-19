@@ -21,8 +21,14 @@ if ($amountInPaise < 100) {
 $currency = isset($input['currency']) && !empty($input['currency']) ? $input['currency'] : 'INR';
 $receipt = 'rcpt_' . time() . '_' . rand(1000, 9999);
 
-$keyId = getenv('RAZORPAY_KEY_ID') ?: 'rzp_live_TZtOW3aeVNZT0s';
-$keySecret = getenv('RAZORPAY_KEY_SECRET') ?: '6rG2BpqWUfYt7Buiz492jNCl';
+$keyId = getenv('RAZORPAY_KEY_ID') ?: '';
+$keySecret = getenv('RAZORPAY_KEY_SECRET') ?: '';
+
+if (empty($keyId) || empty($keySecret)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Razorpay credentials not configured in environment']);
+    exit();
+}
 
 $payload = json_encode([
     'amount' => $amountInPaise,
