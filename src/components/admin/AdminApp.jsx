@@ -700,21 +700,13 @@ export default function App({ onLogout, loggedInEmail }) {
         return;
       }
 
-      let activeKey = import.meta.env?.VITE_RAZORPAY_KEY_ID || 'rzp_live_TZtOW3aeVNZT0s';
-      try {
-        const s = localStorage.getItem('hrms_global_settings');
-        if (s) {
-          const parsed = JSON.parse(s);
-          if (parsed.razorpayKeyId && parsed.razorpayKeyId.trim()) activeKey = parsed.razorpayKeyId.trim();
-        }
-      } catch {}
-
       const payerEmail = (company?.adminEmail || company?.email || loggedInEmail || profile?.email || '').trim();
       const rawPhone = String(company?.phone || company?.adminPhone || profile?.phone || profile?.contact || '').trim();
       const payerPhone = rawPhone.replace(/[^0-9+]/g, '');
       const payerName = (company?.adminName || profile?.name || company?.name || company?.companyName || "Company Admin").trim();
       const companyTitle = company?.companyName || company?.name || profile?.companyName || "ITLC HRMS Workspace";
 
+      let activeKey = '';
       let orderId = undefined;
       try {
         const orderRes = await api.createRazorpayOrder({
@@ -727,13 +719,42 @@ export default function App({ onLogout, loggedInEmail }) {
           customerName: payerName
         });
         if (orderRes && orderRes.success) {
-          if (orderRes.key) activeKey = orderRes.key;
+          if (orderRes.key && orderRes.key.trim()) {
+            activeKey = orderRes.key.trim();
+          }
           if (orderRes.orderId && typeof orderRes.orderId === 'string' && orderRes.orderId.startsWith('order_') && !orderRes.orderId.includes('mock') && !orderRes.orderId.includes('order_local_')) {
             orderId = orderRes.orderId;
           }
         }
       } catch (e) {
-        console.warn("Could not create server order, proceeding with client checkout", e);
+        console.warn("Could not create server order, checking local settings", e);
+      }
+
+      if (!activeKey) {
+        try {
+          const s = localStorage.getItem('hrms_global_settings');
+          if (s) {
+            const parsed = JSON.parse(s);
+            if (parsed.razorpayKeyId && parsed.razorpayKeyId.trim()) activeKey = parsed.razorpayKeyId.trim();
+          }
+        } catch {}
+      }
+      if (!activeKey) {
+        try {
+          const c = localStorage.getItem('razorpay_config');
+          if (c) {
+            const parsed = JSON.parse(c);
+            if (parsed.keyId && parsed.keyId.trim()) activeKey = parsed.keyId.trim();
+          }
+        } catch {}
+      }
+      if (!activeKey) {
+        activeKey = import.meta.env?.VITE_RAZORPAY_KEY_ID || '';
+      }
+
+      if (!activeKey) {
+        alert("Payment Gateway Error: Razorpay API Key ID is not configured by the Super Owner in the Settings panel yet.");
+        return;
       }
 
       const options = {
@@ -743,6 +764,11 @@ export default function App({ onLogout, loggedInEmail }) {
         name: companyTitle,
         description: `Subscription: ${plan.name}`,
         ...(orderId ? { order_id: orderId } : {}),
+        modal: {
+          ondismiss: function () {
+            setShowSubscriptionModal(true);
+          }
+        },
         handler: async function (response) {
           try {
             const compId = company?.id || company?.tenantId || profile?.companyId;
@@ -847,8 +873,11 @@ export default function App({ onLogout, loggedInEmail }) {
         }
       };
 
+      // Temporarily close blur modal before opening checkout to prevent backdrop filter from blurring Razorpay iframe/QR code
+      setShowSubscriptionModal(false);
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', function (resp) {
+        setShowSubscriptionModal(true);
         alert("Payment Failed: " + (resp.error?.description || "Transaction was cancelled or declined"));
       });
       rzp.open();

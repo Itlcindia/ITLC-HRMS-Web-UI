@@ -128,8 +128,8 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     razorpayEnabled: true,
     paypalEnabled: true,
     stripeSecretKey: '',
-    razorpayKeyId: 'rzp_live_Tb2olLw1YkeJRm',
-    razorpaySecret: 'giWCJ9bxC3NcUSfvQvr5dp2i',
+    razorpayKeyId: '',
+    razorpaySecret: '',
     realUpiId: 'itlc@upi'
   };
 

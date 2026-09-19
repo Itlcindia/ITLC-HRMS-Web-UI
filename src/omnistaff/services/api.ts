@@ -3827,8 +3827,8 @@ export const api = {
       razorpayEnabled: true,
       paypalEnabled: true,
       stripeSecretKey: '',
-      razorpayKeyId: 'rzp_live_TZtOW3aeVNZT0s',
-      razorpaySecret: '6rG2BpqWUfYt7Buiz492jNCl',
+      razorpayKeyId: '',
+      razorpaySecret: '',
       realUpiId: 'itlc@upi'
     };
   },
@@ -6127,7 +6127,7 @@ export const api = {
       } catch {}
     }
     if (!liveKey) {
-      liveKey = (import.meta as any).env?.VITE_RAZORPAY_KEY_ID || (import.meta as any).env?.RAZORPAY_KEY_ID || 'rzp_live_TZtOW3aeVNZT0s';
+      liveKey = (import.meta as any).env?.VITE_RAZORPAY_KEY_ID || (import.meta as any).env?.RAZORPAY_KEY_ID || '';
     }
 
     const amountInPaise = data.amount ? Math.round(data.amount * 100) : 99900;

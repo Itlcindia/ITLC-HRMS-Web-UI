@@ -138,7 +138,9 @@ export const paymentService = {
         } catch {}
       }
       if (!liveRazorpayKey) {
-        liveRazorpayKey = 'rzp_live_TZtOW3aeVNZT0s';
+        alert("Payment Gateway Error: Razorpay API Key ID is not configured by the Super Owner in the Settings panel yet.");
+        if (onDismiss) onDismiss();
+        return;
       }
 
       // Resolve purchasing company details for prefill
