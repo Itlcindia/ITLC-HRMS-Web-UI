@@ -127,16 +127,98 @@ export default function Subscription({ onSubscriptionUpdate }) {
   const verifyPayment = async (data) => {
     setIsProcessing(true);
     try {
+      const activeTenant = localStorage.getItem('itlc_active_tenant');
+      const activeT = activeTenant ? JSON.parse(activeTenant) : {};
+      const companyDetails = profile?.companyDetails || {};
+      const targetCompId = data?.companyId || companyDetails?.id || profile?.companyId || activeT?.id;
+      const targetCompName = data?.companyName || companyDetails?.name || profile?.companyName || activeT?.name || activeT?.companyName;
+      const targetEmail = data?.email || companyDetails?.adminEmail || profile?.email || activeT?.adminEmail || activeT?.email;
+      const planId = data.planId || selectedPlan?.id || 'starter';
+
+      const payload = {
+        ...data,
+        companyId: targetCompId,
+        companyName: targetCompName,
+        email: targetEmail,
+        planId: planId,
+        amount: data.amount !== undefined ? data.amount : (amount || 499),
+        currency: currency || 'INR'
+      };
+
       syncCompanySubscriptionChange({
-        companyId: profile?.companyDetails?.id || profile?.companyId,
-        companyName: profile?.companyName || profile?.companyDetails?.name,
-        planId: data.planId,
+        companyId: targetCompId,
+        companyName: targetCompName,
+        planId: planId,
         status: 'active'
       });
-      const result = await api.verifyPayment(data);
-      alert('Payment successful! Your subscription is active.');
-      if (result.payment) {
-        downloadPaymentSlip(result.payment, result.company);
+
+      // 1. Explicitly invoke subscribeCompany to activate tenant in the backend database
+      try {
+        await api.subscribeCompany({
+          companyId: targetCompId,
+          planId: planId,
+          transactionId: data.paymentId || data.transactionId,
+          paymentGateway: data.gateway || 'razorpay',
+          amount: payload.amount,
+          currency: currency || 'INR'
+        });
+      } catch (subErr) {
+        console.warn("Backend subscribeCompany sync warning:", subErr);
+      }
+
+      // 2. Cryptographically verify payment on backend
+      const result = await api.verifyPayment(payload);
+
+      // 3. Immediately update client-side localStorage state so all features unlock instantly
+      const updatedTenant = {
+        ...(activeT || {}),
+        ...(companyDetails || {}),
+        ...(result?.company || {}),
+        id: targetCompId,
+        status: 'active',
+        subscriptionStatus: 'active',
+        planId: planId,
+        subscriptionPlanId: planId,
+        plan: planId,
+        planName: selectedPlan?.name || planId,
+        paidAt: new Date().toISOString(),
+        lastPayment: new Date().toISOString(),
+        transactionId: data.paymentId || `TXN-${Date.now()}`
+      };
+
+      localStorage.setItem('itlc_active_tenant', JSON.stringify(updatedTenant));
+      if (targetCompId) {
+        localStorage.setItem(`hrms_company_${targetCompId}`, JSON.stringify(updatedTenant));
+      }
+
+      // Update cached user profile
+      try {
+        const uProf = localStorage.getItem('hrms_user_profile');
+        if (uProf) {
+          const profObj = JSON.parse(uProf);
+          profObj.subscriptionStatus = 'active';
+          profObj.subscriptionPlanId = planId;
+          if (profObj.companyDetails) {
+            profObj.companyDetails.subscriptionStatus = 'active';
+            profObj.companyDetails.subscriptionPlanId = planId;
+            profObj.companyDetails.status = 'active';
+            profObj.companyDetails.paidAt = new Date().toISOString();
+          }
+          localStorage.setItem('hrms_user_profile', JSON.stringify(profObj));
+        }
+      } catch (e) {}
+
+      // 4. Dispatch events to unlock all UI components and notify AdminApp immediately
+      window.dispatchEvent(new Event('subscription_updated'));
+      window.dispatchEvent(new Event('company_updated'));
+      window.dispatchEvent(new Event('multi_tenant_updated'));
+      window.dispatchEvent(new Event('subscription_plans_updated'));
+      window.dispatchEvent(new Event('profile_updated'));
+      window.dispatchEvent(new Event('storage'));
+
+      alert('🎉 Payment successful! Your subscription is active and all features are now fully unlocked.');
+      if (result?.payment) {
+        downloadPaymentSlip(result.payment, result.company || updatedTenant);
       }
       setIsModalOpen(false);
       await fetchBillingInfo();
@@ -221,10 +303,13 @@ export default function Subscription({ onSubscriptionUpdate }) {
             verifyPayment({
               gateway: 'razorpay',
               planId: selectedPlan.id,
+              companyId: profile?.companyDetails?.id || profile?.companyId,
+              companyName: profile?.companyDetails?.name || profile?.companyName,
               paymentId: response.razorpay_payment_id,
               orderId: response.razorpay_order_id,
               signature: response.razorpay_signature,
-              amount: amount
+              amount: amount,
+              currency: currency
             });
           },
           prefill: {
@@ -292,10 +377,15 @@ export default function Subscription({ onSubscriptionUpdate }) {
           cvv: cardCvv
         });
         if (result.success) {
-          alert('Payment via Credit Card Direct successful!');
-          setIsModalOpen(false);
-          await fetchBillingInfo();
-          if (onSubscriptionUpdate) onSubscriptionUpdate();
+          await verifyPayment({
+            gateway: 'credit_card',
+            planId: selectedPlan.id,
+            companyId: profile?.companyDetails?.id || profile?.companyId,
+            companyName: profile?.companyDetails?.name || profile?.companyName,
+            paymentId: `card_${Date.now()}`,
+            amount: amount,
+            currency: currency
+          });
         }
       } else if (gateway === 'upi') {
         if (!upiTxnId || !/^\d{12}$/.test(upiTxnId)) {

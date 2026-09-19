@@ -6184,8 +6184,12 @@ export const api = {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(data)
-      }, 2500);
-      return await handleResponse(res);
+      }, 8000);
+      const resJson = await handleResponse(res);
+      if (resJson?.company) {
+        localStorage.setItem('itlc_active_tenant', JSON.stringify(resJson.company));
+      }
+      return resJson;
     } catch {
       return { success: true, verified: true };
     }

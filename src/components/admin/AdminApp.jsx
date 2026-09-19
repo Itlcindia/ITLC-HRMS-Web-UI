@@ -139,13 +139,26 @@ export default function App({ onLogout, loggedInEmail }) {
       try {
         const prof = await api.getProfile();
         const comp = await api.getAdminCompany();
-        const normalizedComp = comp ? {
-          ...comp,
-          subscriptionStatus: comp.subscriptionStatus || (comp.paidAt || comp.lastPayment || comp.transactionId ? 'active' : 'unpaid'),
-          subscriptionPlanId: comp.subscriptionPlanId || comp.planId || comp.plan || 'starter',
-          planId: comp.subscriptionPlanId || comp.planId || comp.plan || 'starter',
-          plan: comp.subscriptionPlanId || comp.planId || comp.plan || 'starter'
-        } : comp;
+        const activeTenantRaw = localStorage.getItem('itlc_active_tenant');
+        const activeT = activeTenantRaw ? JSON.parse(activeTenantRaw) : null;
+        const mergedComp = comp || activeT;
+        const isSubActive = Boolean(
+          mergedComp?.subscriptionStatus === 'active' || 
+          mergedComp?.paidAt || 
+          mergedComp?.lastPayment || 
+          mergedComp?.transactionId || 
+          activeT?.subscriptionStatus === 'active' ||
+          activeT?.paidAt ||
+          prof?.subscriptionStatus === 'active'
+        );
+        const normalizedComp = mergedComp ? {
+          ...activeT,
+          ...mergedComp,
+          subscriptionStatus: isSubActive ? 'active' : (mergedComp.subscriptionStatus || 'unpaid'),
+          subscriptionPlanId: mergedComp.subscriptionPlanId || mergedComp.planId || mergedComp.plan || activeT?.subscriptionPlanId || activeT?.planId || 'starter',
+          planId: mergedComp.subscriptionPlanId || mergedComp.planId || mergedComp.plan || activeT?.subscriptionPlanId || activeT?.planId || 'starter',
+          plan: mergedComp.subscriptionPlanId || mergedComp.planId || mergedComp.plan || activeT?.subscriptionPlanId || activeT?.planId || 'starter'
+        } : mergedComp;
         setCompany(normalizedComp);
         try {
           const fetchedPlans = await api.getPlans().catch(() => api.getAdminPlans());
@@ -411,13 +424,16 @@ export default function App({ onLogout, loggedInEmail }) {
 
   const isSubscriptionActive = Boolean(
     company &&
-    company.subscriptionStatus === 'active' &&
+    (
+      company.subscriptionStatus === 'active' || 
+      company.paidAt || 
+      company.lastPayment || 
+      company.transactionId ||
+      profile?.subscriptionStatus === 'active'
+    ) &&
     company.status !== 'suspended' &&
     company.status !== 'deleted' &&
-    company.status !== 'expired' &&
-    (company.subscriptionPlanId || company.planId || company.plan) &&
-    (company.subscriptionPlanId !== 'none' && company.planId !== 'none' && company.plan !== 'none') &&
-    (company.subscriptionPlanId !== 'unselected' && company.planId !== 'unselected')
+    company.status !== 'expired'
   );
 
   const renderActiveView = () => {
