@@ -288,7 +288,12 @@ export const CompaniesTab: React.FC = () => {
           status: formData.status,
           lat: formData.lat === '' ? null : Number(formData.lat),
           lng: formData.lng === '' ? null : Number(formData.lng),
-          radius: Number(formData.radius) || 500
+          radius: Number(formData.radius) || 500,
+          ...(formData.customPassword ? {
+            password: formData.customPassword.trim(),
+            adminPassword: formData.customPassword.trim(),
+            customPassword: formData.customPassword.trim()
+          } : {})
         });
         setCompanies(prev => prev.map(c => c.id === selectedCompany.id ? { ...c, ...updated } : c));
         if (detailsCompany && detailsCompany.id === selectedCompany.id) {
