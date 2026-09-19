@@ -43,9 +43,9 @@ export const paymentService = {
   async createOrder(params: PaymentOrderParams) {
     try {
       const endpoints = [
-        'https://lemonchiffon-mink-999414.hostingersite.com/api/payments/create-order',
-        '/api/create-order.php',
-        '/api/payments/create-order'
+        '/api/payments/create-order',
+        '/api/payment/create-razorpay-order',
+        '/api/create-order.php'
       ];
       for (const endpoint of endpoints) {
         try {
@@ -56,13 +56,17 @@ export const paymentService = {
               planId: params.planId,
               amount: params.amount,
               currency: params.currency || 'INR',
-              companyName: params.companyName
+              companyName: params.companyName,
+              customerEmail: params.customerEmail,
+              customerPhone: params.customerPhone,
+              customerName: params.customerName
             })
           });
 
           if (res.ok) {
             const data = await res.json();
             if (data.order && data.order.id) {
+              if (data.key) data.order.key = data.key;
               return data.order;
             }
           }
@@ -92,17 +96,19 @@ export const paymentService = {
     const order = await this.createOrder(params);
 
     if (isLoaded && (window as any).Razorpay) {
-      // Dynamic Key from SuperOwner settings, direct razorpay_config, Environment or Integrations
-      let liveRazorpayKey = '';
-      try {
-        const globalSettingsRaw = localStorage.getItem('hrms_global_settings');
-        if (globalSettingsRaw) {
-          const globalSettings = JSON.parse(globalSettingsRaw);
-          if (globalSettings.razorpayKeyId && globalSettings.razorpayKeyId.trim()) {
-            liveRazorpayKey = globalSettings.razorpayKeyId.trim();
+      // Dynamic Key from order, SuperOwner settings, direct razorpay_config, Environment or Integrations
+      let liveRazorpayKey = (order as any)?.key || '';
+      if (!liveRazorpayKey) {
+        try {
+          const globalSettingsRaw = localStorage.getItem('hrms_global_settings');
+          if (globalSettingsRaw) {
+            const globalSettings = JSON.parse(globalSettingsRaw);
+            if (globalSettings.razorpayKeyId && globalSettings.razorpayKeyId.trim()) {
+              liveRazorpayKey = globalSettings.razorpayKeyId.trim();
+            }
           }
-        }
-      } catch {}
+        } catch {}
+      }
 
       if (!liveRazorpayKey) {
         try {
@@ -117,7 +123,7 @@ export const paymentService = {
       }
 
       if (!liveRazorpayKey) {
-        liveRazorpayKey = (import.meta as any).env?.VITE_RAZORPAY_KEY_ID;
+        liveRazorpayKey = (import.meta as any).env?.VITE_RAZORPAY_KEY_ID || (import.meta as any).env?.RAZORPAY_KEY_ID;
       }
       if (!liveRazorpayKey) {
         try {
@@ -132,21 +138,49 @@ export const paymentService = {
         } catch {}
       }
       if (!liveRazorpayKey) {
-        liveRazorpayKey = 'rzp_live_Tb2olLw1YkeJRm';
+        liveRazorpayKey = 'rzp_live_TZtOW3aeVNZT0s';
       }
+
+      // Resolve purchasing company details for prefill
+      let companyEmail = params.customerEmail || '';
+      let companyPhone = params.customerPhone || '';
+      let companyName = params.customerName || params.companyName || '';
+
+      if (!companyEmail || !companyPhone) {
+        try {
+          const tenantRaw = localStorage.getItem('itlc_active_tenant') || localStorage.getItem('current_company');
+          if (tenantRaw) {
+            const t = JSON.parse(tenantRaw);
+            if (!companyEmail) companyEmail = t.adminEmail || t.email || '';
+            if (!companyPhone) companyPhone = t.adminPhone || t.phone || '';
+            if (!companyName) companyName = t.adminName || t.name || '';
+          }
+          if (!companyEmail || !companyPhone) {
+            const userRaw = localStorage.getItem('currentUser') || localStorage.getItem('user') || localStorage.getItem('hrms_user');
+            if (userRaw) {
+              const u = JSON.parse(userRaw);
+              if (!companyEmail) companyEmail = u.email || '';
+              if (!companyPhone) companyPhone = u.phone || '';
+              if (!companyName) companyName = u.name || '';
+            }
+          }
+        } catch {}
+      }
+
+      const cleanContact = (companyPhone || '').replace(/[^0-9+]/g, '');
 
       const options = {
         key: liveRazorpayKey,
         amount: order.amount,
         currency: order.currency || 'INR',
         name: 'ITLC Suite Cloud',
-        description: `Subscription for ${params.companyName} (${params.planId.toUpperCase()})`,
+        description: `Subscription for ${params.companyName || companyName} (${(params.planId || 'Starter').toUpperCase()})`,
         image: '/itlc_logo.png',
-        order_id: order.id.startsWith('order_local_') ? undefined : order.id,
+        order_id: (order.id && !order.id.startsWith('order_local_')) ? order.id : undefined,
         prefill: {
-          name: params.customerName,
-          email: params.customerEmail,
-          contact: params.customerPhone
+          name: companyName,
+          email: companyEmail,
+          contact: cleanContact
         },
         theme: {
           color: '#4f46e5'
