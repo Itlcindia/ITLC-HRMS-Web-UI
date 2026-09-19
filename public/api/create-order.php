@@ -21,8 +21,8 @@ if ($amountInPaise < 100) {
 $currency = isset($input['currency']) && !empty($input['currency']) ? $input['currency'] : 'INR';
 $receipt = 'rcpt_' . time() . '_' . rand(1000, 9999);
 
-$keyId = 'rzp_live_Tb2olLw1YkeJRm';
-$keySecret = 'giWCJ9bxC3NcUSfvQvr5dp2i';
+$keyId = getenv('RAZORPAY_KEY_ID') ?: 'rzp_live_TZtOW3aeVNZT0s';
+$keySecret = getenv('RAZORPAY_KEY_SECRET') ?: '6rG2BpqWUfYt7Buiz492jNCl';
 
 $payload = json_encode([
     'amount' => $amountInPaise,

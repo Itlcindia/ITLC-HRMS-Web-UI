@@ -107,9 +107,9 @@ export const SubscriptionQuotaMeterModal: React.FC<SubscriptionQuotaMeterModalPr
         planId: targetPlan.id,
         amount: taxCalc.total,
         companyName: tenant.name,
-        customerName: tenant.adminName,
-        customerEmail: tenant.adminEmail,
-        customerPhone: tenant.adminPhone
+        customerName: tenant.adminName || tenant.name,
+        customerEmail: tenant.adminEmail || tenant.email || '',
+        customerPhone: tenant.adminPhone || tenant.phone || ''
       },
       (result) => {
         setIsProcessing(false);
@@ -176,9 +176,9 @@ export const SubscriptionQuotaMeterModal: React.FC<SubscriptionQuotaMeterModalPr
         planId: `addon_storage_${extraGb}gb`,
         amount: taxCalc.total,
         companyName: tenant.name,
-        customerName: tenant.adminName,
-        customerEmail: tenant.adminEmail,
-        customerPhone: tenant.adminPhone
+        customerName: tenant.adminName || tenant.name,
+        customerEmail: tenant.adminEmail || tenant.email || '',
+        customerPhone: tenant.adminPhone || tenant.phone || ''
       },
       () => {
         setIsProcessing(false);

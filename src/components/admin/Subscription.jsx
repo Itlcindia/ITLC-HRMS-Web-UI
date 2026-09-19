@@ -187,8 +187,13 @@ export default function Subscription({ onSubscriptionUpdate }) {
           } catch {}
         }
         if (!activeKey) {
-          activeKey = 'rzp_live_Tb2olLw1YkeJRm';
+          activeKey = import.meta.env?.VITE_RAZORPAY_KEY_ID || 'rzp_live_TZtOW3aeVNZT0s';
         }
+
+        const compPhone = company?.adminPhone || company?.phone || profile?.phone || profile?.adminPhone || '';
+        const compEmail = company?.adminEmail || company?.email || profile?.email || profile?.adminEmail || '';
+        const compName = company?.adminName || company?.name || profile?.name || profile?.companyName || '';
+        const cleanContact = compPhone.replace(/[^0-9+]/g, '');
 
         const options = {
           key: activeKey,
@@ -208,8 +213,9 @@ export default function Subscription({ onSubscriptionUpdate }) {
             });
           },
           prefill: {
-            name: profile?.name || '',
-            email: profile?.email || ''
+            name: compName,
+            email: compEmail,
+            contact: cleanContact
           },
           theme: { color: '#4f46e5' }
         };

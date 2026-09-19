@@ -6117,7 +6117,7 @@ export const api = {
       } catch {}
     }
     if (!liveKey) {
-      liveKey = (import.meta as any).env?.VITE_RAZORPAY_KEY_ID || 'rzp_live_Tb2olLw1YkeJRm';
+      liveKey = (import.meta as any).env?.VITE_RAZORPAY_KEY_ID || (import.meta as any).env?.RAZORPAY_KEY_ID || 'rzp_live_TZtOW3aeVNZT0s';
     }
 
     const amountInPaise = data.amount ? Math.round(data.amount * 100) : 99900;

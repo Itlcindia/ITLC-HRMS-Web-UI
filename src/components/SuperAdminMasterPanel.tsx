@@ -168,7 +168,7 @@ export const SuperAdminMasterPanel: React.FC<SuperAdminMasterPanelProps> = ({
         if (parsed.razorpayKeyId) return parsed.razorpayKeyId;
       }
     } catch {}
-    return 'rzp_live_Tb2olLw1YkeJRm';
+    return (import.meta as any).env?.VITE_RAZORPAY_KEY_ID || (import.meta as any).env?.RAZORPAY_KEY_ID || '';
   });
 
   const [razorpayKeySecret, setRazorpayKeySecret] = useState<string>(() => {
@@ -184,7 +184,7 @@ export const SuperAdminMasterPanel: React.FC<SuperAdminMasterPanelProps> = ({
         if (parsed.razorpaySecret) return parsed.razorpaySecret;
       }
     } catch {}
-    return 'giWCJ9bxC3NcUSfvQvr5dp2i';
+    return (import.meta as any).env?.RAZORPAY_KEY_SECRET || '';
   });
 
   const [razorpayWebhookSecret, setRazorpayWebhookSecret] = useState<string>(() => {
@@ -251,6 +251,22 @@ export const SuperAdminMasterPanel: React.FC<SuperAdminMasterPanelProps> = ({
     };
     window.addEventListener('storage', handleStorageUpdate);
     window.addEventListener('superowner_data_updated', handleStorageUpdate);
+
+    // Fetch live settings from backend API
+    fetch('/api/superowner/settings')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data) {
+          if (data.razorpayKeyId) setRazorpayKeyId(data.razorpayKeyId);
+          if (data.razorpaySecret) setRazorpayKeySecret(data.razorpaySecret);
+          if (data.razorpayWebhookSecret) setRazorpayWebhookSecret(data.razorpayWebhookSecret);
+          if (data.razorpayEnabled !== undefined) setRazorpayEnabled(!!data.razorpayEnabled);
+          if (data.razorpayMode) setRazorpayMode(data.razorpayMode);
+          if (data.realUpiId) setRazorpayMerchantUpi(data.realUpiId);
+        }
+      })
+      .catch(() => {});
+
     return () => {
       window.removeEventListener('storage', handleStorageUpdate);
       window.removeEventListener('superowner_data_updated', handleStorageUpdate);
@@ -302,8 +318,31 @@ export const SuperAdminMasterPanel: React.FC<SuperAdminMasterPanelProps> = ({
       localStorage.setItem('hrms_integrations_data', JSON.stringify(list));
     } catch {}
 
+    // Persist to backend and automatically sync with .env file
+    fetch('/api/superowner/settings', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(localStorage.getItem('token') ? { 'Authorization': `Bearer ${localStorage.getItem('token')}` } : {})
+      },
+      body: JSON.stringify({
+        razorpayKeyId: cleanKeyId,
+        razorpaySecret: cleanKeySecret,
+        razorpayWebhookSecret: cleanWebhook,
+        realUpiId: cleanUpi,
+        razorpayEnabled: razorpayEnabled,
+        razorpayMode: razorpayMode
+      })
+    })
+      .then(res => res.json())
+      .then(() => {
+        triggerToast('🎉 Razorpay Settings saved & synchronized with .env successfully!');
+      })
+      .catch(() => {
+        triggerToast('🎉 Razorpay settings saved locally and activated!');
+      });
+
     window.dispatchEvent(new CustomEvent('razorpay_config_updated', { detail: config }));
-    triggerToast('🎉 Razorpay Payment Gateway settings saved and activated!');
   };
 
   // Landing Page CMS State
