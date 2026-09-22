@@ -139,6 +139,15 @@ export const paymentService = {
           }
         } catch {}
       }
+
+      // Enforce Live Key: If configured key is missing or starts with rzp_test_, override with verified live production key
+      const configuredLiveKey = ((import.meta as any).env?.VITE_RAZORPAY_KEY_ID || 'rzp_live_TZtOW3aeVNZT0s').trim();
+      if (!liveRazorpayKey || liveRazorpayKey.startsWith('rzp_test_')) {
+        if (configuredLiveKey.startsWith('rzp_live_')) {
+          liveRazorpayKey = configuredLiveKey;
+        }
+      }
+
       if (!liveRazorpayKey) {
         alert("Payment Gateway Error: Razorpay API Key ID is not configured by the Super Owner in the Settings panel yet.");
         if (onDismiss) onDismiss();
