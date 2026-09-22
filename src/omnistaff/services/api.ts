@@ -3887,7 +3887,7 @@ export const api = {
         method: 'PUT',
         headers: getHeaders(),
         body: JSON.stringify(data)
-      }, 2000);
+      }, 8000);
       return await handleResponse(res);
     } catch {
       return data;
