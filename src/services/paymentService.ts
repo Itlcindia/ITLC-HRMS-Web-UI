@@ -43,6 +43,8 @@ export const paymentService = {
   async createOrder(params: PaymentOrderParams) {
     try {
       const endpoints = [
+        `${API_URL}/payments/create-order`,
+        `${API_URL}/payment/create-razorpay-order`,
         '/api/payments/create-order',
         '/api/payment/create-razorpay-order',
         '/api/create-order.php'

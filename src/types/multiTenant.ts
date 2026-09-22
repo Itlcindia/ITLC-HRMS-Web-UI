@@ -1131,7 +1131,14 @@ export const syncCompanySubscriptionChange = (updateData: {
     try {
       if (typeof window !== 'undefined' && window.fetch) {
         const getSafeBase = () => {
-          if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+          if (typeof window !== 'undefined' && (
+            Boolean((window as any).Capacitor) || 
+            window.location.protocol === 'capacitor:' ||
+            (window.location.hostname === 'localhost' && (!window.location.port || window.location.port === '' || window.location.port === '80' || window.location.port === '443'))
+          )) {
+            return 'https://lemonchiffon-mink-999414.hostingersite.com/api';
+          }
+          if (typeof window !== 'undefined' && (window.location.port === '5173' || window.location.port === '3000')) {
             return '/api';
           }
           let url = (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env.VITE_API_URL) || 'https://lemonchiffon-mink-999414.hostingersite.com/api';

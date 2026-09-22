@@ -1,24 +1,50 @@
 import { getLiveSubscriptionPlans, syncCompanySubscriptionChange, syncHrmsPlansListToUnifiedCatalog, initialSeedTenants } from '../../types/multiTenant';
 import { secureStorage } from '../../utils/cryptoStorage';
 
+export const LIVE_BACKEND_URL = 'https://lemonchiffon-mink-999414.hostingersite.com/api';
+
+const isNativeApp = () => {
+  if (typeof window === 'undefined') return false;
+  return Boolean(
+    (window as any).Capacitor || 
+    (window as any).Capacitor?.isNativePlatform?.() ||
+    window.location.protocol === 'capacitor:' ||
+    window.location.protocol === 'ionic:' ||
+    window.location.href.includes('capacitor://') ||
+    (window.location.hostname === 'localhost' && (!window.location.port || window.location.port === '' || window.location.port === '80' || window.location.port === '443'))
+  );
+};
+
 const isMobileApp = typeof window !== 'undefined' && (
-  (window as any).Capacitor || 
+  isNativeApp() ||
   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 );
 
 const resolveApiUrl = () => {
-  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+  // If running inside Mobile Native App (Capacitor Android / iOS), ALWAYS point directly to cloud backend!
+  if (isNativeApp()) {
+    return LIVE_BACKEND_URL;
+  }
+  // If running on local Vite dev server with proxy (localhost:5173 or :3000)
+  if (typeof window !== 'undefined' && (window.location.port === '5173' || window.location.port === '3000')) {
     return '/api';
   }
-  let url = (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env.VITE_API_URL) || 'https://lemonchiffon-mink-999414.hostingersite.com/api';
+  let url = (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env.VITE_API_URL) || LIVE_BACKEND_URL;
   url = url.trim().replace(/\/+$/, '');
-  if (!url.endsWith('/api')) {
+  if (url === '/api' && typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return LIVE_BACKEND_URL;
+  }
+  if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('/')) {
+    url = `https://${url}`;
+  }
+  if (!url.endsWith('/api') && !url.startsWith('/')) {
     url += '/api';
   }
   return url;
 };
 
 export const API_URL = resolveApiUrl();
+
 
 // Helper to get request headers with secure token
 const getHeaders = (isMultipart = false) => {
@@ -612,7 +638,7 @@ export const api = {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(credentials)
-      }, 4000);
+      }, 10000);
       
       if (res.status === 403) {
         const errData = await res.json().catch(() => ({}));
@@ -654,8 +680,16 @@ export const api = {
         throw new Error(errData.message || errData.error || '❌ Invalid email or password. Access Denied.');
       }
     } catch (backendErr: any) {
-      throw backendErr;
+      if (backendErr.message && (
+        backendErr.message.includes('Invalid email or password') ||
+        backendErr.message.includes('Access Revoked') ||
+        backendErr.message.includes('Access Denied')
+      )) {
+        throw backendErr;
+      }
+      console.warn('Backend live API connection issue, falling back to local credentials engine:', backendErr);
     }
+
 
     // =========================================================================
     // 2. STRICT LOCAL CREDENTIAL VERIFICATION (Zero-Tolerance Security Engine)

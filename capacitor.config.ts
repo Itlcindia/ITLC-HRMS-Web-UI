@@ -5,7 +5,8 @@ const config: CapacitorConfig = {
   appName: 'ITLC HRMS & CRM',
   webDir: 'dist',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
+    cleartext: true
   }
 };
 
