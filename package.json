@@ -7,6 +7,9 @@
     "dev": "vite",
     "server": "node server.js",
     "build": "vite build",
+    "cap:build": "vite build && cap sync android",
+    "cap:sync": "cap sync android",
+    "cap:open": "cap open android",
     "lint": "oxlint",
     "preview": "vite preview"
   },
@@ -14,24 +17,28 @@
     "@capacitor/core": "^8.5.1",
     "@capacitor/geolocation": "^8.2.2",
     "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.4",
     "chart.js": "^4.5.1",
     "clsx": "^2.1.1",
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^13.2.0",
     "lucide-react": "^1.28.0",
+    "oxlint": "^1.75.0",
     "react": "^19.2.8",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.8",
     "recharts": "^3.10.1",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.3",
-    "@types/node": "^24.13.3",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.4",
-    "oxlint": "^1.75.0",
     "typescript": "~6.0.2",
     "vite": "^8.2.0"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/cli": "^8.5.2"
   }
 }

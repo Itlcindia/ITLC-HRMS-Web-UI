@@ -1,7 +1,7 @@
 {
-  "short_name": "ITLC CRM",
-  "name": "ITLC CRM Enterprise Admin Panel",
-  "description": "Next-Gen Enterprise CRM & Sales Pipeline Management",
+  "short_name": "ITLC Suite",
+  "name": "ITLC HRMS & CRM",
+  "description": "Next-Gen Enterprise HRMS, Geofenced Attendance, Payroll & Cloud CRM Suite",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",
