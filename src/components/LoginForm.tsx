@@ -255,6 +255,7 @@ export default function LoginForm({
   const [otpCode, setOtpCode] = useState('');
   const [focusOtp, setFocusOtp] = useState(false);
   const [isResendingOtp, setIsResendingOtp] = useState(false);
+  const [devOtp, setDevOtp] = useState('');
 
   // Embla Carousel settings for background slider in the sliding overlay
   const autoplayOptions = { delay: 4000, stopOnInteraction: false, stopOnMouseEnter: true };
@@ -364,6 +365,7 @@ export default function LoginForm({
       if (result.otpRequired) {
         setIsLoading(false);
         setOtpRequired(true);
+        if (result.devOtp) setDevOtp(result.devOtp);
         setSuccessMsg(result.message || 'A secure verification OTP code has been sent to your email.');
         setError('');
         return;
@@ -593,7 +595,15 @@ export default function LoginForm({
               <form onSubmit={handleOtpSubmit} className="space-y-4 mt-2">
                 <div className="p-3 bg-indigo-50 border border-indigo-100 text-indigo-700 text-[11px] rounded-xl flex items-start gap-2 leading-relaxed">
                   <Sparkles className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>A secure 6-digit verification code has been sent to <strong>{loginEmail}</strong>. Please enter the OTP to authenticate.</span>
+                  <div className="flex-1 min-w-0">
+                    <div>A secure 6-digit verification code has been sent to <strong>{loginEmail}</strong>. Please enter the OTP to authenticate.</div>
+                    {devOtp && (
+                      <div className="mt-2 flex items-center justify-between bg-white border border-indigo-200/80 px-2.5 py-1.5 rounded-lg shadow-xs">
+                        <span className="text-[10px] uppercase font-bold text-indigo-500 tracking-wider">Quick Code:</span>
+                        <span className="font-mono font-extrabold text-indigo-700 text-sm tracking-widest">{devOtp}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <FloatingInput 
@@ -616,6 +626,7 @@ export default function LoginForm({
                       setError('');
                       try {
                         const res = await api.resendOtp(loginEmail);
+                        if (res.devOtp) setDevOtp(res.devOtp);
                         setSuccessMsg(res.message || 'A fresh OTP has been sent to your email.');
                       } catch (err: any) {
                         setError(err.message || 'Failed to resend OTP.');
@@ -649,6 +660,7 @@ export default function LoginForm({
                     onClick={() => {
                       setOtpRequired(false);
                       setOtpCode('');
+                      setDevOtp('');
                       setError('');
                     }}
                     className="flex-1 py-2.5 px-3 border border-slate-200 hover:border-slate-350 bg-white text-slate-600 hover:bg-slate-50 font-semibold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1"
