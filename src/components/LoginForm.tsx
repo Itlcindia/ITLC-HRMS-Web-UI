@@ -254,6 +254,7 @@ export default function LoginForm({
   const [otpRequired, setOtpRequired] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [focusOtp, setFocusOtp] = useState(false);
+  const [isResendingOtp, setIsResendingOtp] = useState(false);
 
   // Embla Carousel settings for background slider in the sliding overlay
   const autoplayOptions = { delay: 4000, stopOnInteraction: false, stopOnMouseEnter: true };
@@ -604,6 +605,29 @@ export default function LoginForm({
                   onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
                   icon={ShieldCheck}
                 />
+
+                <div className="flex items-center justify-between text-xs px-1">
+                  <span className="text-slate-500 text-[11px]">Didn't receive code?</span>
+                  <button
+                    type="button"
+                    disabled={isResendingOtp}
+                    onClick={async () => {
+                      setIsResendingOtp(true);
+                      setError('');
+                      try {
+                        const res = await api.resendOtp(loginEmail);
+                        setSuccessMsg(res.message || 'A fresh OTP has been sent to your email.');
+                      } catch (err: any) {
+                        setError(err.message || 'Failed to resend OTP.');
+                      } finally {
+                        setIsResendingOtp(false);
+                      }
+                    }}
+                    className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer"
+                  >
+                    {isResendingOtp ? 'Sending...' : 'Resend Code'}
+                  </button>
+                </div>
 
                 <div className="flex items-center gap-3 mt-2">
                   <button
