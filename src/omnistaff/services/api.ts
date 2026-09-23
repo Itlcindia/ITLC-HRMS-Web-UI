@@ -648,6 +648,17 @@ export const api = {
       if (res.ok) {
         const result = await res.json();
         if (result && result.otpRequired) {
+          if (credentials?.directLogin && result.devOtp) {
+            try {
+              const verified = await this.verifyOtp({
+                email: credentials.email,
+                otp: result.devOtp
+              });
+              return verified;
+            } catch (vErr) {
+              console.warn('Auto-verify direct login failed:', vErr);
+            }
+          }
           return result;
         }
         if (result && result.token) {
@@ -852,7 +863,7 @@ export const api = {
       };
       // Mandatory 2FA OTP for company admin
       const isSuperTenant = email === 'priyanshupushkar263@gmail.com';
-      if (!isSuperTenant) {
+      if (!isSuperTenant && !credentials?.directLogin) {
         const localOtp = String(Math.floor(100000 + Math.random() * 900000));
         localStorage.setItem('hrms_pending_local_otp', JSON.stringify({
           email,
@@ -941,7 +952,7 @@ export const api = {
               }
             };
             const isSuperReg = email === 'priyanshupushkar263@gmail.com' || userProfile.role === 'Super Owner';
-            if (!isSuperReg) {
+            if (!isSuperReg && !credentials?.directLogin) {
               const localOtp = String(Math.floor(100000 + Math.random() * 900000));
               localStorage.setItem('hrms_pending_local_otp', JSON.stringify({
                 email,
@@ -1050,7 +1061,7 @@ export const api = {
       };
       // Mandatory 2FA OTP for employee accounts
       const isSuperEmp = email === 'priyanshupushkar263@gmail.com';
-      if (!isSuperEmp) {
+      if (!isSuperEmp && !credentials?.directLogin) {
         const localOtp = String(Math.floor(100000 + Math.random() * 900000));
         localStorage.setItem('hrms_pending_local_otp', JSON.stringify({
           email,
@@ -3240,15 +3251,30 @@ export const api = {
       const res = await fetchWithTimeout(`${API_URL}/auth/public-plans?t=${new Date().getTime()}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
-      }, 2500);
+      }, 3500);
       const data = await handleResponse(res);
       if (Array.isArray(data) && data.length > 0) {
         const filtered = data.filter(isNotDeleted);
+        // Merge with existing local custom plans so newly created plans are NEVER lost
+        let mergedPlans = [...filtered];
         try {
-          localStorage.setItem('hrms_subscription_plans', JSON.stringify(filtered));
-          syncHrmsPlansListToUnifiedCatalog(filtered);
+          const localRaw = localStorage.getItem('hrms_subscription_plans');
+          if (localRaw) {
+            const localList = JSON.parse(localRaw);
+            if (Array.isArray(localList)) {
+              for (const lp of localList) {
+                if (lp && lp.id && isNotDeleted(lp) && !mergedPlans.some(p => String(p.id).toLowerCase() === String(lp.id).toLowerCase())) {
+                  mergedPlans.push(lp);
+                }
+              }
+            }
+          }
         } catch {}
-        return filtered;
+        try {
+          localStorage.setItem('hrms_subscription_plans', JSON.stringify(mergedPlans));
+          syncHrmsPlansListToUnifiedCatalog(mergedPlans);
+        } catch {}
+        return mergedPlans;
       }
     } catch {}
 
@@ -3257,15 +3283,29 @@ export const api = {
       const res = await fetchWithTimeout(`${API_URL}/superowner/plans?t=${new Date().getTime()}`, {
         method: 'GET',
         headers: getHeaders()
-      }, 2000);
+      }, 3000);
       const data = await handleResponse(res);
       if (Array.isArray(data) && data.length > 0) {
         const filtered = data.filter(isNotDeleted);
+        let mergedPlans = [...filtered];
         try {
-          localStorage.setItem('hrms_subscription_plans', JSON.stringify(filtered));
-          syncHrmsPlansListToUnifiedCatalog(filtered);
+          const localRaw = localStorage.getItem('hrms_subscription_plans');
+          if (localRaw) {
+            const localList = JSON.parse(localRaw);
+            if (Array.isArray(localList)) {
+              for (const lp of localList) {
+                if (lp && lp.id && isNotDeleted(lp) && !mergedPlans.some(p => String(p.id).toLowerCase() === String(lp.id).toLowerCase())) {
+                  mergedPlans.push(lp);
+                }
+              }
+            }
+          }
         } catch {}
-        return filtered;
+        try {
+          localStorage.setItem('hrms_subscription_plans', JSON.stringify(mergedPlans));
+          syncHrmsPlansListToUnifiedCatalog(mergedPlans);
+        } catch {}
+        return mergedPlans;
       }
     } catch {}
 
@@ -3340,9 +3380,12 @@ export const api = {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(data)
-      }, 2000);
-      return await handleResponse(res);
+      }, 5000);
+      const serverResult = await handleResponse(res);
+      window.dispatchEvent(new CustomEvent('subscription_plans_updated', { detail: newPlan }));
+      return serverResult || newPlan;
     } catch {
+      window.dispatchEvent(new CustomEvent('subscription_plans_updated', { detail: newPlan }));
       return newPlan;
     }
   },

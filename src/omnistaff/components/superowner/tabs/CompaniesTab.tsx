@@ -1392,7 +1392,7 @@ export const CompaniesTab: React.FC = () => {
                       setGeneratedCredentials(null);
                       if (creds) {
                         try {
-                          await api.login({ email: creds.email, password: creds.pass });
+                          await api.login({ email: creds.email, password: creds.pass, directLogin: true });
                           window.location.href = '/';
                         } catch (e: any) {
                           addToast(e.message || 'Login failed', 'error');

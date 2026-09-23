@@ -99,7 +99,7 @@ export const CrmSecureLoginPage: React.FC<CrmSecureLoginPageProps> = ({
 
     try {
       // 1. Omnistaff API Login
-      const res = await api.login({ email: email.trim(), password: password.trim() });
+      const res = await api.login({ email: email.trim(), password: password.trim(), directLogin: true });
       if (res && res.user) {
         setIsLoading(false);
         onSuccessLogin({

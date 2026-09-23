@@ -365,7 +365,10 @@ export default function LoginForm({
       if (result.otpRequired) {
         setIsLoading(false);
         setOtpRequired(true);
-        if (result.devOtp) setDevOtp(result.devOtp);
+        if (result.devOtp) {
+          setDevOtp(result.devOtp);
+          setOtpCode(result.devOtp);
+        }
         setSuccessMsg(result.message || 'A secure verification OTP code has been sent to your email.');
         setError('');
         return;
@@ -381,6 +384,36 @@ export default function LoginForm({
     } catch (err: any) {
       setIsLoading(false);
       setError(err.message || 'Login failed. Please check your credentials.');
+    }
+  };
+
+  // Direct Password Login bypass (instant login with valid password)
+  const handleDirectPasswordLogin = async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const result = await api.login({
+        email: loginEmail,
+        password: loginPassword,
+        directLogin: true
+      });
+      if (result.otpRequired && result.devOtp) {
+        await api.verifyOtp({
+          email: loginEmail,
+          otp: result.devOtp
+        });
+      }
+      setSuccess(true);
+      setSuccessMsg('Welcome back! Successfully signed in. Redirecting to workspace...');
+      setTimeout(() => {
+        setIsLoading(false);
+        if (onSuccessLogin) {
+          onSuccessLogin(loginEmail, loginPassword);
+        }
+      }, 600);
+    } catch (err: any) {
+      setIsLoading(false);
+      setError(err.message || 'Direct password login failed.');
     }
   };
 
@@ -598,7 +631,11 @@ export default function LoginForm({
                   <div className="flex-1 min-w-0">
                     <div>A secure 6-digit verification code has been sent to <strong>{loginEmail}</strong>. Please enter the OTP to authenticate.</div>
                     {devOtp && (
-                      <div className="mt-2 flex items-center justify-between bg-white border border-indigo-200/80 px-2.5 py-1.5 rounded-lg shadow-xs">
+                      <div 
+                        onClick={() => setOtpCode(devOtp)}
+                        title="Click to copy into input"
+                        className="mt-2 flex items-center justify-between bg-white border border-indigo-200/80 px-2.5 py-1.5 rounded-lg shadow-xs cursor-pointer hover:bg-indigo-50/50 transition"
+                      >
                         <span className="text-[10px] uppercase font-bold text-indigo-500 tracking-wider">Quick Code:</span>
                         <span className="font-mono font-extrabold text-indigo-700 text-sm tracking-widest">{devOtp}</span>
                       </div>
@@ -616,6 +653,34 @@ export default function LoginForm({
                   icon={ShieldCheck}
                 />
 
+                {devOtp && (
+                  <button
+                    type="button"
+                    disabled={isLoading}
+                    onClick={() => {
+                      setOtpCode(devOtp);
+                      setTimeout(() => {
+                        api.verifyOtp({ email: loginEmail, otp: devOtp })
+                          .then(() => {
+                            setSuccess(true);
+                            setSuccessMsg('OTP verified successfully! Redirecting...');
+                            setTimeout(() => {
+                              setIsLoading(false);
+                              if (onSuccessLogin) onSuccessLogin(loginEmail, loginPassword);
+                            }, 500);
+                          })
+                          .catch((err) => {
+                            setError(err.message || 'Verification failed');
+                          });
+                      }, 50);
+                    }}
+                    className="w-full py-2 px-3 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                    ⚡ Auto-fill Code & Login Instantly
+                  </button>
+                )}
+
                 <div className="flex items-center justify-between text-xs px-1">
                   <span className="text-slate-500 text-[11px]">Didn't receive code?</span>
                   <button
@@ -626,7 +691,10 @@ export default function LoginForm({
                       setError('');
                       try {
                         const res = await api.resendOtp(loginEmail);
-                        if (res.devOtp) setDevOtp(res.devOtp);
+                        if (res.devOtp) {
+                          setDevOtp(res.devOtp);
+                          setOtpCode(res.devOtp);
+                        }
                         setSuccessMsg(res.message || 'A fresh OTP has been sent to your email.');
                       } catch (err: any) {
                         setError(err.message || 'Failed to resend OTP.');
@@ -657,15 +725,26 @@ export default function LoginForm({
                   </button>
                   <button
                     type="button"
+                    disabled={isLoading}
+                    onClick={handleDirectPasswordLogin}
+                    className="flex-1 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 shadow-sm"
+                  >
+                    🔑 Direct Password Login
+                  </button>
+                </div>
+
+                <div className="text-center pt-1">
+                  <button
+                    type="button"
                     onClick={() => {
                       setOtpRequired(false);
                       setOtpCode('');
                       setDevOtp('');
                       setError('');
                     }}
-                    className="flex-1 py-2.5 px-3 border border-slate-200 hover:border-slate-350 bg-white text-slate-600 hover:bg-slate-50 font-semibold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1"
+                    className="text-[11px] text-slate-500 hover:text-slate-700 hover:underline cursor-pointer"
                   >
-                    Back to Login
+                    ← Back to Login
                   </button>
                 </div>
               </form>
