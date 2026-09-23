@@ -1,6 +1,6 @@
 {
-  "short_name": "ITLC Suite",
-  "name": "ITLC HRMS & CRM",
+  "short_name": "OmniStaff HRMS",
+  "name": "OmniStaff HRMS",
   "description": "Next-Gen Enterprise HRMS, Geofenced Attendance, Payroll & Cloud CRM Suite",
   "start_url": "/",
   "display": "standalone",
@@ -9,8 +9,8 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/favicon.svg",
-      "type": "image/svg+xml",
+      "src": "/itlc_logo.png",
+      "type": "image/png",
       "sizes": "192x192 512x512"
     }
   ]
