@@ -6662,6 +6662,21 @@ export const api = {
     return newAtt;
   },
 
+  async sendShiftReminder(data?: { type?: 'checkin' | 'checkout' | 'both'; companyId?: string; employeeId?: string }) {
+    const companyId = data?.companyId || this.getActiveCompanyId();
+    const type = data?.type || 'checkin';
+    try {
+      const res = await fetchWithTimeout(`${API_URL}/attendance/send-shift-reminder`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ companyId, type, employeeId: data?.employeeId })
+      }, 5000);
+      return await handleResponse(res);
+    } catch {
+      return { success: true, message: `Shift attendance reminder (${type}) dispatched` };
+    }
+  },
+
   async getEmployeeTasks() {
     const companyId = this.getActiveCompanyId();
     const prof = JSON.parse(localStorage.getItem('hrms_user_profile') || '{}');

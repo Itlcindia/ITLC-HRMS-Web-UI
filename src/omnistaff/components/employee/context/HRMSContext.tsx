@@ -685,6 +685,50 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
           console.error("Failed to load employee tasks for notifications:", e);
         }
 
+        // Automated Shift Attendance Reminders (Check-In & Check-Out)
+        try {
+          const todayDate = new Date().toISOString().split("T")[0];
+          const shiftStart = prof?.companyDetails?.workdayStart || '09:00';
+          const shiftEnd = prof?.companyDetails?.workdayEnd || '17:00';
+
+          const now = new Date();
+          const curHours = String(now.getHours()).padStart(2, '0');
+          const curMins = String(now.getMinutes()).padStart(2, '0');
+          const currentTime = `${curHours}:${curMins}`;
+
+          const currentAtt = (attList && Array.isArray(attList)) ? attList.find((r: any) => r.date === todayDate) : null;
+
+          // 1. Shift Check-In Reminder: Current time is at or past shift start, and employee has not checked in today
+          if (currentTime >= shiftStart && (!currentAtt || !currentAtt.checkIn)) {
+            const checkInNotifId = `NTF-shift-checkin-${todayDate}`;
+            const isRead = readIds.includes(checkInNotifId);
+            generatedNotifs.push({
+              id: checkInNotifId,
+              title: "Shift Attendance Reminder",
+              message: `It's time to mark your attendance! Shift started at ${shiftStart}. Please check in now.`,
+              category: "policy" as any,
+              read: isRead,
+              date: todayDate
+            });
+          }
+
+          // 2. Shift Check-Out Reminder: Current time is at or past shift end, and employee is clocked in without punch-out
+          if (currentTime >= shiftEnd && currentAtt && currentAtt.checkIn && !currentAtt.checkOut) {
+            const checkOutNotifId = `NTF-shift-checkout-${todayDate}`;
+            const isRead = readIds.includes(checkOutNotifId);
+            generatedNotifs.push({
+              id: checkOutNotifId,
+              title: "Shift Punch-Out Reminder",
+              message: `Your workday shift has ended at ${shiftEnd}. Please don't forget to punch out / record your attendance.`,
+              category: "policy" as any,
+              read: isRead,
+              date: todayDate
+            });
+          }
+        } catch (shiftErr) {
+          console.warn("Failed generating shift attendance reminder:", shiftErr);
+        }
+
         // Sort by date descending
         generatedNotifs.sort((a, b) => b.date.localeCompare(a.date));
         setNotifications(generatedNotifs);
