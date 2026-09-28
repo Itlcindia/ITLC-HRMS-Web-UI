@@ -60,8 +60,53 @@ export const resolveUserRole = (profileData: any): 'superowner' | 'admin' | 'man
   return 'employee';
 };
 
+export const isRegisterRoute = (): boolean => {
+  try {
+    const search = window.location.search.toLowerCase();
+    const hash = window.location.hash.toLowerCase();
+    const path = window.location.pathname.toLowerCase().replace(/\/+$/, '');
+    return (
+      hash === '#signup' ||
+      hash === '#register' ||
+      hash === '#create-account' ||
+      hash.startsWith('#register') ||
+      hash.startsWith('#signup') ||
+      hash.startsWith('#create-account') ||
+      search.includes('mode=signup') ||
+      search.includes('mode=register') ||
+      search.includes('mode=create-account') ||
+      path === '/register' ||
+      path === '/signup' ||
+      path === '/create-account'
+    );
+  } catch {
+    return false;
+  }
+};
+
+export const isLoginRoute = (): boolean => {
+  try {
+    const search = window.location.search.toLowerCase();
+    const hash = window.location.hash.toLowerCase();
+    const path = window.location.pathname.toLowerCase().replace(/\/+$/, '');
+    return (
+      hash === '#login' ||
+      hash.startsWith('#login') ||
+      search.includes('mode=login') ||
+      path === '/login'
+    );
+  } catch {
+    return false;
+  }
+};
+
 export default function App() {
-  const [view, setView] = useState<'landing' | 'login' | 'superowner-login' | 'employee' | 'admin' | 'superowner' | 'manager'>('landing');
+  const [view, setView] = useState<'landing' | 'login' | 'superowner-login' | 'employee' | 'admin' | 'superowner' | 'manager'>(() => {
+    if (isRegisterRoute() || isLoginRoute()) {
+      return 'login';
+    }
+    return 'landing';
+  });
   const [loggedInEmail, setLoggedInEmail] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
@@ -69,20 +114,14 @@ export default function App() {
   const [selectedPlanForLogin, setSelectedPlanForLogin] = useState<string>(() => {
     try {
       const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get('plan') || localStorage.getItem('itlc_selected_onboarding_plan') || 'starter';
+      const hashQuery = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : '';
+      const hashParams = new URLSearchParams(hashQuery);
+      return hashParams.get('plan') || urlParams.get('plan') || localStorage.getItem('itlc_selected_onboarding_plan') || 'starter';
     } catch {
       return 'starter';
     }
   });
-  const [isSignUpForLogin, setIsSignUpForLogin] = useState<boolean>(() => {
-    try {
-      const urlParams = new URLSearchParams(window.location.search);
-      const hash = window.location.hash.toLowerCase();
-      return urlParams.get('mode') === 'signup' || urlParams.get('mode') === 'register' || hash === '#signup' || hash === '#register';
-    } catch {
-      return false;
-    }
-  });
+  const [isSignUpForLogin, setIsSignUpForLogin] = useState<boolean>(() => isRegisterRoute());
 
   const loadProfile = async (forceDashboard = false) => {
     try {
@@ -124,20 +163,22 @@ export default function App() {
             window.history.replaceState({}, '', '/');
           }
           setView(targetRole);
+        } else if (!forceDashboard && isRegisterRoute()) {
+          setIsSignUpForLogin(true);
+          setView('login');
         } else if (!forceDashboard && (hash === '#landing' || search.includes('landing'))) {
           setView('landing');
         } else {
           setView(targetRole);
         }
       } else {
-        const hashLower = hash.toLowerCase();
-        const searchLower = search.toLowerCase();
-        if (hashLower === '#signup' || hashLower === '#register' || searchLower.includes('mode=signup') || searchLower.includes('mode=register')) {
+        if (isRegisterRoute()) {
           setIsSignUpForLogin(true);
           setView('login');
         } else if (isSuperownerRoute) {
           setView('superowner-login');
-        } else if (path === '/login' || search.includes('login') || hash === '#login') {
+        } else if (isLoginRoute()) {
+          setIsSignUpForLogin(false);
           setView('login');
         } else {
           setView('landing');
@@ -161,12 +202,24 @@ export default function App() {
 
   useEffect(() => {
     loadProfile();
-    const handleHashChange = () => {
-      loadProfile();
+    const handleRouteSync = () => {
+      if (isRegisterRoute()) {
+        setIsSignUpForLogin(true);
+        setView('login');
+      } else if (isLoginRoute()) {
+        setIsSignUpForLogin(false);
+        setView('login');
+      } else if (window.location.hash === '#landing') {
+        setView('landing');
+      } else {
+        loadProfile();
+      }
     };
-    window.addEventListener('hashchange', handleHashChange);
+    window.addEventListener('hashchange', handleRouteSync);
+    window.addEventListener('popstate', handleRouteSync);
     return () => {
-      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('hashchange', handleRouteSync);
+      window.removeEventListener('popstate', handleRouteSync);
     };
   }, []);
 
@@ -314,6 +367,14 @@ export default function App() {
         onOpenLogin={(initialPlanId?: string, isSignUp?: boolean) => {
           if (initialPlanId) setSelectedPlanForLogin(initialPlanId);
           setIsSignUpForLogin(!!isSignUp);
+          try {
+            if (isSignUp) {
+              const planParam = initialPlanId && initialPlanId !== 'starter' ? `?plan=${initialPlanId}` : '';
+              window.history.pushState({}, '', `/#register${planParam}`);
+            } else {
+              window.history.pushState({}, '', '/#login');
+            }
+          } catch {}
           setView('login');
         }}
         onOpenSuperowner={() => setView('superowner-login')}
@@ -335,7 +396,11 @@ export default function App() {
       {/* Back to Website Button */}
       <button
         onClick={() => {
-          window.location.hash = '';
+          try {
+            window.history.pushState({}, '', '/');
+          } catch {
+            window.location.hash = '';
+          }
           setView('landing');
         }}
         className="absolute top-4 left-4 z-20 flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/90 backdrop-blur border border-slate-200 text-xs font-bold text-slate-700 hover:text-sky-600 hover:bg-white shadow-sm transition cursor-pointer"

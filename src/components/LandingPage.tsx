@@ -490,10 +490,21 @@ export default function LandingPage({
     const syncRoute = () => {
       const path = window.location.pathname.toLowerCase().replace(/\/+$/, '') || '/';
       const hash = window.location.hash.toLowerCase();
-      if (path === '/register' || hash === '#register' || hash.startsWith('#register')) {
-        window.history.replaceState({}, '', '/');
+      if (
+        path === '/register' || 
+        path === '/signup' || 
+        path === '/create-account' ||
+        hash === '#register' || 
+        hash.startsWith('#register') || 
+        hash === '#signup' || 
+        hash.startsWith('#signup') || 
+        hash === '#create-account'
+      ) {
         if (onOpenLogin) {
-          onOpenLogin('starter', false);
+          const hashQuery = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : '';
+          const hashParams = new URLSearchParams(hashQuery);
+          const plan = hashParams.get('plan') || new URLSearchParams(window.location.search).get('plan') || 'starter';
+          onOpenLogin(plan, true);
         }
         return;
       }
@@ -501,7 +512,7 @@ export default function LandingPage({
       const routeState = getLandingRouteState();
       setActiveLandingView(routeState.view);
 
-      if (window.location.hash) {
+      if (window.location.hash && !window.location.hash.startsWith('#login') && !window.location.hash.startsWith('#register')) {
         const cleanPath = landingPathByView[routeState.view] || '/';
         window.history.replaceState({}, '', cleanPath);
       }
@@ -540,7 +551,7 @@ export default function LandingPage({
   const openRegister = (planId: string = 'starter') => {
     setSelectedOnboardingPlanId(planId);
     if (onOpenLogin) {
-      onOpenLogin(planId, false);
+      onOpenLogin(planId, true);
     } else {
       setShowSecureAuthModal(true);
     }

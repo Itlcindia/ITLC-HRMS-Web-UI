@@ -4,7 +4,7 @@ import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { 
   Mail, Lock, Eye, EyeOff, ArrowRight, ShieldCheck, Sparkles, 
-  Building2, Phone, Check, Globe, MapPin 
+  Building2, Phone, Check, Globe, MapPin, Share2 
 } from 'lucide-react';
 import { api } from '../services/api';
 import { paymentService } from '../services/paymentService';
@@ -137,13 +137,27 @@ export default function LoginForm({
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const hash = window.location.hash.toLowerCase();
-      return urlParams.get('mode') === 'signup' || urlParams.get('mode') === 'register' || hash === '#signup' || hash === '#register';
+      const path = window.location.pathname.toLowerCase().replace(/\/+$/, '');
+      return (
+        urlParams.get('mode') === 'signup' || 
+        urlParams.get('mode') === 'register' || 
+        urlParams.get('mode') === 'create-account' || 
+        hash === '#signup' || 
+        hash === '#register' || 
+        hash.startsWith('#register') || 
+        hash.startsWith('#signup') || 
+        hash === '#create-account' ||
+        path === '/register' || 
+        path === '/signup' || 
+        path === '/create-account'
+      );
     } catch {
       return false;
     }
   });
   const [setupRequired, setSetupRequired] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   // Live Subscription Plans from Super Owner
   const [availablePlans, setAvailablePlans] = useState<any[]>([
@@ -155,13 +169,71 @@ export default function LoginForm({
     if (initialPlanId) return initialPlanId;
     try {
       const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get('plan') || localStorage.getItem('itlc_selected_onboarding_plan') || 'starter';
+      const hashQuery = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : '';
+      const hashParams = new URLSearchParams(hashQuery);
+      return hashParams.get('plan') || urlParams.get('plan') || localStorage.getItem('itlc_selected_onboarding_plan') || 'starter';
     } catch {
       return 'starter';
     }
   });
   const [registeredCompanyData, setRegisteredCompanyData] = useState<any>(null);
   const [showPaymentPrompt, setShowPaymentPrompt] = useState(false);
+
+  const getDirectRegisterLink = () => {
+    const origin = window.location.origin;
+    const planParam = selectedPlanId && selectedPlanId !== 'starter' ? `?plan=${selectedPlanId}` : '';
+    return `${origin}/#register${planParam}`;
+  };
+
+  const handleCopyRegisterLink = async () => {
+    const link = getDirectRegisterLink();
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(link);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = link;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+      }
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2500);
+    } catch {
+      // Fallback
+    }
+  };
+
+  useEffect(() => {
+    const syncHash = () => {
+      const hash = window.location.hash.toLowerCase();
+      if (hash === '#register' || hash.startsWith('#register') || hash === '#signup' || hash === '#create-account') {
+        setIsSignUp(true);
+      } else if (hash === '#login') {
+        setIsSignUp(false);
+      }
+    };
+    window.addEventListener('hashchange', syncHash);
+    window.addEventListener('popstate', syncHash);
+    return () => {
+      window.removeEventListener('hashchange', syncHash);
+      window.removeEventListener('popstate', syncHash);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isSignUp) {
+      const hash = window.location.hash.toLowerCase();
+      const path = window.location.pathname.toLowerCase().replace(/\/+$/, '');
+      if (hash !== '#register' && !hash.startsWith('#register') && path !== '/register' && path !== '/signup') {
+        const planParam = selectedPlanId && selectedPlanId !== 'starter' ? `?plan=${selectedPlanId}` : '';
+        try {
+          window.history.replaceState({}, '', `/#register${planParam}`);
+        } catch {}
+      }
+    }
+  }, [isSignUp, selectedPlanId]);
 
   useEffect(() => {
     if (initialPlanId) setSelectedPlanId(initialPlanId);
@@ -340,6 +412,14 @@ export default function LoginForm({
     setIsSignUp(signUpMode);
     resetSignUpState();
     setError('');
+    try {
+      if (signUpMode) {
+        const planParam = selectedPlanId && selectedPlanId !== 'starter' ? `?plan=${selectedPlanId}` : '';
+        window.history.pushState({}, '', `/#register${planParam}`);
+      } else {
+        window.history.pushState({}, '', '/#login');
+      }
+    } catch {}
   };
 
   // Submit Login
@@ -861,20 +941,47 @@ export default function LoginForm({
             transition={springTransition}
             style={{ display: isMobile ? (isSignUp ? 'flex' : 'none') : 'flex' }}
           >
-            <div>
-              <div className="inline-flex items-center justify-center p-1.5 bg-gradient-to-tr from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl mb-1.5 text-indigo-655 shadow-sm">
-                <Sparkles className="w-4 h-4 animate-pulse text-indigo-600" />
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <div className="inline-flex items-center justify-center p-1.5 bg-gradient-to-tr from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl mb-1.5 text-indigo-655 shadow-sm">
+                  <Sparkles className="w-4 h-4 animate-pulse text-indigo-600" />
+                </div>
+                <h2 className="text-lg sm:text-xl font-bold font-display text-slate-900 tracking-tight">
+                  {setupRequired ? (
+                    <>Setup <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent">Super Owner</span></>
+                  ) : (
+                    <>Create <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent">Account</span></>
+                  )}
+                </h2>
+                <p className="text-slate-400 text-[11px] mt-0.5">
+                  {setupRequired ? 'First-time setup detected. Configure the platform master administrator.' : 'Sign up today and get onboarded to the Apex Suite platform.'}
+                </p>
               </div>
-              <h2 className="text-lg sm:text-xl font-bold font-display text-slate-900 tracking-tight">
-                {setupRequired ? (
-                  <>Setup <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent">Super Owner</span></>
-                ) : (
-                  <>Create <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent">Account</span></>
-                )}
-              </h2>
-              <p className="text-slate-400 text-[11px] mt-0.5">
-                {setupRequired ? 'First-time setup detected. Configure the platform master administrator.' : 'Sign up today and get onboarded to the Apex Suite platform.'}
-              </p>
+
+              {!setupRequired && (
+                <button
+                  type="button"
+                  onClick={handleCopyRegisterLink}
+                  title="Copy direct registration link to share"
+                  className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[11px] font-semibold transition-all cursor-pointer ${
+                    copiedLink 
+                      ? 'bg-emerald-50 border-emerald-300 text-emerald-700 shadow-xs' 
+                      : 'bg-white hover:bg-indigo-50/70 border-indigo-200 text-indigo-600 shadow-xs hover:border-indigo-300'
+                  }`}
+                >
+                  {copiedLink ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Link Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>Copy Direct Link</span>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
 
             {/* Step progress bar */}
