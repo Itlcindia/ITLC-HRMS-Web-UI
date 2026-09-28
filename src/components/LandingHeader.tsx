@@ -79,6 +79,9 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
         </div>
       </header>
 
+      {/* Spacer to preserve document layout flow when navbar is position: fixed */}
+      <div className="itlc-reference-nav-spacer" aria-hidden="true" />
+
       {/* Mobile Slide-over Drawer Side Menu */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-[100] md:hidden">

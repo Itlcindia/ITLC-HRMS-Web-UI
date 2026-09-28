@@ -265,7 +265,10 @@ export const ItlcEcosystemOrbit: React.FC<ItlcEcosystemOrbitProps> = ({
             <span style={{ fontSize: '10px', fontWeight: 800, color: '#38bdf8', letterSpacing: '1.2px', textTransform: 'uppercase' }}>
               MASTER PLATFORM
             </span>
-            <h3 style={{ margin: '2px 0 0', fontSize: '19px', fontWeight: 900, color: '#ffffff', letterSpacing: '-0.4px', lineHeight: 1.1 }}>
+            <h3 
+              className="itlc-orbit-center-title"
+              style={{ margin: '2px 0 0', fontSize: '19px', fontWeight: 900, color: '#ffffff', letterSpacing: '-0.4px', lineHeight: 1.1 }}
+            >
               {cmsConfig.orbitCenterTitle || 'ITLC Ecosystem'}
             </h3>
             <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600, marginTop: '3px' }}>

@@ -683,9 +683,6 @@ export default function LoginForm({
             style={{ display: isMobile ? (isSignUp ? 'none' : 'flex') : 'flex' }}
           >
             <div>
-              <div className="inline-flex items-center justify-center p-2.5 bg-gradient-to-tr from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl text-indigo-650 shadow-sm mb-3">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
               <h2 className="text-xl sm:text-2xl font-bold font-display text-slate-900 tracking-tight">
                 {isSuperownerMode ? (
                   <>Superowner <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent">Login</span></>
@@ -693,7 +690,16 @@ export default function LoginForm({
                   <>Welcome <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent">back</span></>
                 )}
               </h2>
-              <p className="text-slate-400 text-xs mt-0.5">
+              <p 
+                className="text-slate-500 mt-1 whitespace-nowrap" 
+                style={{ 
+                  fontSize: '10px', 
+                  transform: 'scale(0.72)', 
+                  transformOrigin: 'left center', 
+                  display: 'inline-block',
+                  lineHeight: '1.2' 
+                }}
+              >
                 {isSuperownerMode ? "Enter credentials for Superowner Dashboard access." : "Enter your credentials to access your workspaces."}
               </p>
             </div>
@@ -867,7 +873,8 @@ export default function LoginForm({
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="flex-1 py-2.5 px-3 bg-gradient-to-r from-indigo-600 to-violet-700 hover:from-indigo-500 hover:to-violet-600 text-white font-semibold text-xs rounded-xl shadow-[0_4px_12px_rgba(79,70,229,0.22)] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-1"
+                    className="flex-1 py-2.5 px-3 bg-gradient-to-r from-indigo-600 to-violet-700 hover:from-indigo-500 hover:to-violet-600 text-white font-extrabold text-xs rounded-xl shadow-[0_4px_12px_rgba(79,70,229,0.22)] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-1"
+                    style={{ fontWeight: 800, fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif" }}
                   >
                     {isLoading ? (
                       <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -881,7 +888,8 @@ export default function LoginForm({
                   <button
                     type="button"
                     onClick={handleCreateAccountClick}
-                    className="flex-1 py-2.5 px-3 border border-indigo-200 hover:border-indigo-400 bg-white text-indigo-600 hover:bg-indigo-50/30 font-semibold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1"
+                    className="flex-1 py-2.5 px-3 border border-indigo-200 hover:border-indigo-400 bg-white text-indigo-600 hover:bg-indigo-50/30 font-extrabold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1"
+                    style={{ fontWeight: 800, fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif" }}
                   >
                     Create Account
                   </button>
@@ -943,9 +951,6 @@ export default function LoginForm({
           >
             <div className="flex items-start justify-between gap-2">
               <div>
-                <div className="inline-flex items-center justify-center p-1.5 bg-gradient-to-tr from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl mb-1.5 text-indigo-655 shadow-sm">
-                  <Sparkles className="w-4 h-4 animate-pulse text-indigo-600" />
-                </div>
                 <h2 className="text-lg sm:text-xl font-bold font-display text-slate-900 tracking-tight">
                   {setupRequired ? (
                     <>Setup <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent">Super Owner</span></>
@@ -953,7 +958,16 @@ export default function LoginForm({
                     <>Create <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent">Account</span></>
                   )}
                 </h2>
-                <p className="text-slate-400 text-[11px] mt-0.5">
+                <p 
+                  className="text-slate-500 mt-1 whitespace-nowrap" 
+                  style={{ 
+                    fontSize: '10px', 
+                    transform: 'scale(0.72)', 
+                    transformOrigin: 'left center', 
+                    display: 'inline-block',
+                    lineHeight: '1.2' 
+                  }}
+                >
                   {setupRequired ? 'First-time setup detected. Configure the platform master administrator.' : 'Sign up today and get onboarded to the Apex Suite platform.'}
                 </p>
               </div>
@@ -1275,14 +1289,16 @@ export default function LoginForm({
                     <button
                       type="button"
                       onClick={() => setSignUpStep(1)}
-                      className="py-2 px-3 border border-slate-200 hover:border-slate-400 bg-white text-slate-600 font-semibold text-xs rounded-xl transition-all cursor-pointer"
+                      className="py-2 px-3 border border-slate-200 hover:border-slate-400 bg-white text-slate-600 font-extrabold text-xs rounded-xl transition-all cursor-pointer"
+                      style={{ fontWeight: 800, fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif" }}
                     >
                       Back
                     </button>
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="flex-grow py-2 px-4 bg-gradient-to-r from-indigo-650 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs rounded-xl shadow-[0_3px_10px_rgba(79,70,229,0.18)] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                      className="flex-grow py-2 px-4 bg-gradient-to-r from-indigo-650 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-extrabold text-xs rounded-xl shadow-[0_3px_10px_rgba(79,70,229,0.18)] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                      style={{ fontWeight: 800, fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif" }}
                     >
                       {isLoading ? (
                         <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -1304,12 +1320,12 @@ export default function LoginForm({
               DESKTOP SLIDING OVERLAY PANEL (Only visible on desktop)
              ========================================================== */}
           <motion.div
-            className="absolute top-0 bottom-0 left-0 w-1/2 z-20 hidden lg:flex flex-col justify-center items-center text-center p-8 overflow-hidden text-white shadow-2xl border-l border-white/10"
+            className="auth-sliding-overlay absolute top-0 bottom-0 left-0 w-1/2 z-20 hidden lg:flex flex-col justify-center items-center text-center p-8 overflow-hidden text-white shadow-2xl border-l border-white/10"
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
             animate={{
               x: isSignUp ? "0%" : "100%",
-              borderRadius: isSignUp ? "0px 120px 120px 0px" : "120px 0px 0px 120px"
+              borderRadius: isSignUp ? "0px 85px 85px 0px" : "85px 0px 0px 85px"
             }}
             transition={springTransition}
             style={{
@@ -1322,10 +1338,10 @@ export default function LoginForm({
             <div className="absolute top-10 right-10 w-24 h-24 rounded-full bg-white/5 blur-xl pointer-events-none" />
             <div className="absolute bottom-10 left-10 w-32 h-32 rounded-full bg-indigo-300/10 blur-2xl pointer-events-none" />
 
-            <div className="relative z-10 w-full max-w-[370px] flex flex-col items-center space-y-6">
+            <div className="relative z-10 w-full max-w-[370px] flex flex-col items-center">
               
               {/* Blue Image Slideshow inside the overlay */}
-              <div className="w-full overflow-hidden relative max-w-[360px]">
+              <div className="w-full relative max-w-[360px]">
                 <div ref={emblaRef} className="overflow-hidden w-full">
                   <div className="flex">
                     {slides.map((slide) => (
@@ -1375,8 +1391,8 @@ export default function LoginForm({
                   </div>
                 </div>
                 
-                {/* Pagination Dots centered below image */}
-                <div className="flex justify-center gap-1.5 mt-2">
+                {/* Pagination Dots centered below image with clear separation */}
+                <div className="flex justify-center items-center gap-2" style={{ marginTop: '40px' }}>
                   {scrollSnaps.map((_, index) => (
                     <button
                       key={index}
@@ -1392,8 +1408,8 @@ export default function LoginForm({
                 </div>
               </div>
 
-              {/* Text content below slideshow */}
-              <div className="w-full">
+              {/* Text content below slideshow - position strictly preserved */}
+              <div className="w-full" style={{ marginTop: '20px' }}>
                 <AnimatePresence mode="wait">
                   {isSignUp ? (
                     <motion.div
@@ -1402,19 +1418,24 @@ export default function LoginForm({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -15 }}
                       transition={{ duration: 0.3 }}
-                      className="space-y-4"
+                      className="flex flex-col items-center text-center w-full"
                     >
-                      <h3 className="text-xl font-bold font-display tracking-tight">Already registered?</h3>
-                      <p className="text-indigo-100 text-xs leading-relaxed">
+                      <h3 className="text-xl font-bold font-display tracking-tight text-white" style={{ color: '#ffffff', marginTop: '8px' }}>
+                        Already registered?
+                      </h3>
+                      <p className="text-white text-[11px] leading-relaxed max-w-[320px] mx-auto" style={{ color: '#ffffff', marginTop: '12px' }}>
                         To keep connected with your workspaces and teams, please sign in with your credentials.
                       </p>
-                      <button
-                        type="button"
-                        onClick={() => handleToggleMode(false)}
-                        className="py-2.5 px-6 border border-white hover:bg-white hover:text-indigo-900 font-bold text-xs rounded-xl shadow-md transition-all active:scale-[0.96] cursor-pointer"
-                      >
-                        Sign In
-                      </button>
+                      <div style={{ marginTop: '40px' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleMode(false)}
+                          className="button font-extrabold"
+                          style={{ fontWeight: 800, fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif" }}
+                        >
+                          <span className="button-content font-extrabold" style={{ fontWeight: 800, fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif" }}>Sign In</span>
+                        </button>
+                      </div>
                     </motion.div>
                   ) : (
                     <motion.div
@@ -1423,19 +1444,24 @@ export default function LoginForm({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -15 }}
                       transition={{ duration: 0.3 }}
-                      className="space-y-4"
+                      className="flex flex-col items-center text-center w-full"
                     >
-                      <h3 className="text-xl font-bold font-display tracking-tight">New to Apex Suite?</h3>
-                      <p className="text-indigo-100 text-xs leading-relaxed">
+                      <h3 className="text-xl font-bold font-display tracking-tight text-white" style={{ color: '#ffffff', marginTop: '8px' }}>
+                        New to Apex Suite?
+                      </h3>
+                      <p className="text-white text-[11px] leading-relaxed max-w-[320px] mx-auto" style={{ color: '#ffffff', marginTop: '12px' }}>
                         Enter your organizational details and start managing your company analytics forecasts.
                       </p>
-                      <button
-                        type="button"
-                        onClick={handleCreateAccountClick}
-                        className="py-2.5 px-6 border border-white hover:bg-white hover:text-indigo-900 font-bold text-xs rounded-xl shadow-md transition-all active:scale-[0.96] cursor-pointer"
-                      >
-                        Create Account
-                      </button>
+                      <div style={{ marginTop: '40px' }}>
+                        <button
+                          type="button"
+                          onClick={handleCreateAccountClick}
+                          className="button font-extrabold"
+                          style={{ fontWeight: 800, fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif" }}
+                        >
+                          <span className="button-content font-extrabold" style={{ fontWeight: 800, fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif" }}>Create Account</span>
+                        </button>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>

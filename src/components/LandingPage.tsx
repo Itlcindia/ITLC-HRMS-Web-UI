@@ -764,43 +764,30 @@ export default function LandingPage({
                       else setShowSecureAuthModal(true);
                     }}
                   />
-                  {/* Interactive Workspaces 3D Carousel Showcase */}
-                  <section className="py-14 bg-gradient-to-b from-white via-slate-50 to-white border-y border-slate-200/70 relative overflow-hidden">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-8">
-                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-100/90 text-sky-700 text-xs font-extrabold uppercase tracking-wider mb-3">
-                        <Sparkles size={14} className="text-sky-600" /> Enterprise Workspace Suite
-                      </div>
-                      <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-                        Experience Next-Gen HRMS & Business Intelligence
-                      </h2>
-                      <p className="mt-2 text-slate-600 text-sm sm:text-base max-w-2xl mx-auto">
-                        Explore unified employee records, live biometric attendance, Kanban pipelines, and automated payroll in an interactive 3D tour.
-                      </p>
-                    </div>
-                    <Carousel />
-                  </section>
                   <HrmsFeatureFaqSection />
-                  <ReadyStartedSection
-                    onStart={() => openRegister('starter')}
-                    whatsappNumber={cmsConfig.whatsappSalesNumber}
-                  />
                 </React.Fragment>
               );
 
             case 'ecosystem_orbit':
               return (
-                <div id="workspaces" key="ecosystem_orbit">
-                  <ItlcEcosystemOrbit 
-                    onLaunchCrm={() => {
-                      triggerToast('🚀 ITLC Sales CRM is Coming Soon! Stay tuned.');
-                    }}
-                    onLaunchHrms={() => {
-                      if (onOpenLogin) onOpenLogin();
-                      else setShowSecureAuthModal(true);
-                    }}
-                    lang={lang}
+                <React.Fragment key="ecosystem_orbit">
+                  <div id="workspaces">
+                    <ItlcEcosystemOrbit 
+                      onLaunchCrm={() => {
+                        triggerToast('🚀 ITLC Sales CRM is Coming Soon! Stay tuned.');
+                      }}
+                      onLaunchHrms={() => {
+                        if (onOpenLogin) onOpenLogin();
+                        else setShowSecureAuthModal(true);
+                      }}
+                      lang={lang}
+                    />
+                  </div>
+                  <ReadyStartedSection
+                    onStart={() => openRegister('starter')}
+                    whatsappNumber={cmsConfig.whatsappSalesNumber}
                   />
-                </div>
+                </React.Fragment>
               );
 
             case 'product_showcase':

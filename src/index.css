@@ -8213,9 +8213,11 @@ input:checked + .slider:before {
    REFERENCE HERO: ITLC HRMS SCREENSHOT MATCH
    ========================================================= */
 .itlc-reference-nav {
-  position: sticky !important;
+  position: fixed !important;
   top: 0 !important;
-  z-index: 80 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 1000 !important;
   width: 100% !important;
   min-height: 105px !important;
   padding: 0 5.7vw !important;
@@ -8223,11 +8225,21 @@ input:checked + .slider:before {
   grid-template-columns: minmax(320px, 1fr) auto minmax(260px, 1fr) !important;
   align-items: center !important;
   gap: 32px !important;
-  background: #ffffff !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
   border: 0 !important;
   border-bottom: 1px solid rgba(212, 226, 241, 0.7) !important;
   border-radius: 0 !important;
   box-shadow: 0 2px 18px rgba(8, 45, 91, 0.05) !important;
+  transform: none !important;
+}
+
+.itlc-reference-nav-spacer {
+  display: block !important;
+  width: 100% !important;
+  height: 105px !important;
+  pointer-events: none !important;
 }
 
 .itlc-reference-brand {
@@ -8913,6 +8925,10 @@ input:checked + .slider:before {
     min-height: 82px !important;
   }
 
+  .itlc-reference-nav-spacer {
+    height: 82px !important;
+  }
+
   .itlc-reference-menu {
     display: none !important;
   }
@@ -8937,6 +8953,10 @@ input:checked + .slider:before {
     padding: 0 16px !important;
     gap: 12px !important;
     grid-template-columns: 1fr auto !important;
+  }
+
+  .itlc-reference-nav-spacer {
+    height: 84px !important;
   }
 
   .itlc-reference-brand img {
@@ -10658,7 +10678,8 @@ input:checked + .slider:before {
 }
 
 .itlc-reference-nav {
-  animation: itlcLandingNavDrop 0.55s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+  animation: none !important;
+  transform: none !important;
 }
 
 .itlc-reference-copy h1,
@@ -11631,5 +11652,254 @@ img[src*="qr"] {
   backface-visibility: hidden !important;
   filter: none !important;
   -webkit-font-smoothing: antialiased !important;
+}
+
+/* Blue Background Sliding Overlay Panel Text Overrides */
+.auth-sliding-overlay h1,
+.auth-sliding-overlay h2,
+.auth-sliding-overlay h3,
+.auth-sliding-overlay h4,
+.auth-sliding-overlay p,
+.auth-sliding-overlay span:not(.button-content),
+.auth-sliding-overlay div:not(.button):not(.button-content) {
+  color: #ffffff !important;
+}
+
+/* From Uiverse.io by Madflows - White Button with Black Text and Purple Gradient Hover */
+.button {
+  position: relative;
+  overflow: hidden;
+  height: 3rem;
+  padding: 0 2rem;
+  border-radius: 1.5rem;
+  background: #ffffff !important;
+  background-size: 400%;
+  color: #000000 !important;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800 !important;
+  font-size: 0.875rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+.button:hover::before {
+  transform: scaleX(1);
+}
+
+.button-content {
+  position: relative;
+  z-index: 1;
+  color: #000000 !important;
+  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 800 !important;
+}
+
+.button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  width: 100%;
+  height: inherit;
+  border-radius: inherit;
+  background: linear-gradient(
+    82.3deg,
+    rgba(150, 93, 233, 1) 10.8%,
+    rgba(99, 88, 238, 1) 94.3%
+  );
+  transition: all 0.475s;
+}
+
+/* Auth Form Panels: Explicit layout and generous separation from the blue sliding card */
+@media (min-width: 1024px) {
+  .auth-signin-panel {
+    left: 0 !important;
+    right: auto !important;
+    width: 50% !important;
+    padding-left: 32px !important;
+    padding-right: 56px !important;
+  }
+  .auth-signup-panel {
+    left: 50% !important;
+    right: 0 !important;
+    width: 50% !important;
+    padding-left: 56px !important;
+    padding-right: 32px !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  .auth-signin-panel {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+  .auth-signup-panel {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+}
+
+/* Explicit input padding overrides to guarantee icons and text never stick to edges or overlap */
+input.auth-input-icon,
+textarea.auth-input-icon {
+  padding-left: 50px !important;
+  padding-right: 16px !important;
+}
+
+input.auth-input-password {
+  padding-left: 50px !important;
+  padding-right: 50px !important;
+}
+
+.auth-icon-wrapper {
+  position: absolute !important;
+  left: 18px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  pointer-events: none !important;
+  z-index: 10 !important;
+}
+
+.auth-eye-wrapper {
+  position: absolute !important;
+  right: 18px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  cursor: pointer !important;
+  z-index: 10 !important;
+}
+
+/* Compact spacing exclusively for Company Email & Company Website so placeholders don't get truncated */
+.auth-compact-icon {
+  position: absolute !important;
+  left: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  pointer-events: none !important;
+  z-index: 10 !important;
+}
+
+input.auth-compact-input {
+  padding-left: 34px !important;
+  padding-right: 8px !important;
+}
+
+/* Login main card blue shadow with rich interactive hover glow */
+.auth-card-shadow {
+  box-shadow: 0 20px 45px -10px rgba(59, 130, 246, 0.22), 0 10px 25px -8px rgba(37, 99, 235, 0.16) !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.auth-card-shadow:hover {
+  box-shadow: 0 25px 65px -8px rgba(37, 99, 235, 0.38), 0 14px 32px -6px rgba(59, 130, 246, 0.28) !important;
+  border-color: rgba(147, 197, 253, 0.8) !important;
+}
+
+/* From Uiverse.io by xopc333 - Animated Back Button (50% scale - 28px) */
+.uiverse-back-btn {
+  display: block;
+  position: fixed !important;
+  top: 16px !important;
+  left: 16px !important;
+  z-index: 9999 !important;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  overflow: hidden;
+  outline: none;
+  background-color: #0f172a;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 0;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+  transition: transform 0.25s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.25s ease;
+}
+
+.uiverse-back-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.28);
+}
+
+.uiverse-back-btn:before,
+.uiverse-back-btn:after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  inset: 3.5px;
+}
+
+.uiverse-back-btn:before {
+  border: 2px solid #f0eeef;
+  transition: opacity 0.4s cubic-bezier(0.77, 0, 0.175, 1) 80ms,
+    transform 0.5s cubic-bezier(0.455, 0.03, 0.515, 0.955) 80ms;
+}
+
+.uiverse-back-btn:after {
+  border: 2px solid #96daf0;
+  transform: scale(1.3);
+  transition: opacity 0.4s cubic-bezier(0.165, 0.84, 0.44, 1),
+    transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  opacity: 0;
+}
+
+.uiverse-back-btn:hover:before,
+.uiverse-back-btn:focus:before {
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.4s cubic-bezier(0.165, 0.84, 0.44, 1),
+    transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.uiverse-back-btn:hover:after,
+.uiverse-back-btn:focus:after {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.4s cubic-bezier(0.77, 0, 0.175, 1) 80ms,
+    transform 0.5s cubic-bezier(0.455, 0.03, 0.515, 0.955) 80ms;
+}
+
+.uiverse-back-btn .button-box {
+  display: flex;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.uiverse-back-btn .button-elem {
+  display: block;
+  width: 10px;
+  height: 10px;
+  margin: 9px 9px 0 9px;
+  transform: rotate(180deg);
+  fill: #f0eeef;
+}
+
+.uiverse-back-btn:hover .button-box,
+.uiverse-back-btn:focus .button-box {
+  transition: 0.4s;
+  transform: translateX(-28px);
+}
+
+/* Center Orbit Hub Title override - Ensure crisp pure white text */
+.itlc-orbit-center-title,
+.itlc-ecosystem-orbit-section h3 {
+  color: #ffffff !important;
 }
 
