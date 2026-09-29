@@ -395,10 +395,6 @@ export default function App({ onSwitchToCRM, onOpenIntroHub, onChooseWorkspace }
             <LoginForm 
               onSuccessLogin={handleSuccessLogin} 
               isSuperownerMode={false} 
-              onOpenRegister={() => {
-                setIsRegisteringCompany(true);
-                window.location.hash = '#register';
-              }}
             />
           )}
         </div>

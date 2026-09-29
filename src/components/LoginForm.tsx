@@ -329,6 +329,8 @@ export default function LoginForm({
     }
   };
 
+
+
   // Submit OTP Verification
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -660,6 +662,8 @@ export default function LoginForm({
                   Apple
                 </button>
               </div>
+
+
 
 
             </div>
