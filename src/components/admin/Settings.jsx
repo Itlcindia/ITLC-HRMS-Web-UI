@@ -153,7 +153,6 @@ export default function CompanySettings() {
     try {
       await api.updateAdminCompany({
         name: compName,
-        email: compEmail,
         logo: compLogo,
         themeColor,
         phone,
@@ -779,10 +778,6 @@ export default function CompanySettings() {
               <div className="premium-form-group">
                 <label className="premium-label">Branch HQ Coordinates</label>
                 <input type="text" value={branchHQCoordinates} onChange={(e) => setBranchHQCoordinates(e.target.value)} className="premium-input" />
-              </div>
-              <div style={{ gridColumn: 'span 3', padding: '10px 14px', background: 'rgba(16, 185, 129, 0.08)', borderRadius: 8, border: '1px solid rgba(16, 185, 129, 0.2)', fontSize: '0.8rem', color: '#059669', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span>🔔</span>
-                <span><strong>Automated Shift Attendance Reminders Active:</strong> Employees receive check-in reminders at Start time and punch-out reminders at End time.</span>
               </div>
             </div>
           </div>

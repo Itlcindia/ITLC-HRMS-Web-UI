@@ -126,33 +126,34 @@ const menuItems = [
   { id: 'support', label: 'Support', icon: HeartHandshake },
 ];
 
-export default function Sidebar({ 
-  activeTab, 
-  setActiveTab, 
-  collapsed, 
-  setCollapsed, 
-  handleLogout, 
-  mobileOpen, 
-  setMobileOpen, 
-  companyName, 
-  companyLogo, 
-  featureFlags = {}, 
-  subscriptionPlanId, 
-  onSwitchToCRM,
-  isSubscriptionActive = true,
-  onOpenSubscriptionModal
-}) {
+export default function Sidebar({ activeTab, setActiveTab, collapsed, setCollapsed, handleLogout, mobileOpen, setMobileOpen, companyName, companyLogo, featureFlags = {}, subscriptionPlanId, onSwitchToCRM }) {
   const [expandedMenus, setExpandedMenus] = useState({});
   const [isMobile, setIsMobile] = useState(false);
 
   const isLocked = (itemId) => {
-    if (itemId === 'dashboard' || itemId === 'subscription') return false;
-    if (isSubscriptionActive === false) return true;
+    if (!subscriptionPlanId) return false;
+    const plan = subscriptionPlanId.toLowerCase();
+    if (plan === 'enterprise' || plan === 'business') return false;
+
+    if (plan === 'free_trial' || plan === 'trial' || plan === 'starter' || plan === 'none' || plan === 'unselected') {
+      if (['recruitment', 'performance', 'training'].includes(itemId)) return true;
+    }
+    if (plan === 'free_trial' || plan === 'trial' || plan === 'none' || plan === 'unselected') {
+      if (['payroll', 'expenses'].includes(itemId)) return true;
+    }
     return false;
   };
 
   const isSubItemLocked = (itemId, subItemId) => {
-    if (isSubscriptionActive === false) return true;
+    if (!subscriptionPlanId) return false;
+    const plan = subscriptionPlanId.toLowerCase();
+    if (plan === 'enterprise' || plan === 'business') return false;
+
+    if (itemId === 'payroll') {
+      if (plan === 'starter' || plan === 'free_trial' || plan === 'trial' || plan === 'unselected') {
+        return ['payroll-structures', 'payroll-compliance'].includes(subItemId);
+      }
+    }
     return false;
   };
 
@@ -233,12 +234,6 @@ export default function Sidebar({
   };
 
   const hasValidLogo = companyLogo && (companyLogo.startsWith('data:image/') || companyLogo.startsWith('http://') || companyLogo.startsWith('https://'));
-  const effectiveCompanyName = companyName || (() => {
-    try {
-      const t = JSON.parse(localStorage.getItem('itlc_active_tenant') || '{}');
-      return t.name || t.companyName || '';
-    } catch(e) { return ''; }
-  })() || 'Company';
 
   return (
     <aside
@@ -277,11 +272,11 @@ export default function Sidebar({
               {hasValidLogo ? (
                 <img src={companyLogo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               ) : (
-                effectiveCompanyName ? effectiveCompanyName[0].toUpperCase() : 'C'
+                companyName ? companyName[0].toUpperCase() : 'A'
               )}
             </div>
             <div>
-              <span style={{ fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.02em', background: 'linear-gradient(90deg, #0F172A 0%, #475569 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{effectiveCompanyName}</span>
+              <span style={{ fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.02em', background: 'linear-gradient(90deg, #0F172A 0%, #475569 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{companyName || 'Antigravity'}</span>
               <div style={{ fontSize: 9, color: 'var(--color-accent)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: -2 }}>HRMS Enterprise</div>
             </div>
           </motion.div>
@@ -382,11 +377,7 @@ export default function Sidebar({
                 <button
                   onClick={() => {
                     if (isLocked(item.id)) {
-                      if (onOpenSubscriptionModal) {
-                        onOpenSubscriptionModal();
-                      } else {
-                        alert(`🔒 FEATURE LOCKED\nThe "${item.label}" module is not included in your current subscription plan (${subscriptionPlanId || 'Free Preview'}). Please choose a plan under "Subscription & Billing" to unlock this feature.`);
-                      }
+                      alert(`🔒 FEATURE LOCKED\nThe "${item.label}" module is not included in your current subscription plan (${subscriptionPlanId}). Please upgrade your plan under "Subscription & Billing" to unlock this feature.`);
                       return;
                     }
                     toggleMenu(item.id);
@@ -456,11 +447,7 @@ export default function Sidebar({
                             key={sub.id}
                             onClick={() => {
                               if (subLocked) {
-                                if (onOpenSubscriptionModal) {
-                                  onOpenSubscriptionModal();
-                                } else {
-                                  alert(`🔒 FEATURE LOCKED\nThe "${sub.label}" feature is locked under your current subscription plan (${subscriptionPlanId || 'Free Preview'}). Please choose a plan to unlock.`);
-                                }
+                                alert(`🔒 FEATURE LOCKED\nThe "${sub.label}" feature is locked under your current subscription plan (${subscriptionPlanId}). Please upgrade your plan to unlock.`);
                                 return;
                               }
                               handleItemClick(sub.id);
@@ -505,11 +492,7 @@ export default function Sidebar({
               key={item.id}
               onClick={() => {
                 if (locked) {
-                  if (onOpenSubscriptionModal) {
-                    onOpenSubscriptionModal();
-                  } else {
-                    alert(`🔒 FEATURE LOCKED\nThe "${item.label}" module is not included in your current subscription plan (${subscriptionPlanId || 'Free Preview'}). Please upgrade your plan under "Subscription & Billing" to unlock this feature.`);
-                  }
+                  alert(`🔒 FEATURE LOCKED\nThe "${item.label}" module is not included in your current subscription plan (${subscriptionPlanId}). Please upgrade your plan under "Subscription & Billing" to unlock this feature.`);
                   return;
                 }
                 handleItemClick(item.id);

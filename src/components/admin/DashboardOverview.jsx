@@ -99,7 +99,7 @@ const recentActivities = [
   { type: 'job', title: 'Senior Product Designer vacancy published', time: '3 days ago', desc: 'Active hiring post listed on LinkedIn.', color: '#EC4899' },
 ];
 
-export default function DashboardOverview({ employeesList = [], notifications = [], setActiveTab, currency = 'USD', isSubscriptionActive = true, onOpenSubscriptionModal }) {
+export default function DashboardOverview({ employeesList = [], notifications = [], setActiveTab, currency = 'USD' }) {
   const [loading, setLoading] = useState(true);
   const [company, setCompany] = useState(null);
   const [activities, setActivities] = useState([]);
@@ -122,7 +122,7 @@ export default function DashboardOverview({ employeesList = [], notifications = 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [companyData, actDataRaw, attTrends, payTrends, attendanceLogs, branchesData, jobsData] = await Promise.all([
+        const [companyData, actData, attTrends, payTrends, attendanceLogs, branchesData, jobsData] = await Promise.all([
           api.getAdminCompany(),
           api.getAdminAuditLogs().catch(() => []),
           api.getAttendanceTrends().catch(() => []),
@@ -134,25 +134,17 @@ export default function DashboardOverview({ employeesList = [], notifications = 
 
         if (companyData) setCompany(companyData);
         
-        let actData = actDataRaw;
-        if (!actData || actData.length === 0) {
-          try {
-            const rawLogs = localStorage.getItem('hrms_activity_logs');
-            if (rawLogs) actData = JSON.parse(rawLogs);
-          } catch (_) {}
-        }
-
         if (actData && actData.length > 0) {
           setActivities(actData.slice(0, 5).map((a) => {
             let color = '#4F46E5';
-            if (a.category === 'HR' || a.action?.includes('Employee')) color = '#10B981';
+            if (a.category === 'HR') color = '#10B981';
             if (a.category === 'Payroll') color = '#EC4899';
-            if (a.category === 'Billing' || a.action?.includes('Subscription')) color = '#8B5CF6';
+            if (a.category === 'Billing') color = '#8B5CF6';
             return {
-              type: a.category?.toLowerCase() || 'system',
-              title: a.action || 'Activity',
-              time: a.timestamp ? new Date(a.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now',
-              desc: a.details || a.description || '',
+              type: a.category?.toLowerCase() || 'joined',
+              title: a.action,
+              time: new Date(a.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              desc: a.details,
               color
             };
           }));
@@ -187,24 +179,7 @@ export default function DashboardOverview({ employeesList = [], notifications = 
         setLoading(false);
       }
     };
-
     fetchDashboardData();
-
-    const handleSync = () => {
-      fetchDashboardData();
-    };
-
-    window.addEventListener('company_updated', handleSync);
-    window.addEventListener('subscription_updated', handleSync);
-    window.addEventListener('multi_tenant_updated', handleSync);
-    window.addEventListener('storage', handleSync);
-
-    return () => {
-      window.removeEventListener('company_updated', handleSync);
-      window.removeEventListener('subscription_updated', handleSync);
-      window.removeEventListener('multi_tenant_updated', handleSync);
-      window.removeEventListener('storage', handleSync);
-    };
   }, []);
 
   const handleActionClick = (tabName) => {
@@ -263,60 +238,9 @@ export default function DashboardOverview({ employeesList = [], notifications = 
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {/* Free Preview / Inactive Subscription Alert Banner */}
-      {!isSubscriptionActive && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          style={{
-            background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%)',
-            borderRadius: '16px',
-            padding: '18px 24px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            boxShadow: '0 10px 25px -5px rgba(79, 70, 229, 0.3)',
-            gap: 16,
-            flexWrap: 'wrap',
-            color: '#ffffff'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <span style={{ fontSize: '2rem' }}>🚀</span>
-            <div>
-              <h4 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0, color: '#ffffff' }}>
-                Free Preview Mode Active
-              </h4>
-              <p style={{ fontSize: '0.85rem', margin: '4px 0 0 0', opacity: 0.9, color: '#f1f5f9' }}>
-                All modules (People, Attendance, Leave, Payroll, Recruitment & Settings) are currently locked. Choose a plan to unlock all features.
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => onOpenSubscriptionModal ? onOpenSubscriptionModal() : (setActiveTab && setActiveTab('subscription'))}
-            style={{
-              padding: '10px 22px',
-              fontSize: '0.88rem',
-              fontWeight: 800,
-              background: '#ffffff',
-              color: '#4f46e5',
-              border: 'none',
-              borderRadius: '10px',
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              transition: 'transform 0.15s ease'
-            }}
-          >
-            <span>⚡ Buy Subscription Now</span>
-          </button>
-        </motion.div>
-      )}
-
+      
       {/* Subscription Limit Warning Alert Banner */}
-      {company && totalEmployees >= (company.seatLimit || company.maxEmployees) && (
+      {company && totalEmployees >= company.maxEmployees && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -719,23 +643,21 @@ export default function DashboardOverview({ employeesList = [], notifications = 
           <div>
             <span className="premium-label" style={{ fontSize: '0.65rem' }}>Active Plan</span>
             <div style={{ fontSize: '0.9rem', fontWeight: 700, marginTop: 4, color: 'var(--color-primary)', textTransform: 'capitalize' }}>
-              {company?.subscriptionPlanId || 'Demo Plan'}
+              {company?.subscriptionPlanId || 'Starter'}
             </div>
           </div>
           <div>
             <span className="premium-label" style={{ fontSize: '0.65rem' }}>Max Employees Limit</span>
             <div style={{ fontSize: '0.9rem', fontWeight: 700, marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
               <Users size={14} style={{ color: 'var(--color-text-tertiary)' }} />
-              <span className="number-font" style={{ fontSize: '0.85rem' }}>{employeesList.length} / {company?.seatLimit || company?.maxEmployees || company?.userSeatLimit || 50}</span>
+              <span className="number-font" style={{ fontSize: '0.85rem' }}>{employeesList.length} / {company?.maxEmployees || 100}</span>
             </div>
           </div>
           <div>
             <span className="premium-label" style={{ fontSize: '0.65rem' }}>Cloud storage limit</span>
             <div style={{ fontSize: '0.9rem', fontWeight: 700, marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
               <HardDrive size={14} style={{ color: 'var(--color-text-tertiary)' }} />
-              <span className="number-font" style={{ fontSize: '0.85rem' }}>
-                {Number(company?.storageUsed !== undefined ? company.storageUsed : 0.85).toFixed(2)} GB / {company?.storageLimitGb || company?.storageLimit || 50} GB
-              </span>
+              <span className="number-font" style={{ fontSize: '0.85rem' }}>{company?.storageLimit || 50} GB</span>
             </div>
           </div>
         </div>

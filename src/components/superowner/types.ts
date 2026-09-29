@@ -61,12 +61,10 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'Super Owner' | 'Super Admin' | 'Company Admin' | 'HR' | 'Manager' | 'Employee' | string;
+  role: 'Super Owner' | 'Company Admin' | 'HR' | 'Manager' | 'Employee';
   status: 'active' | 'suspended';
   companyName: string;
   createdDate: string;
-  password?: string;
-  phone?: string;
 }
 
 export interface Coupon {

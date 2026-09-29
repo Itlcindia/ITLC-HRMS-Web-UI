@@ -340,12 +340,10 @@ export const MyProfile: React.FC = () => {
   const [activeDocUploadId, setActiveDocUploadId] = useState<string | null>(null);
 
   useEffect(() => {
-    const userDocKey = `hrms_profile_vault_docs_${(profile.email || profile.id || 'default').toLowerCase()}`;
     if (profile.documents && profile.documents.length > 0) {
       setDocumentsVault(profile.documents);
-      localStorage.setItem(userDocKey, JSON.stringify(profile.documents));
     } else {
-      const saved = localStorage.getItem(userDocKey) || localStorage.getItem("hrms_profile_vault_docs");
+      const saved = localStorage.getItem("hrms_profile_vault_docs");
       if (saved) {
         try {
           setDocumentsVault(JSON.parse(saved));
@@ -356,7 +354,7 @@ export const MyProfile: React.FC = () => {
         setDocumentsVault(DEFAULT_DOCUMENTS);
       }
     }
-  }, [profile.documents, profile.email, profile.id]);
+  }, [profile.documents]);
 
   useEffect(() => {
     if (globalSubTab) {
@@ -371,8 +369,6 @@ export const MyProfile: React.FC = () => {
 
   const saveDocs = (newDocs: ProfileDoc[]) => {
     setDocumentsVault(newDocs);
-    const userDocKey = `hrms_profile_vault_docs_${(profile.email || profile.id || 'default').toLowerCase()}`;
-    localStorage.setItem(userDocKey, JSON.stringify(newDocs));
     localStorage.setItem("hrms_profile_vault_docs", JSON.stringify(newDocs));
     updateProfile({ documents: newDocs });
   };

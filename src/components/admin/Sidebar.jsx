@@ -126,32 +126,34 @@ const menuItems = [
   { id: 'support', label: 'Support', icon: HeartHandshake },
 ];
 
-export default function Sidebar({ 
-  activeTab, 
-  setActiveTab, 
-  collapsed, 
-  setCollapsed, 
-  handleLogout, 
-  mobileOpen, 
-  setMobileOpen, 
-  companyName, 
-  companyLogo, 
-  featureFlags = {}, 
-  subscriptionPlanId,
-  isSubscriptionActive = true,
-  onOpenSubscriptionModal
-}) {
+export default function Sidebar({ activeTab, setActiveTab, collapsed, setCollapsed, handleLogout, mobileOpen, setMobileOpen, companyName, companyLogo, featureFlags = {}, subscriptionPlanId }) {
   const [expandedMenus, setExpandedMenus] = useState({});
   const [isMobile, setIsMobile] = useState(false);
 
   const isLocked = (itemId) => {
-    if (itemId === 'dashboard' || itemId === 'subscription') return false;
-    if (isSubscriptionActive === false) return true;
+    if (!subscriptionPlanId) return false;
+    const plan = subscriptionPlanId.toLowerCase();
+    if (plan === 'enterprise' || plan === 'business') return false;
+
+    if (plan === 'free_trial' || plan === 'trial' || plan === 'starter' || plan === 'none' || plan === 'unselected') {
+      if (['recruitment', 'performance', 'training'].includes(itemId)) return true;
+    }
+    if (plan === 'free_trial' || plan === 'trial' || plan === 'none' || plan === 'unselected') {
+      if (['payroll', 'expenses'].includes(itemId)) return true;
+    }
     return false;
   };
 
   const isSubItemLocked = (itemId, subItemId) => {
-    if (isSubscriptionActive === false) return true;
+    if (!subscriptionPlanId) return false;
+    const plan = subscriptionPlanId.toLowerCase();
+    if (plan === 'enterprise' || plan === 'business') return false;
+
+    if (itemId === 'payroll') {
+      if (plan === 'starter' || plan === 'free_trial' || plan === 'trial' || plan === 'unselected') {
+        return ['payroll-structures', 'payroll-compliance'].includes(subItemId);
+      }
+    }
     return false;
   };
 
@@ -234,12 +236,6 @@ export default function Sidebar({
   };
 
   const hasValidLogo = companyLogo && (companyLogo.startsWith('data:image/') || companyLogo.startsWith('http://') || companyLogo.startsWith('https://'));
-  const effectiveCompanyName = companyName || (() => {
-    try {
-      const t = JSON.parse(localStorage.getItem('itlc_active_tenant') || '{}');
-      return t.name || t.companyName || '';
-    } catch(e) { return ''; }
-  })() || 'Company';
 
   return (
     <aside
@@ -250,39 +246,39 @@ export default function Sidebar({
         padding: '24px 20px', 
         display: 'flex', 
         alignItems: 'center', 
-        justifyContent: 'space-between',
-        borderBottom: '1px solid var(--sidebar-border)'
+        justifyContent: collapsed ? 'center' : 'space-between',
+        borderBottom: '1px solid rgba(226, 232, 240, 0.6)',
+        flexShrink: 0
       }}>
         {!collapsed && (
           <motion.div 
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            style={{ display: 'flex', alignItems: 'center', gap: 12, overflow: 'hidden' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 10 }}
           >
             <div style={{
-              width: 38,
-              height: 38,
-              borderRadius: 12,
-              background: 'linear-gradient(135deg, rgba(79,70,229,0.1) 0%, rgba(6,182,212,0.1) 100%)',
-              border: '1px solid rgba(79,70,229,0.2)',
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              background: hasValidLogo ? 'rgba(0,0,0,0.02)' : 'linear-gradient(135deg, #4F46E5 0%, #06B6D4 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '1.2rem',
+              color: 'white',
               fontWeight: 800,
-              color: 'var(--color-primary)',
-              flexShrink: 0,
+              fontSize: 18,
               boxShadow: hasValidLogo ? 'none' : '0 4px 10px rgba(79, 70, 229, 0.3)',
               overflow: 'hidden'
             }}>
               {hasValidLogo ? (
                 <img src={companyLogo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               ) : (
-                effectiveCompanyName ? effectiveCompanyName[0].toUpperCase() : 'C'
+                companyName ? companyName[0].toUpperCase() : 'A'
               )}
             </div>
             <div>
-              <span style={{ fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.02em', background: 'linear-gradient(90deg, #0F172A 0%, #475569 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{effectiveCompanyName}</span>
+              <span style={{ fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.02em', background: 'linear-gradient(90deg, #0F172A 0%, #475569 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{companyName || 'Antigravity'}</span>
               <div style={{ fontSize: 9, color: 'var(--color-accent)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: -2 }}>HRMS Enterprise</div>
             </div>
           </motion.div>
@@ -347,11 +343,7 @@ export default function Sidebar({
                 <button
                   onClick={() => {
                     if (isLocked(item.id)) {
-                      if (onOpenSubscriptionModal) {
-                        onOpenSubscriptionModal();
-                      } else {
-                        alert(`🔒 FEATURE LOCKED\nThe "${item.label}" module is not included in your current subscription plan (${subscriptionPlanId || 'Free Preview'}). Please choose a plan under "Subscription & Billing" to unlock this feature.`);
-                      }
+                      alert(`🔒 FEATURE LOCKED\nThe "${item.label}" module is not included in your current subscription plan (${subscriptionPlanId}). Please upgrade your plan under "Subscription & Billing" to unlock this feature.`);
                       return;
                     }
                     toggleMenu(item.id);
@@ -421,11 +413,7 @@ export default function Sidebar({
                             key={sub.id}
                             onClick={() => {
                               if (subLocked) {
-                                if (onOpenSubscriptionModal) {
-                                  onOpenSubscriptionModal();
-                                } else {
-                                  alert(`🔒 FEATURE LOCKED\nThe "${sub.label}" feature is locked under your current subscription plan (${subscriptionPlanId || 'Free Preview'}). Please choose a plan to unlock.`);
-                                }
+                                alert(`🔒 FEATURE LOCKED\nThe "${sub.label}" feature is locked under your current subscription plan (${subscriptionPlanId}). Please upgrade your plan to unlock.`);
                                 return;
                               }
                               handleItemClick(sub.id);
@@ -470,11 +458,7 @@ export default function Sidebar({
               key={item.id}
               onClick={() => {
                 if (locked) {
-                  if (onOpenSubscriptionModal) {
-                    onOpenSubscriptionModal();
-                  } else {
-                    alert(`🔒 FEATURE LOCKED\nThe "${item.label}" module is not included in your current subscription plan (${subscriptionPlanId || 'Free Preview'}). Please upgrade your plan under "Subscription & Billing" to unlock this feature.`);
-                  }
+                  alert(`🔒 FEATURE LOCKED\nThe "${item.label}" module is not included in your current subscription plan (${subscriptionPlanId}). Please upgrade your plan under "Subscription & Billing" to unlock this feature.`);
                   return;
                 }
                 handleItemClick(item.id);

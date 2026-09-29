@@ -36,9 +36,7 @@ export default function SuperownerLogin({ onSuccessLogin }: { onSuccessLogin: ()
 
     try {
       const res = await api.login({ email, password });
-      const roleLower = String(res?.role || '').toLowerCase();
-      if (res && (res.role === 'Super Owner' || res.role === 'Super Admin' || roleLower.includes('super'))) {
-        localStorage.removeItem('itlc_active_tenant');
+      if (res && res.role === 'Super Owner') {
         onSuccessLogin();
       } else {
         setError('Unauthorized access: This portal is reserved for the Super Owner only.');
@@ -249,7 +247,7 @@ export default function SuperownerLogin({ onSuccessLogin }: { onSuccessLogin: ()
                 onClick={async () => {
                   setIsLoading(true);
                   try {
-                    const res = await api.login({ email: 'priyanshupushkar263@gmail.com', password: 'Priyanshu8090' });
+                    const res = await api.login({ email: 'superowner@itlc.com', password: 'admin' });
                     if (res) onSuccessLogin();
                   } catch (e) {
                     onSuccessLogin();

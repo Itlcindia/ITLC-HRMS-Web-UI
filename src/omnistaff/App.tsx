@@ -19,62 +19,6 @@ export interface OmniStaffAppProps {
   onChooseWorkspace?: (profile: any) => void;
 }
 
-export const resolveUserRole = (profileData: any): 'superowner' | 'admin' | 'manager' | 'employee' => {
-  if (!profileData) return 'employee';
-  const role = (profileData.role || profileData.systemRole || '').toLowerCase().trim();
-  const email = (profileData.email || '').toLowerCase().trim();
-  const designation = (profileData.designation || '').toLowerCase().trim();
-
-  let isCustomSuper = false;
-  try {
-    const soUsersRaw = localStorage.getItem('hrms_superowner_users');
-    if (soUsersRaw) {
-      const soUsers = JSON.parse(soUsersRaw);
-      if (Array.isArray(soUsers) && soUsers.some((u: any) => u && u.email && u.email.toLowerCase().trim() === email && String(u.role).toLowerCase().includes('super'))) {
-        isCustomSuper = true;
-      }
-    }
-    if (!isCustomSuper) {
-      const addRaw = localStorage.getItem('hrms_additional_superowners');
-      if (addRaw) {
-        const addList = JSON.parse(addRaw);
-        if (Array.isArray(addList) && addList.some((so: any) => so && so.email && so.email.toLowerCase().trim() === email)) {
-          isCustomSuper = true;
-        }
-      }
-    }
-  } catch {}
-
-  if (email === 'priyanshupushkar263@gmail.com') {
-    return 'superowner';
-  }
-
-  if (
-    role.includes('admin') || 
-    role.includes('hr') || 
-    role.includes('owner') || 
-    role.includes('director') || 
-    role.includes('administrator') ||
-    designation.includes('hr') ||
-    designation.includes('director') ||
-    designation.includes('administrator')
-  ) {
-    return 'admin';
-  }
-
-  if (
-    role.includes('manager') || 
-    role.includes('lead') || 
-    role.includes('supervisor') ||
-    designation.includes('manager') ||
-    designation.includes('lead')
-  ) {
-    return 'manager';
-  }
-
-  return 'employee';
-};
-
 export default function App({ onSwitchToCRM, onOpenIntroHub, onChooseWorkspace }: OmniStaffAppProps) {
   const [isRegisteringCompany, setIsRegisteringCompany] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
@@ -118,11 +62,10 @@ export default function App({ onSwitchToCRM, onOpenIntroHub, onChooseWorkspace }
     }
 
     if (token || userRole) {
-      if (saved) {
-        try {
-          return resolveUserRole(JSON.parse(saved));
-        } catch {}
-      }
+      if (userRole === 'Super Owner') return 'superowner';
+      if (userRole === 'Company Admin' || userRole === 'HR' || userRole === 'Admin') return 'admin';
+      if (userRole === 'Manager') return 'manager';
+      if (userRole === 'Employee' || userRole === 'Sales Rep') return 'employee';
       if (isSuperownerRoute) return 'superowner';
       return 'admin';
     }
@@ -141,19 +84,6 @@ export default function App({ onSwitchToCRM, onOpenIntroHub, onChooseWorkspace }
 
   const loadProfile = async () => {
     try {
-      // Auto-purge any stale test company tokens or cached active tenants (e.g. Quota Limited Corp)
-      try {
-        const cachedActive = localStorage.getItem('itlc_active_tenant');
-        if (cachedActive && (cachedActive.includes('Quota Limited') || cachedActive.includes('comp_limit_') || cachedActive.includes('admin_comp_limit_'))) {
-          localStorage.removeItem('itlc_active_tenant');
-        }
-        const cachedProfileRaw = localStorage.getItem('hrms_user_profile');
-        if (cachedProfileRaw && (cachedProfileRaw.includes('Quota Limited') || cachedProfileRaw.includes('comp_limit_') || cachedProfileRaw.includes('admin_comp_limit_'))) {
-          localStorage.removeItem('hrms_user_profile');
-          localStorage.removeItem('hrms_jwt_token');
-        }
-      } catch {}
-
       const token = localStorage.getItem('hrms_jwt_token');
       const cachedRaw = localStorage.getItem('hrms_user_profile');
       let cachedProfile: any = null;
@@ -185,21 +115,29 @@ export default function App({ onSwitchToCRM, onOpenIntroHub, onChooseWorkspace }
           const hash = window.location.hash.toLowerCase();
           const isSuperownerRoute = path === '/superowner' || path.includes('superowner') || search.includes('superowner') || hash.includes('superowner');
 
-          const targetRole = resolveUserRole(profileData);
-
-          if (targetRole === 'superowner') {
-            localStorage.removeItem('itlc_active_tenant');
-          }
-
           if (isSuperownerRoute) {
-            if (targetRole === 'superowner') {
+            if (profileData.role === 'Super Owner') {
               setView('superowner');
+            } else if (profileData.role === 'Company Admin' || profileData.role === 'HR' || profileData.role === 'Admin') {
+              window.location.hash = '';
+              setView('admin');
+            } else if (profileData.role === 'Manager') {
+              window.location.hash = '';
+              setView('manager');
             } else {
               window.location.hash = '';
-              setView(targetRole);
+              setView('employee');
             }
           } else {
-            setView(targetRole);
+            if (profileData.role === 'Super Owner') {
+              setView('superowner');
+            } else if (profileData.role === 'Company Admin' || profileData.role === 'HR' || profileData.role === 'Admin') {
+              setView('admin');
+            } else if (profileData.role === 'Manager') {
+              setView('manager');
+            } else {
+              setView('employee');
+            }
           }
         } else {
           setView('login');
@@ -331,7 +269,28 @@ export default function App({ onSwitchToCRM, onOpenIntroHub, onChooseWorkspace }
     );
   }
 
-  // Direct access to dashboard - no subscription purchase barrier on login
+  if (view !== 'superowner' && view !== 'superowner-login' && profile?.companyDetails?.status === 'expired') {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center bg-slate-900 text-white font-sans overflow-y-auto">
+        {renderLoginNavbar()}
+        <div className="w-full max-w-6xl p-6 relative">
+          <div className="bg-rose-500/10 text-rose-400 p-4 rounded-xl border border-rose-500/20 mb-6 flex items-start gap-4 shadow-lg shadow-rose-900/20">
+            <div className="h-10 w-10 shrink-0 bg-rose-500/20 rounded-full flex items-center justify-center font-bold text-xl">!</div>
+            <div>
+              <h3 className="font-bold text-lg">Subscription Expired</h3>
+              <p className="text-sm opacity-80 mt-1">Your company's trial or subscription tier has expired. Please select a plan below to continue using the platform.</p>
+            </div>
+            <button onClick={handleLogout} className="ml-auto px-5 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer">
+              Logout
+            </button>
+          </div>
+          <div className="bg-slate-800 rounded-2xl p-2 sm:p-6 border border-slate-700 shadow-2xl">
+             <Subscription onSubscriptionUpdate={loadProfile} /> 
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (view !== 'superowner' && view !== 'superowner-login' && profile?.companyDetails?.status === 'suspended') {
     return (
@@ -417,16 +376,6 @@ export default function App({ onSwitchToCRM, onOpenIntroHub, onChooseWorkspace }
     <div className="min-h-screen w-full flex flex-col bg-[#fafbfc] relative overflow-hidden">
       {/* Top Floating Subtle Controls */}
       <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
-        {onOpenIntroHub && (
-          <button
-            onClick={onOpenIntroHub}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/80 hover:bg-white text-slate-700 hover:text-indigo-600 border border-slate-200/80 text-xs font-semibold shadow-xs backdrop-blur-sm transition-all cursor-pointer"
-            title="Back to Landing Home"
-          >
-            <Globe size={13} className="text-slate-500" />
-            <span className="hidden sm:inline">Landing</span> Home
-          </button>
-        )}
       </div>
 
       <main className="flex-1 w-full flex items-center justify-center p-3 sm:p-6 md:p-8 bg-[#fafbfc] text-slate-800 relative font-sans overflow-hidden">

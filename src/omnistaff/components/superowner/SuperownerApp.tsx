@@ -7,8 +7,7 @@ import {
   Search, Keyboard, Zap, ChevronDown, ChevronRight, ChevronUp, Sparkles, CheckCircle2, 
   ArrowRight, X, AlertTriangle, Play, HelpCircle, Database, Sun, Moon,
   TrendingUp, Target, Receipt, CheckSquare, Briefcase, GripVertical, 
-  RotateCcw, Layers, ArrowUpDown, Globe, LayoutTemplate, Image as ImageIcon,
-  Phone, Palette
+  RotateCcw, Layers, ArrowUpDown, Globe, LayoutTemplate, Image as ImageIcon
 } from 'lucide-react';
 import { useDashboard } from './context/DashboardContext';
 import { api } from '../../services/api';
@@ -29,13 +28,20 @@ import SecurityTab from './tabs/SecurityTab';
 import ActivityLogsTab from './tabs/ActivityLogsTab';
 import SettingsTab from './tabs/SettingsTab';
 
+// Import Sales CRM Tab Components
+import CrmOverviewTab from './tabs/CrmOverviewTab';
+import CrmLeadsTab from './tabs/CrmLeadsTab';
+import CrmInvoicesTab from './tabs/CrmInvoicesTab';
+import CrmTasksTab from './tabs/CrmTasksTab';
+import CrmSettingsTab from './tabs/CrmSettingsTab';
+
 // Import Landing Page CMS Component
 import LandingSettingsTab from './tabs/LandingSettingsTab';
 
 export interface SidebarItemDef {
   id: string;
   name: string;
-  suite: 'hrms' | 'landing';
+  suite: 'hrms' | 'crm' | 'landing';
   icon: any;
 }
 
@@ -52,21 +58,26 @@ export const HRMS_SIDEBAR_ITEMS: SidebarItemDef[] = [
   { id: 'hrms_coupons', name: 'Coupons', suite: 'hrms', icon: Ticket },
   { id: 'hrms_integrations', name: 'Integrations', suite: 'hrms', icon: GitMerge },
   { id: 'hrms_security', name: 'Security', suite: 'hrms', icon: Lock },
-  { id: 'hrms_settings', name: 'Settings', suite: 'hrms', icon: Settings },
 ];
 
 export const LANDING_SIDEBAR_ITEMS: SidebarItemDef[] = [
   { id: 'landing_settings', name: 'Landing Page Settings', suite: 'landing', icon: Globe },
   { id: 'landing_showcase_images', name: 'Showcase Images & Sliders', suite: 'landing', icon: LayoutTemplate },
-  { id: 'landing_reorder', name: 'Section Reorder & Layout', suite: 'landing', icon: GripVertical },
-  { id: 'landing_contact', name: 'Contact & Touchpoints', suite: 'landing', icon: Phone },
-  { id: 'landing_branding', name: 'Brand Styling & Theme', suite: 'landing', icon: Palette },
-  { id: 'landing_hero', name: 'Hero Headline & Badges', suite: 'landing', icon: Sparkles }
+  { id: 'landing_reorder', name: 'Section Reorder & Layout', suite: 'landing', icon: GripVertical }
+];
+
+export const CRM_SIDEBAR_ITEMS: SidebarItemDef[] = [
+  { id: 'crm_overview', name: 'CRM Dashboard', suite: 'crm', icon: TrendingUp },
+  { id: 'crm_leads', name: 'Leads & Deals Pipeline', suite: 'crm', icon: Target },
+  { id: 'crm_invoices', name: 'Invoices & Quotes', suite: 'crm', icon: Receipt },
+  { id: 'crm_tasks', name: 'Tasks & Schedules', suite: 'crm', icon: CheckSquare },
+  { id: 'crm_settings', name: 'CRM Master Settings', suite: 'crm', icon: Briefcase },
 ];
 
 const DEFAULT_SIDEBAR_ITEMS: SidebarItemDef[] = [
   ...HRMS_SIDEBAR_ITEMS,
-  ...LANDING_SIDEBAR_ITEMS
+  ...LANDING_SIDEBAR_ITEMS,
+  ...CRM_SIDEBAR_ITEMS
 ];
 
 export const App: React.FC<{ 
@@ -89,12 +100,21 @@ export const App: React.FC<{
 
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [suiteFilter, setSuiteFilter] = useState<'all' | 'hrms' | 'landing'>('all');
+  const [suiteFilter, setSuiteFilter] = useState<'all' | 'hrms' | 'crm' | 'landing'>('all');
 
   // Accordion Expand/Collapse States (with localStorage persistence)
   const [hrmsExpanded, setHrmsExpanded] = useState<boolean>(() => {
     try {
       const saved = localStorage.getItem('superowner_hrms_expanded');
+      return saved !== null ? saved === 'true' : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const [crmExpanded, setCrmExpanded] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('superowner_crm_expanded');
       return saved !== null ? saved === 'true' : true;
     } catch {
       return true;
@@ -118,6 +138,14 @@ export const App: React.FC<{
     });
   };
 
+  const toggleCrm = () => {
+    setCrmExpanded(prev => {
+      const next = !prev;
+      localStorage.setItem('superowner_crm_expanded', String(next));
+      return next;
+    });
+  };
+
   const toggleLanding = () => {
     setLandingExpanded(prev => {
       const next = !prev;
@@ -128,16 +156,20 @@ export const App: React.FC<{
 
   const handleExpandAll = () => {
     setHrmsExpanded(true);
+    setCrmExpanded(true);
     setLandingExpanded(true);
     localStorage.setItem('superowner_hrms_expanded', 'true');
+    localStorage.setItem('superowner_crm_expanded', 'true');
     localStorage.setItem('superowner_landing_expanded', 'true');
     addToast('All suite modules expanded.', 'info');
   };
 
   const handleCollapseAll = () => {
     setHrmsExpanded(false);
+    setCrmExpanded(false);
     setLandingExpanded(false);
     localStorage.setItem('superowner_hrms_expanded', 'false');
+    localStorage.setItem('superowner_crm_expanded', 'false');
     localStorage.setItem('superowner_landing_expanded', 'false');
     addToast('All suite modules collapsed.', 'info');
   };
@@ -249,6 +281,10 @@ export const App: React.FC<{
     return sidebarItems.filter(item => item.suite === 'hrms');
   }, [sidebarItems]);
 
+  const crmItems = useMemo(() => {
+    return sidebarItems.filter(item => item.suite === 'crm');
+  }, [sidebarItems]);
+
   const landingItems = useMemo(() => {
     return sidebarItems.filter(item => item.suite === 'landing');
   }, [sidebarItems]);
@@ -277,32 +313,22 @@ export const App: React.FC<{
       case 'Activity Logs': return <ActivityLogsTab />;
       case 'Settings': case 'HRMS Settings': return <SettingsTab />;
 
+      // 💼 Sales CRM Suite Tabs
+      case 'CRM Dashboard': case 'Sales CRM Overview': return <CrmOverviewTab onSwitchToCRM={onSwitchToCRM} />;
+      case 'Leads & Deals Pipeline': case 'CRM Leads': return <CrmLeadsTab />;
+      case 'Invoices & Quotes': case 'CRM Invoices': return <CrmInvoicesTab />;
+      case 'Tasks & Schedules': case 'CRM Tasks': return <CrmTasksTab />;
+      case 'CRM Master Settings': case 'CRM Settings': return <CrmSettingsTab />;
+
       // 🌐 Landing Page & Website CMS Tabs
       case 'Showcase Images & Sliders':
       case 'landing_showcase_images':
         return <LandingSettingsTab onOpenIntroHub={onOpenIntroHub} initialSubTab="showcase_images" />;
 
-      case 'Section Reorder & Layout':
-      case 'landing_reorder':
-        return <LandingSettingsTab onOpenIntroHub={onOpenIntroHub} initialSubTab="sections" />;
-
-      case 'Contact & Touchpoints':
-      case 'landing_contact':
-        return <LandingSettingsTab onOpenIntroHub={onOpenIntroHub} initialSubTab="contact" />;
-
-      case 'Brand Styling & Theme':
-      case 'Branding & Theme':
-      case 'landing_branding':
-        return <LandingSettingsTab onOpenIntroHub={onOpenIntroHub} initialSubTab="branding" />;
-
-      case 'Hero Headline & Badges':
-      case 'landing_hero':
-        return <LandingSettingsTab onOpenIntroHub={onOpenIntroHub} initialSubTab="hero" />;
-
       case 'Landing Page Settings':
+      case 'Section Reorder & Layout':
       case 'Landing Page CMS':
       case 'Landing Settings':
-      case 'landing_settings':
         return <LandingSettingsTab onOpenIntroHub={onOpenIntroHub} initialSubTab="sections" />;
 
       default: return <OverviewTab />;
@@ -517,70 +543,88 @@ export const App: React.FC<{
                })}
              </div>
 
-              {/* 🌐 LANDING PAGE SETTINGS SECTION (Directly under Security) */}
-              <div className="pt-3 border-t border-slate-100 space-y-1">
-                {(isMobile || sidebarOpen) && (
-                  <div className="px-3.5 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Globe className="h-3.5 w-3.5 text-indigo-600" />
-                    <span>Landing Page Settings</span>
-                  </div>
-                )}
-                {LANDING_SIDEBAR_ITEMS.map((item) => {
-                  const isActive = 
-                    activeTab === item.name || 
-                    (item.name === 'Landing Page Settings' && (activeTab === 'Landing Settings' || activeTab === 'landing_settings' || activeTab === 'Landing Page CMS'));
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => handleSetActiveTab(item.name)}
-                      className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition text-xs cursor-pointer ${
-                        isActive 
-                          ? 'bg-indigo-50 text-indigo-600 font-medium shadow-2xs' 
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-normal'
-                      }`}
-                    >
-                      <item.icon className={`h-4.5 w-4.5 shrink-0 ${
-                        isActive ? 'text-indigo-600' : 'text-slate-500'
-                      }`} />
-                      {(isMobile || sidebarOpen) && (
-                        <span className="truncate">{item.name}</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </nav>
-          </div>
+             {/* 🌐 LANDING PAGE SECTION */}
+             <div className="pt-2 border-t border-slate-100 space-y-1">
+               {(isMobile || sidebarOpen) && (
+                 <div className="px-3.5 py-1 text-[10px] font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                   <span>🌐 Landing Page</span>
+                 </div>
+               )}
+               {LANDING_SIDEBAR_ITEMS.map((item) => {
+                 const isActive = activeTab === item.name || (item.name === 'Landing Page Settings' && activeTab === 'Landing Settings');
+                 return (
+                   <button
+                     key={item.id}
+                     onClick={() => handleSetActiveTab(item.name)}
+                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition text-xs cursor-pointer ${
+                       isActive 
+                         ? 'bg-emerald-50 text-emerald-600 font-medium shadow-2xs' 
+                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-normal'
+                     }`}
+                   >
+                     <item.icon className={`h-4.5 w-4.5 shrink-0 ${
+                       isActive ? 'text-emerald-600' : 'text-slate-500'
+                     }`} />
+                     {(isMobile || sidebarOpen) && (
+                       <span className="truncate">{item.name}</span>
+                     )}
+                   </button>
+                 );
+               })}
+             </div>
 
-          {/* Footer profile / logout */}
-          <div className="p-3 border-t border-slate-200/80 space-y-1">
-            <button
-              onClick={() => handleSetActiveTab('Dashboard')}
-              className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition text-xs font-normal cursor-pointer"
-            >
-              <User className="h-4.5 w-4.5 shrink-0 text-slate-500" />
-              {(isMobile || sidebarOpen) && <span className="truncate">ITLC HRMS</span>}
-            </button>
+             {/* 💼 SALES CRM SECTION */}
+             <div className="pt-2 border-t border-slate-100 space-y-1">
+               {(isMobile || sidebarOpen) && (
+                 <div className="px-3.5 py-1 text-[10px] font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                   <span>💼 Sales CRM</span>
+                 </div>
+               )}
+               {CRM_SIDEBAR_ITEMS.map((item) => {
+                 const isActive = activeTab === item.name || (item.name === 'CRM Dashboard' && activeTab === 'Sales CRM Overview');
+                 return (
+                   <button
+                     key={item.id}
+                     onClick={() => handleSetActiveTab(item.name)}
+                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition text-xs cursor-pointer ${
+                       isActive 
+                         ? 'bg-purple-50 text-purple-600 font-medium shadow-2xs' 
+                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-normal'
+                     }`}
+                   >
+                     <item.icon className={`h-4.5 w-4.5 shrink-0 ${
+                       isActive ? 'text-purple-600' : 'text-slate-500'
+                     }`} />
+                     {(isMobile || sidebarOpen) && (
+                       <span className="truncate">{item.name}</span>
+                     )}
+                   </button>
+                 );
+               })}
+             </div>
+           </nav>
+         </div>
 
-            <button
-              onClick={() => handleSetActiveTab('Settings')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition text-xs cursor-pointer ${
-                activeTab === 'Settings' 
-                  ? 'bg-indigo-50 text-indigo-600 font-medium' 
-                  : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50 font-normal'
-              }`}
-            >
-              <Settings className={`h-4.5 w-4.5 shrink-0 ${activeTab === 'Settings' ? 'text-indigo-600' : 'text-slate-500'}`} />
-              {(isMobile || sidebarOpen) && <span>Settings</span>}
-            </button>
+         {/* Footer profile / logout matching reference */}
+         <div className="p-3 border-t border-slate-200/80 space-y-1">
+           <button
+             onClick={() => {
+               if (onSwitchToCRM) onSwitchToCRM();
+               else handleSetActiveTab('CRM Dashboard');
+             }}
+             className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition text-xs font-normal cursor-pointer"
+           >
+             <User className="h-4.5 w-4.5 shrink-0 text-slate-500" />
+             {(isMobile || sidebarOpen) && <span className="truncate">ITLC INDIA</span>}
+           </button>
 
-            <button
-              onClick={() => onLogout ? onLogout() : setIsLocked(true)}
-              className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-700 hover:text-rose-600 hover:bg-rose-50 transition text-xs font-normal cursor-pointer"
-            >
-              <LogOut className="h-4.5 w-4.5 shrink-0 text-slate-500" />
-              {(isMobile || sidebarOpen) && <span>Log Out</span>}
-            </button>
+           <button
+             onClick={() => onLogout ? onLogout() : setIsLocked(true)}
+             className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-700 hover:text-rose-600 hover:bg-rose-50 transition text-xs font-normal cursor-pointer"
+           >
+             <LogOut className="h-4.5 w-4.5 shrink-0 text-slate-500" />
+             {(isMobile || sidebarOpen) && <span>Log Out</span>}
+           </button>
          </div>
        </aside>
 
@@ -689,20 +733,6 @@ export const App: React.FC<{
                 )}
               </AnimatePresence>
             </div>
-
-            {/* Settings shortcut */}
-            <button
-              onClick={() => handleSetActiveTab('Settings')}
-              className={`p-2 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-semibold ${
-                activeTab === 'Settings'
-                  ? 'bg-indigo-50 text-indigo-600'
-                  : 'hover:bg-slate-100 text-slate-600 hover:text-slate-900'
-              }`}
-              title="Open System & Payment Slip Settings"
-            >
-              <Settings className="h-4.5 w-4.5" />
-              <span className="hidden md:inline">Settings</span>
-            </button>
 
             {/* Notification Drawer activator */}
             <div className="relative">

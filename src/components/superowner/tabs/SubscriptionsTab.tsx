@@ -44,31 +44,6 @@ const getFeatureLabelAndStyle = (key: string, enabled: boolean) => {
   }
 };
 
-export const DEFAULT_PLAN_FEATURES = {
-  payroll: true,
-  attendance: true,
-  recruitment: false,
-  faceRecognition: false,
-  gpsAttendance: false,
-  apiAccess: false,
-  whiteLabel: false
-};
-
-export const resolvePlanFeatures = (rawFeatures: any) => {
-  if (!rawFeatures) return DEFAULT_PLAN_FEATURES;
-  if (typeof rawFeatures === 'string') {
-    try {
-      const parsed = JSON.parse(rawFeatures);
-      if (parsed && typeof parsed === 'object') return { ...DEFAULT_PLAN_FEATURES, ...parsed };
-    } catch {}
-    return DEFAULT_PLAN_FEATURES;
-  }
-  if (typeof rawFeatures === 'object') {
-    return { ...DEFAULT_PLAN_FEATURES, ...rawFeatures };
-  }
-  return DEFAULT_PLAN_FEATURES;
-};
-
 export const SubscriptionsTab: React.FC = () => {
   const { plans, setPlans, companies, setCompanies, addToast, addLog, formatAmount, setIsFormDirty } = useDashboard();
   
@@ -163,18 +138,16 @@ export const SubscriptionsTab: React.FC = () => {
       storageLimit: plan.storageLimit,
       aiCreditsLimit: plan.aiCreditsLimit,
       showOnLandingPage: plan.showOnLandingPage !== false,
-      features: resolvePlanFeatures(plan.features)
+      features: { ...plan.features }
     });
     setIsModalOpen(true);
   };
 
-  const handleToggleLandingVisibility = async (planId: string, e?: React.MouseEvent) => {
+  const handleToggleLandingVisibility = (planId: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    let newShow = true;
     const updated = plans.map(p => {
       if (p.id === planId) {
         const currentShow = p.showOnLandingPage !== false;
-        newShow = !currentShow;
         return { ...p, showOnLandingPage: !currentShow };
       }
       return p;
@@ -184,9 +157,6 @@ export const SubscriptionsTab: React.FC = () => {
       localStorage.setItem('hrms_subscription_plans', JSON.stringify(updated));
     } catch (err) {}
     syncHrmsPlansListToUnifiedCatalog(updated);
-    try {
-      await api.updatePlan(planId, { showOnLandingPage: newShow });
-    } catch (err) {}
     addToast('Landing Page visibility updated!', 'info');
   };
 
@@ -203,13 +173,6 @@ export const SubscriptionsTab: React.FC = () => {
       } catch (err) {
         console.warn('Backend deletePlan failed, deleting locally:', err);
       }
-      try {
-        const deletedIds = JSON.parse(localStorage.getItem('hrms_deleted_plan_ids') || '[]');
-        if (!deletedIds.includes(id)) {
-          deletedIds.push(id);
-          localStorage.setItem('hrms_deleted_plan_ids', JSON.stringify(deletedIds));
-        }
-      } catch (e) {}
       const updated = plans.filter(p => p.id !== id);
       setPlans(updated);
       try {
@@ -247,24 +210,19 @@ export const SubscriptionsTab: React.FC = () => {
           billingCycle: formData.billingCycle,
           trialDays: Number(formData.trialDays),
           employeeLimit: Number(formData.employeeLimit),
-          seatLimit: Number(formData.employeeLimit),
           storageLimit: Number(formData.storageLimit),
-          storageLimitGb: Number(formData.storageLimit),
           aiCreditsLimit: Number(formData.aiCreditsLimit),
           showOnLandingPage: formData.showOnLandingPage !== false,
           features: formData.features
         };
-
         try {
-          const deletedRaw = localStorage.getItem('hrms_deleted_plan_ids');
-          if (deletedRaw) {
-            const list = JSON.parse(deletedRaw);
-            if (Array.isArray(list)) {
-              const cleaned = list.filter((id: string) => String(id).toLowerCase() !== selectedPlan.id.toLowerCase());
-              localStorage.setItem('hrms_deleted_plan_ids', JSON.stringify(cleaned));
-            }
+          const updatedPlan = await api.updatePlan(selectedPlan.id, updatedData);
+          if (updatedPlan && typeof updatedPlan.features === 'string') {
+            try { updatedPlan.features = JSON.parse(updatedPlan.features); } catch(e){}
           }
-        } catch (e) {}
+        } catch (err) {
+          console.warn('Backend updatePlan failed, saving locally:', err);
+        }
 
         const updatedList = plans.map(p => p.id === selectedPlan.id ? { ...p, ...updatedData } : p);
         setPlans(updatedList);
@@ -274,16 +232,9 @@ export const SubscriptionsTab: React.FC = () => {
         syncHrmsPlansListToUnifiedCatalog(updatedList);
         addToast(`Plan "${formData.name}" updated successfully`, 'success');
         addLog('Plan Updated', `Plan details for "${formData.name}" modified.`, 'subscription');
-
-        api.updatePlan(selectedPlan.id, updatedData).catch(err => {
-          console.warn('Backend updatePlan failed:', err);
-        });
       } else {
         // Create
-        const baseSlug = formData.name.trim().toLowerCase().replace(/[^a-z0-9]/g, '_') || 'plan';
-        const exists = plans.some(p => p.id === baseSlug);
-        const newId = exists ? `${baseSlug}_${Date.now()}` : baseSlug;
-
+        const newId = formData.name.trim().toLowerCase().replace(/[^a-z0-9]/g, '_') || `plan_${Date.now()}`;
         const newPlanData: any = {
           id: newId,
           name: formData.name.trim(),
@@ -294,26 +245,21 @@ export const SubscriptionsTab: React.FC = () => {
           billingCycle: formData.billingCycle,
           trialDays: Number(formData.trialDays),
           employeeLimit: Number(formData.employeeLimit),
-          seatLimit: Number(formData.employeeLimit),
           storageLimit: Number(formData.storageLimit),
-          storageLimitGb: Number(formData.storageLimit),
           aiCreditsLimit: Number(formData.aiCreditsLimit),
           showOnLandingPage: formData.showOnLandingPage !== false,
           features: formData.features
         };
-
         try {
-          const deletedRaw = localStorage.getItem('hrms_deleted_plan_ids');
-          if (deletedRaw) {
-            const list = JSON.parse(deletedRaw);
-            if (Array.isArray(list)) {
-              const cleaned = list.filter((id: string) => String(id).toLowerCase() !== newId.toLowerCase());
-              localStorage.setItem('hrms_deleted_plan_ids', JSON.stringify(cleaned));
-            }
+          const newPlan = await api.createPlan(newPlanData);
+          if (newPlan && typeof newPlan.features === 'string') {
+            try { newPlan.features = JSON.parse(newPlan.features); } catch(e){}
           }
-        } catch (e) {}
+        } catch (err) {
+          console.warn('Backend createPlan failed, saving locally:', err);
+        }
 
-        const updatedList = [...plans.filter(p => p.id !== newId), newPlanData];
+        const updatedList = [...plans, newPlanData];
         setPlans(updatedList);
         try {
           localStorage.setItem('hrms_subscription_plans', JSON.stringify(updatedList));
@@ -321,10 +267,6 @@ export const SubscriptionsTab: React.FC = () => {
         syncHrmsPlansListToUnifiedCatalog(updatedList);
         addToast(`Plan "${formData.name}" created successfully`, 'success');
         addLog('Plan Created', `New subscription plan "${formData.name}" registered.`, 'subscription');
-
-        api.createPlan(newPlanData).catch(err => {
-          console.warn('Backend createPlan failed:', err);
-        });
       }
       setIsFormDirty(false);
       setIsModalOpen(false);
@@ -468,7 +410,7 @@ export const SubscriptionsTab: React.FC = () => {
                 <div className="space-y-2 pt-2 text-xs">
                   <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Modules Included:</span>
                   
-                  {Object.entries(resolvePlanFeatures(plan.features)).map(([key, enabled]) => {
+                  {Object.entries(plan.features).map(([key, enabled]) => {
                     const styleInfo = getFeatureLabelAndStyle(key, enabled);
                     return (
                       <div key={key} className={`flex items-center justify-between`}>
@@ -707,7 +649,7 @@ export const SubscriptionsTab: React.FC = () => {
                     <label className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Included Modules</label>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                      {Object.entries(resolvePlanFeatures(formData.features)).map(([key, enabled]) => {
+                      {Object.entries(formData.features).map(([key, enabled]) => {
                         const styleInfo = getFeatureLabelAndStyle(key, enabled);
                         return (
                           <div

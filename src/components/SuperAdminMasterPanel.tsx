@@ -162,13 +162,8 @@ export const SuperAdminMasterPanel: React.FC<SuperAdminMasterPanelProps> = ({
         const parsed = JSON.parse(saved);
         if (parsed.keyId) return parsed.keyId;
       }
-      const g = localStorage.getItem('hrms_global_settings');
-      if (g) {
-        const parsed = JSON.parse(g);
-        if (parsed.razorpayKeyId) return parsed.razorpayKeyId;
-      }
     } catch {}
-    return (import.meta as any).env?.VITE_RAZORPAY_KEY_ID || (import.meta as any).env?.RAZORPAY_KEY_ID || '';
+    return '';
   });
 
   const [razorpayKeySecret, setRazorpayKeySecret] = useState<string>(() => {
@@ -178,13 +173,8 @@ export const SuperAdminMasterPanel: React.FC<SuperAdminMasterPanelProps> = ({
         const parsed = JSON.parse(saved);
         if (parsed.keySecret) return parsed.keySecret;
       }
-      const g = localStorage.getItem('hrms_global_settings');
-      if (g) {
-        const parsed = JSON.parse(g);
-        if (parsed.razorpaySecret) return parsed.razorpaySecret;
-      }
     } catch {}
-    return (import.meta as any).env?.RAZORPAY_KEY_SECRET || '';
+    return '';
   });
 
   const [razorpayWebhookSecret, setRazorpayWebhookSecret] = useState<string>(() => {
@@ -251,22 +241,6 @@ export const SuperAdminMasterPanel: React.FC<SuperAdminMasterPanelProps> = ({
     };
     window.addEventListener('storage', handleStorageUpdate);
     window.addEventListener('superowner_data_updated', handleStorageUpdate);
-
-    // Fetch live settings from backend API
-    fetch('/api/superowner/settings')
-      .then(res => res.ok ? res.json() : null)
-      .then(data => {
-        if (data) {
-          if (data.razorpayKeyId) setRazorpayKeyId(data.razorpayKeyId);
-          if (data.razorpaySecret) setRazorpayKeySecret(data.razorpaySecret);
-          if (data.razorpayWebhookSecret) setRazorpayWebhookSecret(data.razorpayWebhookSecret);
-          if (data.razorpayEnabled !== undefined) setRazorpayEnabled(!!data.razorpayEnabled);
-          if (data.razorpayMode) setRazorpayMode(data.razorpayMode);
-          if (data.realUpiId) setRazorpayMerchantUpi(data.realUpiId);
-        }
-      })
-      .catch(() => {});
-
     return () => {
       window.removeEventListener('storage', handleStorageUpdate);
       window.removeEventListener('superowner_data_updated', handleStorageUpdate);
@@ -291,13 +265,7 @@ export const SuperAdminMasterPanel: React.FC<SuperAdminMasterPanelProps> = ({
     };
     localStorage.setItem('razorpay_config', JSON.stringify(config));
 
-    try {
-      const gsRaw = localStorage.getItem('hrms_global_settings');
-      const gs = gsRaw ? JSON.parse(gsRaw) : {};
-      gs.razorpayKeyId = cleanKeyId;
-      gs.razorpaySecret = cleanKeySecret;
-      localStorage.setItem('hrms_global_settings', JSON.stringify(gs));
-    } catch {}
+    // Also sync to hrms_integrations_data
     try {
       const integrationsRaw = localStorage.getItem('hrms_integrations_data') || '[]';
       let list = JSON.parse(integrationsRaw);
@@ -318,31 +286,8 @@ export const SuperAdminMasterPanel: React.FC<SuperAdminMasterPanelProps> = ({
       localStorage.setItem('hrms_integrations_data', JSON.stringify(list));
     } catch {}
 
-    // Persist to backend and automatically sync with .env file
-    fetch('/api/superowner/settings', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(localStorage.getItem('token') ? { 'Authorization': `Bearer ${localStorage.getItem('token')}` } : {})
-      },
-      body: JSON.stringify({
-        razorpayKeyId: cleanKeyId,
-        razorpaySecret: cleanKeySecret,
-        razorpayWebhookSecret: cleanWebhook,
-        realUpiId: cleanUpi,
-        razorpayEnabled: razorpayEnabled,
-        razorpayMode: razorpayMode
-      })
-    })
-      .then(res => res.json())
-      .then(() => {
-        triggerToast('🎉 Razorpay Settings saved & synchronized with .env successfully!');
-      })
-      .catch(() => {
-        triggerToast('🎉 Razorpay settings saved locally and activated!');
-      });
-
     window.dispatchEvent(new CustomEvent('razorpay_config_updated', { detail: config }));
+    triggerToast('🎉 Razorpay Payment Gateway settings saved and activated!');
   };
 
   // Landing Page CMS State
@@ -2249,7 +2194,7 @@ export const SuperAdminMasterPanel: React.FC<SuperAdminMasterPanelProps> = ({
                       className="super-admin-input"
                       value={cmsConfig.whatsappSalesNumber}
                       onChange={(e) => setCmsConfig({ ...cmsConfig, whatsappSalesNumber: e.target.value })}
-                      placeholder="e.g. 919532341000"
+                      placeholder="e.g. 918368817744"
                     />
                     <span style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', display: 'block' }}>
                       Contact Sales button on landing page connects to https://wa.me/{cmsConfig.whatsappSalesNumber}
@@ -2263,7 +2208,7 @@ export const SuperAdminMasterPanel: React.FC<SuperAdminMasterPanelProps> = ({
                       className="super-admin-input"
                       value={cmsConfig.supportEmail}
                       onChange={(e) => setCmsConfig({ ...cmsConfig, supportEmail: e.target.value })}
-                      placeholder="e.g. support@itlcindia.com"
+                      placeholder="e.g. support@itlc.in"
                     />
                   </div>
                 </div>

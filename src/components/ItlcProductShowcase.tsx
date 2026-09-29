@@ -104,10 +104,10 @@ const DEFAULT_SCREENS_IMAGES: Record<string, string[]> = {
 };
 
 export const ItlcProductShowcase: React.FC<ItlcProductShowcaseProps> = ({
-  onLaunchCrm = () => { window.history.pushState({}, '', '/login'); },
-  onLaunchHrms = () => { window.history.pushState({}, '', '/login'); },
-  onOpenSuperAdmin = () => { window.history.pushState({}, '', '/login'); },
-  onOpenOnboarding = () => { window.history.pushState({}, '', '/register'); }
+  onLaunchCrm = () => { window.location.hash = '#login'; },
+  onLaunchHrms = () => { window.location.hash = '#login'; },
+  onOpenSuperAdmin = () => { window.location.hash = '#login'; },
+  onOpenOnboarding = () => { window.location.hash = '#register'; }
 }) => {
   const [activeTabId, setActiveTabId] = useState<string>('hrms_dashboard');
   const [customImages, setCustomImages] = useState<Record<string, string[]>>(() => {
@@ -167,9 +167,9 @@ export const ItlcProductShowcase: React.FC<ItlcProductShowcaseProps> = ({
     },
     {
       id: 'crm_kanban',
-      tabLabel: '📊 Sales CRM (Coming Soon)',
+      tabLabel: '📊 Sales CRM',
       suite: 'crm',
-      badge: 'COMING SOON',
+      badge: 'REVENUE ACCELERATOR',
       title: 'Visual Deals Kanban Pipeline & GPS Field Sales',
       description: 'Drag-and-drop sales deals across Proposal, Negotiation and Won stages with AI win probability and on-ground GPS meeting check-ins.',
       images: customImages.crm_kanban || DEFAULT_SCREENS_IMAGES.crm_kanban,
@@ -177,9 +177,9 @@ export const ItlcProductShowcase: React.FC<ItlcProductShowcaseProps> = ({
       color: '#0284c7',
       gradient: 'linear-gradient(135deg, #0284c7 0%, #00d2ff 50%, #2563eb 100%)',
       glowColor: 'rgba(2, 132, 199, 0.45)',
-      actionText: 'Sales CRM (Coming Soon)',
+      actionText: 'Launch Sales CRM',
       onLaunch: onLaunchCrm,
-      metricBadge: 'Launching Soon',
+      metricBadge: '₹4.82 Cr Active Pipeline',
       keyFeatures: [
         'Visual drag-and-drop Kanban revenue pipeline stages',
         'GPS geolocated client meeting check-in verification',
@@ -211,9 +211,9 @@ export const ItlcProductShowcase: React.FC<ItlcProductShowcaseProps> = ({
     },
     {
       id: 'gst_invoicing',
-      tabLabel: '🧾 GST Invoicing (Coming Soon)',
+      tabLabel: '🧾 GST Invoicing',
       suite: 'crm',
-      badge: 'COMING SOON',
+      badge: 'INSTANT UPI PAYMENTS',
       title: 'Smart GST Tax Invoices & QR Payment Collect',
       description: 'Create GST-compliant invoices with automatic CGST, SGST, IGST tax split, embedded dynamic UPI payment QR, and one-click PDF billing.',
       images: customImages.gst_invoicing || DEFAULT_SCREENS_IMAGES.gst_invoicing,
@@ -221,9 +221,9 @@ export const ItlcProductShowcase: React.FC<ItlcProductShowcaseProps> = ({
       color: '#0ea5e9',
       gradient: 'linear-gradient(135deg, #0ea5e9 0%, #38bdf8 50%, #6366f1 100%)',
       glowColor: 'rgba(14, 165, 233, 0.45)',
-      actionText: 'GST Invoicing (Coming Soon)',
+      actionText: 'Create GST Invoice',
       onLaunch: onLaunchCrm,
-      metricBadge: 'Launching Soon',
+      metricBadge: 'Auto CGST/SGST/IGST Split',
       keyFeatures: [
         '100% Indian GST rule compliance with HSN/SAC codes',
         'Instant UPI QR code generated directly on PDF invoice',

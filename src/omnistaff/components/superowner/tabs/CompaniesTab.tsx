@@ -187,13 +187,12 @@ export const CompaniesTab: React.FC = () => {
     const { id, name } = deleteConfirmCompany;
     try {
       await api.deleteCompany(id);
-      setCompanies(prev => prev.filter(c => c && c.id !== id));
+      setCompanies(prev => prev.filter(c => c.id !== id));
       addToast(`${name} deleted successfully`, 'success');
       addLog('Company Deleted', `Client company "${name}" was removed from the database.`, 'company');
       if (detailsCompany?.id === id) setDetailsCompany(null);
     } catch (err: any) {
-      setCompanies(prev => prev.filter(c => c && c.id !== id));
-      addToast(`${name} deleted successfully`, 'success');
+      addToast(err.message || 'Delete failed', 'error');
     }
     setDeleteConfirmCompany(null);
   };
@@ -269,31 +268,18 @@ export const CompaniesTab: React.FC = () => {
     if (selectedCompany) {
       // Edit
       try {
-        const matchedPlan = plans.find(p => p.id === formData.subscriptionPlanId);
-        const resolvedPlanStorage = matchedPlan?.storageLimit || (formData.subscriptionPlanId === 'enterprise' ? 250 : formData.subscriptionPlanId === 'premium' ? 100 : 50);
-        const resolvedSeats = Number(formData.employeesCount) || matchedPlan?.employeeLimit || 50;
-
         const updated = await api.updateCompany(selectedCompany.id, {
           name: formData.name,
           ownerName: formData.ownerName,
           email: formData.email,
           phone: formData.phone,
-          employeesCount: resolvedSeats,
-          maxEmployees: resolvedSeats,
-          seatLimit: resolvedSeats,
+          employeesCount: Number(formData.employeesCount),
           subscriptionPlanId: formData.subscriptionPlanId,
           storageUsed: Number(formData.storageUsed),
-          storageLimit: resolvedPlanStorage,
-          storageLimitGb: resolvedPlanStorage,
           status: formData.status,
           lat: formData.lat === '' ? null : Number(formData.lat),
           lng: formData.lng === '' ? null : Number(formData.lng),
-          radius: Number(formData.radius) || 500,
-          ...(formData.customPassword ? {
-            password: formData.customPassword.trim(),
-            adminPassword: formData.customPassword.trim(),
-            customPassword: formData.customPassword.trim()
-          } : {})
+          radius: Number(formData.radius) || 500
         });
         setCompanies(prev => prev.map(c => c.id === selectedCompany.id ? { ...c, ...updated } : c));
         if (detailsCompany && detailsCompany.id === selectedCompany.id) {
@@ -305,8 +291,7 @@ export const CompaniesTab: React.FC = () => {
           email: formData.email,
           planId: formData.subscriptionPlanId,
           status: formData.status as any,
-          maxSeats: resolvedSeats,
-          storageLimitGb: resolvedPlanStorage
+          maxSeats: Number(formData.employeesCount)
         });
         addToast(`${formData.name} updated successfully`, 'success');
         addLog('Company Updated', `Company details for "${formData.name}" modified.`, 'company');
@@ -316,50 +301,34 @@ export const CompaniesTab: React.FC = () => {
     } else {
       // Add
       try {
-        const cleanEmail = formData.email.trim().toLowerCase();
-        const cleanPassword = (formData.customPassword || 'Admin@123').trim();
-        const matchedPlan = plans.find(p => p.id === formData.subscriptionPlanId);
-        const resolvedPlanStorage = matchedPlan?.storageLimit || (formData.subscriptionPlanId === 'enterprise' ? 250 : formData.subscriptionPlanId === 'premium' ? 100 : 50);
-        const resolvedSeats = Number(formData.employeesCount) || matchedPlan?.employeeLimit || 50;
-
         const result = await api.createCompany({
-          name: formData.name.trim(),
-          ownerName: formData.ownerName.trim(),
-          email: cleanEmail,
-          phone: formData.phone.trim(),
-          employeesCount: resolvedSeats,
-          maxEmployees: resolvedSeats,
-          seatLimit: resolvedSeats,
+          name: formData.name,
+          ownerName: formData.ownerName,
+          email: formData.email,
+          phone: formData.phone,
+          employeesCount: Number(formData.employeesCount),
           subscriptionPlanId: formData.subscriptionPlanId,
-          storageUsed: Number(formData.storageUsed) || 1.0,
-          storageLimit: resolvedPlanStorage,
-          storageLimitGb: resolvedPlanStorage,
+          storageUsed: Number(formData.storageUsed),
           status: formData.status,
-          customPassword: cleanPassword,
-          password: cleanPassword,
+          customPassword: formData.customPassword,
           lat: formData.lat === '' ? null : Number(formData.lat),
           lng: formData.lng === '' ? null : Number(formData.lng),
           radius: Number(formData.radius) || 500
         });
 
-        const createdComp = result?.company || result;
-        setCompanies(prev => [...prev.filter(c => c && c.id !== createdComp.id), createdComp]);
-        const compPassword = cleanPassword;
+        setCompanies(prev => [...prev, result.company]);
         syncCompanySubscriptionChange({
-          companyId: createdComp.id,
-          companyName: formData.name.trim(),
-          email: cleanEmail,
-          password: compPassword,
-          adminPassword: compPassword,
+          companyId: result.company.id,
+          companyName: formData.name,
+          email: formData.email,
           planId: formData.subscriptionPlanId,
           status: formData.status as any,
-          maxSeats: resolvedSeats,
-          storageLimitGb: resolvedPlanStorage
+          maxSeats: Number(formData.employeesCount)
         });
         setGeneratedCredentials({
-          email: cleanEmail,
-          pass: compPassword,
-          companyName: createdComp.name || formData.name.trim()
+          email: result.admin.email,
+          pass: result.admin.password,
+          companyName: result.company.name
         });
         addToast(`${formData.name} created successfully`, 'success');
         addLog('Company Created', `New company "${formData.name}" added to the platform. Password generated.`, 'company');
@@ -1385,29 +1354,12 @@ export const CompaniesTab: React.FC = () => {
                   💡 Note: The company owner has been added as the master workspace administrator.
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-2 pt-1">
-                  <button
-                    onClick={async () => {
-                      const creds = generatedCredentials;
-                      setGeneratedCredentials(null);
-                      if (creds) {
-                        try {
-                          await api.login({ email: creds.email, password: creds.pass, directLogin: true });
-                          window.location.href = '/';
-                        } catch (e: any) {
-                          addToast(e.message || 'Login failed', 'error');
-                        }
-                      }
-                    }}
-                    className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    <LogIn className="w-3.5 h-3.5" /> Launch Workspace Now
-                  </button>
+                <div className="flex justify-end pt-1">
                   <button
                     onClick={() => setGeneratedCredentials(null)}
-                    className="flex-1 py-2.5 rounded-xl bg-slate-200/80 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition cursor-pointer"
+                    className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition shadow-lg shadow-indigo-600/30 cursor-pointer"
                   >
-                    Close & Keep in Platform
+                    Understood & Close
                   </button>
                 </div>
               </motion.div>

@@ -69,22 +69,7 @@ export const TaskManagement: React.FC = () => {
   useEffect(() => {
     loadTasks();
     const interval = setInterval(loadTasks, 8000);
-
-    const handleUpdate = () => {
-      loadTasks();
-    };
-    if (typeof window !== "undefined") {
-      window.addEventListener('tasks_updated', handleUpdate);
-      window.addEventListener('storage', handleUpdate);
-    }
-
-    return () => {
-      clearInterval(interval);
-      if (typeof window !== "undefined") {
-        window.removeEventListener('tasks_updated', handleUpdate);
-        window.removeEventListener('storage', handleUpdate);
-      }
-    };
+    return () => clearInterval(interval);
   }, []);
 
   const handleStatusChange = async (taskId: string, newStatus: string) => {

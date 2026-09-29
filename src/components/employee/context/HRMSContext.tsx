@@ -20,10 +20,6 @@ export interface EmployeeProfile {
   reportingManager: string;
   employmentType: string;
   companyName?: string;
-  name?: string;
-  employeeId?: string;
-  companyId?: string;
-  tenantId?: string;
   companyLogo?: string;
   documents?: any[];
   companyDetails?: {
@@ -107,15 +103,9 @@ export interface Payslip {
 export interface Document {
   id: string;
   name: string;
-  category: "Contract" | "Identity" | "Compensation" | "Reference" | "KYC" | string;
+  category: "Contract" | "Identity" | "Compensation" | "Reference";
   issueDate: string;
   fileSize: string;
-  status?: string;
-  fileData?: string | null;
-  fileName?: string | null;
-  fileType?: string;
-  type?: string;
-  canUpload?: boolean;
 }
 
 export interface ExpenseClaim {
@@ -283,48 +273,7 @@ const defaultLeaveRequests: LeaveRequest[] = [];
 
 const defaultPayslips: Payslip[] = [];
 
-const defaultDocuments: Document[] = [
-  {
-    id: "DOC-OFFER-001",
-    name: "Offer_Letter.pdf",
-    category: "Contract",
-    issueDate: "2026-05-15",
-    fileSize: "142 KB",
-    status: "Verified"
-  },
-  {
-    id: "DOC-APPOINTMENT-002",
-    name: "Appointment_Letter.pdf",
-    category: "Contract",
-    issueDate: "2026-05-20",
-    fileSize: "185 KB",
-    status: "Verified"
-  },
-  {
-    id: "DOC-ID-003",
-    name: "Corporate_Digital_ID.pdf",
-    category: "Identity",
-    issueDate: "2026-06-01",
-    fileSize: "98 KB",
-    status: "Verified"
-  },
-  {
-    id: "DOC-NDA-004",
-    name: "NDA_and_Security_Policy.pdf",
-    category: "Contract",
-    issueDate: "2026-06-01",
-    fileSize: "210 KB",
-    status: "Verified"
-  },
-  {
-    id: "DOC-HANDBOOK-005",
-    name: "Employee_Code_of_Conduct.pdf",
-    category: "Reference",
-    issueDate: "2026-06-01",
-    fileSize: "512 KB",
-    status: "Verified"
-  }
-];
+const defaultDocuments: Document[] = [];
 
 const defaultExpenses: ExpenseClaim[] = [];
 
@@ -385,25 +334,25 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
     const loadEmployeeData = async () => {
       try {
         const prof = await api.getProfile();
-        setProfile(prev => ({
-          photo: prof.photo || prof.avatar || prev.photo || "",
-          id: prof.id || prof.employeeId || prev.id,
-          fullName: prof.fullName || prof.name || prev.fullName,
-          email: prof.email || prev.email,
-          mobile: prof.phone || prof.mobile || prev.mobile || "",
-          dob: prof.dob || prev.dob || "1992-08-24",
-          gender: prof.gender || prev.gender || "Male",
-          address: prof.address || prev.address || "",
-          joiningDate: prof.joiningDate || prev.joiningDate || "",
-          department: prof.department || prev.department || "Operations",
-          designation: prof.designation || prof.role || prev.designation || "Staff",
-          reportingManager: prof.reportingManager || prev.reportingManager || "None",
+        setProfile({
+          photo: prof.avatar || "",
+          id: prof.id,
+          fullName: prof.name,
+          email: prof.email,
+          mobile: prof.phone || "",
+          dob: prof.dob || "1992-08-24",
+          gender: prof.gender || "Male",
+          address: prof.address || "",
+          joiningDate: prof.joiningDate || "",
+          department: prof.department,
+          designation: prof.role,
+          reportingManager: prof.reportingManager || "None",
           employmentType: "Full-Time Permanent",
-          companyName: prof.companyName || prev.companyName || "ITLC HRMS",
-          companyLogo: prof.companyLogo || prev.companyLogo || "",
-          documents: prof.documents && prof.documents.length > 0 ? prof.documents : (prev.documents && prev.documents.length > 0 ? prev.documents : []),
-          companyDetails: prof.companyDetails || prev.companyDetails || null
-        }));
+          companyName: prof.companyName || "ITLC HRMS",
+          companyLogo: prof.companyLogo || "",
+          documents: prof.documents || [],
+          companyDetails: prof.companyDetails || null
+        });
 
         if (prof.companyDetails && prof.companyDetails.themeColor) {
           applyThemeColor(prof.companyDetails.themeColor);
@@ -420,25 +369,12 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
           attachmentName: l.attachment ? 'attachment' : null,
           attachment: l.attachment || '',
           status: l.status,
-          isHalfDay: Boolean(l.isHalfDay),
-          appliedDate: l.appliedDate || l.appliedOn,
+          isHalfDay: false,
+          appliedDate: l.appliedDate,
           totalDays: l.totalDays,
           currentStep: l.status === 'Approved' ? 4 : l.status === 'Rejected' ? 4 : (l.managerStatus === 'Approved' ? 3 : 2)
         }));
         setLeaveRequests(mappedLeaves);
-
-        // Dynamically compute live leave balances from real DB leaves
-        const computedBalances = { casual: 12, sick: 8, earned: 18, compOff: 4 };
-        mappedLeaves.forEach((l: any) => {
-          if (l.status === 'Approved' || l.status === 'Pending') {
-            const days = Number(l.totalDays) || 0;
-            if (l.type === 'Casual Leave') computedBalances.casual = Math.max(0, computedBalances.casual - days);
-            else if (l.type === 'Sick Leave') computedBalances.sick = Math.max(0, computedBalances.sick - days);
-            else if (l.type === 'Earned Leave') computedBalances.earned = Math.max(0, computedBalances.earned - days);
-            else if (l.type === 'Comp Off') computedBalances.compOff = Math.max(0, computedBalances.compOff - days);
-          }
-        });
-        setLeaveBalances(computedBalances);
 
         // Load Expenses
         const expenseList = await api.getEmployeeExpenses();
@@ -655,80 +591,6 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
           });
         });
 
-        // Load tasks and generate live notifications
-        try {
-          const empTasks = await api.getEmployeeTasks();
-          if (Array.isArray(empTasks)) {
-            empTasks.forEach((t: any) => {
-              const nId = `NTF-task-${t.id}-${t.status}`;
-              const isRead = readIds.includes(nId);
-              let title = "New Task Assigned";
-              let message = `You were assigned: "${t.title}". Deadline: ${t.deadline || 'No deadline'}.`;
-              if (t.status === 'Completed') {
-                title = "Task Completed";
-                message = `Task "${t.title}" is marked as completed.`;
-              } else if (t.status === 'In Progress') {
-                title = "Task In Progress";
-                message = `Task "${t.title}" is currently in progress.`;
-              }
-              generatedNotifs.push({
-                id: nId,
-                title,
-                message,
-                category: 'policy' as any,
-                read: isRead,
-                date: t.deadline || t.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0]
-              });
-            });
-          }
-        } catch (e) {
-          console.error("Failed to load employee tasks for notifications:", e);
-        }
-
-        // Automated Shift Attendance Reminders (Check-In & Check-Out)
-        try {
-          const todayDate = new Date().toISOString().split("T")[0];
-          const shiftStart = prof?.companyDetails?.workdayStart || '09:00';
-          const shiftEnd = prof?.companyDetails?.workdayEnd || '17:00';
-
-          const now = new Date();
-          const curHours = String(now.getHours()).padStart(2, '0');
-          const curMins = String(now.getMinutes()).padStart(2, '0');
-          const currentTime = `${curHours}:${curMins}`;
-
-          const currentAtt = (attList && Array.isArray(attList)) ? attList.find((r: any) => r.date === todayDate) : null;
-
-          // 1. Shift Check-In Reminder: Current time is at or past shift start, and employee has not checked in today
-          if (currentTime >= shiftStart && (!currentAtt || !currentAtt.checkIn)) {
-            const checkInNotifId = `NTF-shift-checkin-${todayDate}`;
-            const isRead = readIds.includes(checkInNotifId);
-            generatedNotifs.push({
-              id: checkInNotifId,
-              title: "Shift Attendance Reminder",
-              message: `It's time to mark your attendance! Shift started at ${shiftStart}. Please check in now.`,
-              category: "policy" as any,
-              read: isRead,
-              date: todayDate
-            });
-          }
-
-          // 2. Shift Check-Out Reminder: Current time is at or past shift end, and employee is clocked in without punch-out
-          if (currentTime >= shiftEnd && currentAtt && currentAtt.checkIn && !currentAtt.checkOut) {
-            const checkOutNotifId = `NTF-shift-checkout-${todayDate}`;
-            const isRead = readIds.includes(checkOutNotifId);
-            generatedNotifs.push({
-              id: checkOutNotifId,
-              title: "Shift Punch-Out Reminder",
-              message: `Your workday shift has ended at ${shiftEnd}. Please don't forget to punch out / record your attendance.`,
-              category: "policy" as any,
-              read: isRead,
-              date: todayDate
-            });
-          }
-        } catch (shiftErr) {
-          console.warn("Failed generating shift attendance reminder:", shiftErr);
-        }
-
         // Sort by date descending
         generatedNotifs.sort((a, b) => b.date.localeCompare(a.date));
         setNotifications(generatedNotifs);
@@ -738,32 +600,8 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
       }
     };
     loadEmployeeData();
-
-    const handleSync = () => {
-      loadEmployeeData();
-    };
-
-    window.addEventListener('profile_updated', handleSync);
-    window.addEventListener('company_updated', handleSync);
-    window.addEventListener('multi_tenant_updated', handleSync);
-    window.addEventListener('tasks_updated', handleSync);
-    window.addEventListener('leaves_updated', handleSync);
-    window.addEventListener('attendance_updated', handleSync);
-    window.addEventListener('corrections_updated', handleSync);
-    window.addEventListener('storage', handleSync);
-
     const interval = setInterval(loadEmployeeData, 10000);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('profile_updated', handleSync);
-      window.removeEventListener('company_updated', handleSync);
-      window.removeEventListener('multi_tenant_updated', handleSync);
-      window.removeEventListener('tasks_updated', handleSync);
-      window.removeEventListener('leaves_updated', handleSync);
-      window.removeEventListener('attendance_updated', handleSync);
-      window.removeEventListener('corrections_updated', handleSync);
-      window.removeEventListener('storage', handleSync);
-    };
+    return () => clearInterval(interval);
   }, [loggedInEmail]);
 
   // Hydrate states from localStorage (only local UI configurations)
@@ -899,11 +737,8 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
       const record = await api.punchIn({
         date: dateStr,
         checkIn: inTimeStr,
-        status: "Present",
-        employeeId: profile.employeeId || profile.id,
-        employeeName: profile.name || profile.fullName,
-        companyId: profile.companyId || profile.tenantId
-      } as any);
+        status: "Present"
+      });
       
       setAttendanceHistory(prev => [record, ...prev]);
     } catch (err: any) {
@@ -966,10 +801,7 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
         checkOut: outTimeStr,
         breakDuration: breakStr,
         workHours: workStr,
-        status: calculatedStatus,
-        employeeId: profile.employeeId || profile.id,
-        employeeName: profile.name || profile.fullName,
-        companyId: profile.companyId || profile.tenantId
+        status: calculatedStatus
       });
 
       setAttendanceHistory(prev => prev.map(rec => rec.date === dateStr ? record : rec));
@@ -1117,13 +949,6 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
       prev.map((r) => (r.id === id ? { ...r, status: "Cancelled", currentStep: 4 } : r))
     );
 
-    // Persist cancellation to backend REST API
-    try {
-      api.updateAdminLeave(id, "Cancelled");
-    } catch (e) {
-      console.warn("Failed to persist leave cancellation to backend:", e);
-    }
-
     addNotification({
       title: "Leave Request Cancelled",
       message: `Your leave request ${id} has been cancelled and balances restored.`,
@@ -1133,35 +958,21 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
 
   const updateProfile = async (updatedFields: Partial<EmployeeProfile>) => {
     try {
-      const payload: any = {
-        id: profile.id,
-        email: profile.email,
-        employeeId: profile.id,
-        role: profile.designation || 'Employee',
-        isEmployee: true
-      };
+      const payload: any = {};
       if (updatedFields.fullName !== undefined) payload.name = updatedFields.fullName;
       if (updatedFields.mobile !== undefined) payload.phone = updatedFields.mobile;
       if (updatedFields.dob !== undefined) payload.dob = updatedFields.dob;
       if (updatedFields.gender !== undefined) payload.gender = updatedFields.gender;
       if (updatedFields.address !== undefined) payload.address = updatedFields.address;
-      if (updatedFields.photo !== undefined) {
-        payload.avatar = updatedFields.photo;
-        payload.photo = updatedFields.photo;
-      }
+      if (updatedFields.photo !== undefined) payload.avatar = updatedFields.photo;
       if (updatedFields.documents !== undefined) payload.documents = updatedFields.documents;
 
-      setProfile((prev) => ({ ...prev, ...updatedFields }));
       await api.updateProfile(payload);
-      if (profile.id) {
-        try {
-          await api.updateEmployee(profile.id, payload);
-        } catch {}
-      }
+      setProfile((prev) => ({ ...prev, ...updatedFields }));
       
       addNotification({
         title: "Profile Saved",
-        message: "Your profile changes and documents have been saved to the database.",
+        message: "Your profile changes have been saved to the database.",
         category: "policy"
       });
     } catch (err: any) {
@@ -1393,25 +1204,25 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
         
         // Load profile and authenticate
         const prof = (await api.getProfile()) || response;
-        setProfile(prev => ({
-          photo: prof.photo || prof.avatar || prev.photo || "",
-          id: prof.id || prof.employeeId || prev.id || "EMP-001",
-          fullName: prof.fullName || prof.name || prev.fullName || "Employee",
-          email: prof.email || email || prev.email,
-          mobile: prof.phone || prof.mobile || prev.mobile || "",
-          dob: prof.dob || prev.dob || "1992-08-24",
-          gender: prof.gender || prev.gender || "Male",
-          address: prof.address || prev.address || "",
-          joiningDate: prof.joiningDate || prev.joiningDate || "",
-          department: prof.department || prev.department || "Operations",
-          designation: prof.designation || prof.role || prev.designation || "Staff",
-          reportingManager: prof.reportingManager || prev.reportingManager || "None",
+        setProfile({
+          photo: prof.avatar || "",
+          id: prof.id || prof.employeeId || "EMP-001",
+          fullName: prof.name || prof.fullName || "Employee",
+          email: prof.email || email,
+          mobile: prof.phone || prof.mobile || "",
+          dob: prof.dob || "1992-08-24",
+          gender: prof.gender || "Male",
+          address: prof.address || "",
+          joiningDate: prof.joiningDate || "",
+          department: prof.department || "Operations",
+          designation: prof.designation || prof.role || "Staff",
+          reportingManager: prof.reportingManager || "None",
           employmentType: "Full-Time Permanent",
-          companyName: prof.companyName || prev.companyName || "ITLC HRMS",
-          companyLogo: prof.companyLogo || prev.companyLogo || "",
-          documents: prof.documents && prof.documents.length > 0 ? prof.documents : (prev.documents && prev.documents.length > 0 ? prev.documents : []),
-          companyDetails: prof.companyDetails || prev.companyDetails || null
-        }));
+          companyName: prof.companyName || "ITLC HRMS",
+          companyLogo: prof.companyLogo || "",
+          documents: prof.documents || [],
+          companyDetails: prof.companyDetails || null
+        });
 
         if (prof.companyDetails && prof.companyDetails.themeColor) {
           applyThemeColor(prof.companyDetails.themeColor);

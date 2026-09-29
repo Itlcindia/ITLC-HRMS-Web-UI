@@ -4,10 +4,9 @@ import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { 
   Mail, Lock, Eye, EyeOff, ArrowRight, ShieldCheck, Sparkles, 
-  Building2, Phone, Check, Globe, MapPin, Share2 
+  Building2, Phone, Check, Globe, MapPin 
 } from 'lucide-react';
 import { api } from '../services/api';
-import { paymentService } from '../services/paymentService';
 
 const slides = [
   { id: 2, title: "HRMS Employee Hub", image: "/dashboards/hrms_employee.png" },
@@ -122,138 +121,15 @@ const FloatingPasswordInput = ({
 export default function LoginForm({
   onSuccessLogin,
   isSuperownerMode = false,
-  onOpenRegister,
-  initialPlanId,
-  initialSignUp = false
+  onOpenRegister
 }: {
   onSuccessLogin?: (email: string, pass: string) => void;
   isSuperownerMode?: boolean;
   onOpenRegister?: () => void;
-  initialPlanId?: string;
-  initialSignUp?: boolean;
 }) {
-  const [isSignUp, setIsSignUp] = useState(() => {
-    if (initialSignUp) return true;
-    try {
-      const urlParams = new URLSearchParams(window.location.search);
-      const hash = window.location.hash.toLowerCase();
-      const path = window.location.pathname.toLowerCase().replace(/\/+$/, '');
-      return (
-        urlParams.get('mode') === 'signup' || 
-        urlParams.get('mode') === 'register' || 
-        urlParams.get('mode') === 'create-account' || 
-        hash === '#signup' || 
-        hash === '#register' || 
-        hash.startsWith('#register') || 
-        hash.startsWith('#signup') || 
-        hash === '#create-account' ||
-        path === '/register' || 
-        path === '/signup' || 
-        path === '/create-account'
-      );
-    } catch {
-      return false;
-    }
-  });
+  const [isSignUp, setIsSignUp] = useState(false);
   const [setupRequired, setSetupRequired] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [copiedLink, setCopiedLink] = useState(false);
-
-  // Live Subscription Plans from Super Owner
-  const [availablePlans, setAvailablePlans] = useState<any[]>([
-    { id: 'starter', name: 'STARTER', priceMonthly: 499, seatLimit: 50 },
-    { id: 'premium', name: 'PREMIUM', priceMonthly: 999, seatLimit: 100 },
-    { id: 'demo', name: 'DEMO', priceMonthly: 199, seatLimit: 10 }
-  ]);
-  const [selectedPlanId, setSelectedPlanId] = useState<string>(() => {
-    if (initialPlanId) return initialPlanId;
-    try {
-      const urlParams = new URLSearchParams(window.location.search);
-      const hashQuery = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : '';
-      const hashParams = new URLSearchParams(hashQuery);
-      return hashParams.get('plan') || urlParams.get('plan') || localStorage.getItem('itlc_selected_onboarding_plan') || 'starter';
-    } catch {
-      return 'starter';
-    }
-  });
-  const [registeredCompanyData, setRegisteredCompanyData] = useState<any>(null);
-  const [showPaymentPrompt, setShowPaymentPrompt] = useState(false);
-
-  const getDirectRegisterLink = () => {
-    const origin = window.location.origin;
-    const planParam = selectedPlanId && selectedPlanId !== 'starter' ? `?plan=${selectedPlanId}` : '';
-    return `${origin}/#register${planParam}`;
-  };
-
-  const handleCopyRegisterLink = async () => {
-    const link = getDirectRegisterLink();
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(link);
-      } else {
-        const textArea = document.createElement("textarea");
-        textArea.value = link;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textArea);
-      }
-      setCopiedLink(true);
-      setTimeout(() => setCopiedLink(false), 2500);
-    } catch {
-      // Fallback
-    }
-  };
-
-  useEffect(() => {
-    const syncHash = () => {
-      const hash = window.location.hash.toLowerCase();
-      if (hash === '#register' || hash.startsWith('#register') || hash === '#signup' || hash === '#create-account') {
-        setIsSignUp(true);
-      } else if (hash === '#login') {
-        setIsSignUp(false);
-      }
-    };
-    window.addEventListener('hashchange', syncHash);
-    window.addEventListener('popstate', syncHash);
-    return () => {
-      window.removeEventListener('hashchange', syncHash);
-      window.removeEventListener('popstate', syncHash);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (isSignUp) {
-      const hash = window.location.hash.toLowerCase();
-      const path = window.location.pathname.toLowerCase().replace(/\/+$/, '');
-      if (hash !== '#register' && !hash.startsWith('#register') && path !== '/register' && path !== '/signup') {
-        const planParam = selectedPlanId && selectedPlanId !== 'starter' ? `?plan=${selectedPlanId}` : '';
-        try {
-          window.history.replaceState({}, '', `/#register${planParam}`);
-        } catch {}
-      }
-    }
-  }, [isSignUp, selectedPlanId]);
-
-  useEffect(() => {
-    if (initialPlanId) setSelectedPlanId(initialPlanId);
-  }, [initialPlanId]);
-
-  useEffect(() => {
-    if (initialSignUp !== undefined) setIsSignUp(initialSignUp);
-  }, [initialSignUp]);
-
-  useEffect(() => {
-    api.getPlans().then((plans: any) => {
-      if (Array.isArray(plans) && plans.length > 0) {
-        setAvailablePlans(plans);
-        if (!initialPlanId) {
-          const pop = plans.find((p: any) => p.badge?.toLowerCase().includes('popular') || p.id === 'starter');
-          if (pop) setSelectedPlanId(pop.id);
-        }
-      }
-    }).catch(() => {});
-  }, [initialPlanId]);
 
   const handleCreateAccountClick = () => {
     if (onOpenRegister) {
@@ -326,8 +202,6 @@ export default function LoginForm({
   const [otpRequired, setOtpRequired] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [focusOtp, setFocusOtp] = useState(false);
-  const [isResendingOtp, setIsResendingOtp] = useState(false);
-  const [devOtp, setDevOtp] = useState('');
 
   // Embla Carousel settings for background slider in the sliding overlay
   const autoplayOptions = { delay: 4000, stopOnInteraction: false, stopOnMouseEnter: true };
@@ -412,14 +286,6 @@ export default function LoginForm({
     setIsSignUp(signUpMode);
     resetSignUpState();
     setError('');
-    try {
-      if (signUpMode) {
-        const planParam = selectedPlanId && selectedPlanId !== 'starter' ? `?plan=${selectedPlanId}` : '';
-        window.history.pushState({}, '', `/#register${planParam}`);
-      } else {
-        window.history.pushState({}, '', '/#login');
-      }
-    } catch {}
   };
 
   // Submit Login
@@ -445,10 +311,6 @@ export default function LoginForm({
       if (result.otpRequired) {
         setIsLoading(false);
         setOtpRequired(true);
-        if (result.devOtp) {
-          setDevOtp(result.devOtp);
-          setOtpCode(result.devOtp);
-        }
         setSuccessMsg(result.message || 'A secure verification OTP code has been sent to your email.');
         setError('');
         return;
@@ -466,38 +328,6 @@ export default function LoginForm({
       setError(err.message || 'Login failed. Please check your credentials.');
     }
   };
-
-  // Direct Password Login bypass (instant login with valid password)
-  const handleDirectPasswordLogin = async () => {
-    setIsLoading(true);
-    setError('');
-    try {
-      const result = await api.login({
-        email: loginEmail,
-        password: loginPassword,
-        directLogin: true
-      });
-      if (result.otpRequired && result.devOtp) {
-        await api.verifyOtp({
-          email: loginEmail,
-          otp: result.devOtp
-        });
-      }
-      setSuccess(true);
-      setSuccessMsg('Welcome back! Successfully signed in. Redirecting to workspace...');
-      setTimeout(() => {
-        setIsLoading(false);
-        if (onSuccessLogin) {
-          onSuccessLogin(loginEmail, loginPassword);
-        }
-      }, 600);
-    } catch (err: any) {
-      setIsLoading(false);
-      setError(err.message || 'Direct password login failed.');
-    }
-  };
-
-
 
   // Submit OTP Verification
   const handleOtpSubmit = async (e: React.FormEvent) => {
@@ -591,11 +421,7 @@ export default function LoginForm({
 
     setIsLoading(true);
     try {
-      const selectedPlan = availablePlans.find((p: any) => p.id === selectedPlanId);
-      const planPrice = Number(selectedPlan?.priceMonthly || selectedPlan?.price || 499);
-
-      // Direct registration without subscription plan: created as unpaid preview
-      const regRes = await api.registerCompany({
+      await api.registerCompany({
         companyName,
         companyEmail,
         companyPhone,
@@ -603,24 +429,15 @@ export default function LoginForm({
         country,
         stateName,
         cityName,
-        ownerName: companyName + ' Admin',
-        subscriptionPlanId: 'none',
-        planId: 'none',
-        plan: null,
-        seatLimit: 10,
-        maxEmployees: 10,
-        storageLimitGb: 10,
-        email: companyEmail,
-        subscriptionStatus: 'unpaid',
-        status: 'active'
+        ownerName: companyName + ' Owner'
       });
-
       setSuccess(true);
-      setSuccessMsg(`Workspace "${companyName}" created successfully! Logging you into your dashboard...`);
+      setSuccessMsg(`Welcome! Your registration for ${companyName} has been successfully completed. You can now log in!`);
       setTimeout(() => {
-        if (onSuccessLogin) onSuccessLogin(companyEmail, password);
-      }, 1000);
-      setIsLoading(false);
+        setIsLoading(false);
+        setIsSignUp(false);
+        setSuccess(false);
+      }, 2500);
     } catch (err: any) {
       setIsLoading(false);
       setError(err.message || 'Registration failed.');
@@ -708,19 +525,7 @@ export default function LoginForm({
               <form onSubmit={handleOtpSubmit} className="space-y-4 mt-2">
                 <div className="p-3 bg-indigo-50 border border-indigo-100 text-indigo-700 text-[11px] rounded-xl flex items-start gap-2 leading-relaxed">
                   <Sparkles className="w-4 h-4 shrink-0 mt-0.5" />
-                  <div className="flex-1 min-w-0">
-                    <div>A secure 6-digit verification code has been sent to <strong>{loginEmail}</strong>. Please enter the OTP to authenticate.</div>
-                    {devOtp && (
-                      <div 
-                        onClick={() => setOtpCode(devOtp)}
-                        title="Click to copy into input"
-                        className="mt-2 flex items-center justify-between bg-white border border-indigo-200/80 px-2.5 py-1.5 rounded-lg shadow-xs cursor-pointer hover:bg-indigo-50/50 transition"
-                      >
-                        <span className="text-[10px] uppercase font-bold text-indigo-500 tracking-wider">Quick Code:</span>
-                        <span className="font-mono font-extrabold text-indigo-700 text-sm tracking-widest">{devOtp}</span>
-                      </div>
-                    )}
-                  </div>
+                  <span>A secure 6-digit verification code has been sent to <strong>{loginEmail}</strong>. Please enter the OTP to authenticate.</span>
                 </div>
 
                 <FloatingInput 
@@ -732,61 +537,6 @@ export default function LoginForm({
                   onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
                   icon={ShieldCheck}
                 />
-
-                {devOtp && (
-                  <button
-                    type="button"
-                    disabled={isLoading}
-                    onClick={() => {
-                      setOtpCode(devOtp);
-                      setTimeout(() => {
-                        api.verifyOtp({ email: loginEmail, otp: devOtp })
-                          .then(() => {
-                            setSuccess(true);
-                            setSuccessMsg('OTP verified successfully! Redirecting...');
-                            setTimeout(() => {
-                              setIsLoading(false);
-                              if (onSuccessLogin) onSuccessLogin(loginEmail, loginPassword);
-                            }, 500);
-                          })
-                          .catch((err) => {
-                            setError(err.message || 'Verification failed');
-                          });
-                      }, 50);
-                    }}
-                    className="w-full py-2 px-3 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-                    ⚡ Auto-fill Code & Login Instantly
-                  </button>
-                )}
-
-                <div className="flex items-center justify-between text-xs px-1">
-                  <span className="text-slate-500 text-[11px]">Didn't receive code?</span>
-                  <button
-                    type="button"
-                    disabled={isResendingOtp}
-                    onClick={async () => {
-                      setIsResendingOtp(true);
-                      setError('');
-                      try {
-                        const res = await api.resendOtp(loginEmail);
-                        if (res.devOtp) {
-                          setDevOtp(res.devOtp);
-                          setOtpCode(res.devOtp);
-                        }
-                        setSuccessMsg(res.message || 'A fresh OTP has been sent to your email.');
-                      } catch (err: any) {
-                        setError(err.message || 'Failed to resend OTP.');
-                      } finally {
-                        setIsResendingOtp(false);
-                      }
-                    }}
-                    className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer"
-                  >
-                    {isResendingOtp ? 'Sending...' : 'Resend Code'}
-                  </button>
-                </div>
 
                 <div className="flex items-center gap-3 mt-2">
                   <button
@@ -805,26 +555,14 @@ export default function LoginForm({
                   </button>
                   <button
                     type="button"
-                    disabled={isLoading}
-                    onClick={handleDirectPasswordLogin}
-                    className="flex-1 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 shadow-sm"
-                  >
-                    🔑 Direct Password Login
-                  </button>
-                </div>
-
-                <div className="text-center pt-1">
-                  <button
-                    type="button"
                     onClick={() => {
                       setOtpRequired(false);
                       setOtpCode('');
-                      setDevOtp('');
                       setError('');
                     }}
-                    className="text-[11px] text-slate-500 hover:text-slate-700 hover:underline cursor-pointer"
+                    className="flex-1 py-2.5 px-3 border border-slate-200 hover:border-slate-350 bg-white text-slate-600 hover:bg-slate-50 font-semibold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1"
                   >
-                    ← Back to Login
+                    Back to Login
                   </button>
                 </div>
               </form>
@@ -924,8 +662,6 @@ export default function LoginForm({
               </div>
 
 
-
-
             </div>
           </motion.div>
 
@@ -941,47 +677,20 @@ export default function LoginForm({
             transition={springTransition}
             style={{ display: isMobile ? (isSignUp ? 'flex' : 'none') : 'flex' }}
           >
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <div className="inline-flex items-center justify-center p-1.5 bg-gradient-to-tr from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl mb-1.5 text-indigo-655 shadow-sm">
-                  <Sparkles className="w-4 h-4 animate-pulse text-indigo-600" />
-                </div>
-                <h2 className="text-lg sm:text-xl font-bold font-display text-slate-900 tracking-tight">
-                  {setupRequired ? (
-                    <>Setup <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent">Super Owner</span></>
-                  ) : (
-                    <>Create <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent">Account</span></>
-                  )}
-                </h2>
-                <p className="text-slate-400 text-[11px] mt-0.5">
-                  {setupRequired ? 'First-time setup detected. Configure the platform master administrator.' : 'Sign up today and get onboarded to the Apex Suite platform.'}
-                </p>
+            <div>
+              <div className="inline-flex items-center justify-center p-1.5 bg-gradient-to-tr from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl mb-1.5 text-indigo-655 shadow-sm">
+                <Sparkles className="w-4 h-4 animate-pulse text-indigo-600" />
               </div>
-
-              {!setupRequired && (
-                <button
-                  type="button"
-                  onClick={handleCopyRegisterLink}
-                  title="Copy direct registration link to share"
-                  className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[11px] font-semibold transition-all cursor-pointer ${
-                    copiedLink 
-                      ? 'bg-emerald-50 border-emerald-300 text-emerald-700 shadow-xs' 
-                      : 'bg-white hover:bg-indigo-50/70 border-indigo-200 text-indigo-600 shadow-xs hover:border-indigo-300'
-                  }`}
-                >
-                  {copiedLink ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>Link Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Share2 className="w-3.5 h-3.5 text-indigo-600" />
-                      <span>Copy Direct Link</span>
-                    </>
-                  )}
-                </button>
-              )}
+              <h2 className="text-lg sm:text-xl font-bold font-display text-slate-900 tracking-tight">
+                {setupRequired ? (
+                  <>Setup <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent">Super Owner</span></>
+                ) : (
+                  <>Create <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent">Account</span></>
+                )}
+              </h2>
+              <p className="text-slate-400 text-[11px] mt-0.5">
+                {setupRequired ? 'First-time setup detected. Configure the platform master administrator.' : 'Sign up today and get onboarded to the Apex Suite platform.'}
+              </p>
             </div>
 
             {/* Step progress bar */}
@@ -1297,6 +1006,7 @@ export default function LoginForm({
                 </div>
               )}
             </form>
+
 
           </motion.div>
 

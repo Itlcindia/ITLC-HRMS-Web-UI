@@ -333,75 +333,6 @@ export default function ManagerApp({ onLogout }) {
         }));
         setMyPayslips(mappedPayslips);
       }
-
-      // Generate Manager Notifications
-      const readNotifIds = JSON.parse(localStorage.getItem('hrms_manager_read_notif_ids') || '[]');
-      const genNotifs = [];
-
-      // 1. Tasks completed by team members
-      (taskList || []).filter(t => t.status === 'Completed').forEach(t => {
-        const id = `NTF-mgr-done-${t.id}`;
-        genNotifs.push({
-          id,
-          title: 'Task Completed by Team',
-          message: `${t.assignedToName || 'Employee'} marked task "${t.title}" as Completed.`,
-          time: t.completedAt ? new Date(t.completedAt).toLocaleDateString() : 'Done',
-          type: 'success',
-          read: readNotifIds.includes(id)
-        });
-      });
-
-      // 2. Tasks assigned to Manager by Company Admin
-      const myId = profile?.id;
-      const myEmpId = profile?.employeeId;
-      const myEmail = (profile?.email || '').toLowerCase().trim();
-      const myName = (profile?.name || profile?.fullName || '').toLowerCase().trim();
-
-      (taskList || []).filter(t => {
-        const isAssignedToMe = (myId && String(t.assignedTo) === String(myId)) ||
-          (myEmpId && String(t.assignedTo) === String(myEmpId)) ||
-          (myEmail && t.assignedToEmail && t.assignedToEmail.toLowerCase().trim() === myEmail) ||
-          (myName && t.assignedToName && t.assignedToName.toLowerCase().trim() === myName);
-        return isAssignedToMe;
-      }).forEach(t => {
-        const id = `NTF-mgr-assigned-${t.id}-${t.status}`;
-        genNotifs.push({
-          id,
-          title: 'New Task Assigned by Admin',
-          message: `You were assigned: "${t.title}" by ${t.assignedBy || 'Company Admin'}. Due: ${t.deadline || 'No deadline'}.`,
-          time: 'New',
-          type: 'info',
-          read: readNotifIds.includes(id)
-        });
-      });
-
-      // 3. Pending leaves requiring Manager recommendation
-      (leaveList || []).filter(l => l.managerStatus === 'Pending' || l.status === 'Pending').forEach(l => {
-        const id = `NTF-mgr-leave-${l.id}`;
-        genNotifs.push({
-          id,
-          title: 'Leave Recommendation Required',
-          message: `${l.employeeName || 'Staff'} requested ${l.totalDays || 1} days of ${l.type}.`,
-          time: 'Pending',
-          type: 'warning',
-          read: readNotifIds.includes(id)
-        });
-      });
-
-      // 4. Pending attendance corrections
-      (corrList || []).filter(c => c.status === 'Pending').forEach(c => {
-        const id = `NTF-mgr-corr-${c.id}`;
-        genNotifs.push({
-          id,
-          title: 'Attendance Regularization',
-          message: `${c.employeeName || 'Staff'} requested punch correction for ${c.date}.`,
-          time: 'Pending',
-          type: 'warning',
-          read: readNotifIds.includes(id)
-        });
-      });
-
-      setNotifications(genNotifs);
     } catch (err) {
       console.error("Critical error in loadLiveManagerPortal:", err);
     } finally {
@@ -412,29 +343,7 @@ export default function ManagerApp({ onLogout }) {
   useEffect(() => {
     loadLiveManagerPortal();
     const interval = setInterval(loadLiveManagerPortal, 8000);
-
-    const handleDataReload = () => {
-      loadLiveManagerPortal();
-    };
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('tasks_updated', handleDataReload);
-      window.addEventListener('leaves_updated', handleDataReload);
-      window.addEventListener('attendance_updated', handleDataReload);
-      window.addEventListener('corrections_updated', handleDataReload);
-      window.addEventListener('storage', handleDataReload);
-    }
-
-    return () => {
-      clearInterval(interval);
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('tasks_updated', handleDataReload);
-        window.removeEventListener('leaves_updated', handleDataReload);
-        window.removeEventListener('attendance_updated', handleDataReload);
-        window.removeEventListener('corrections_updated', handleDataReload);
-        window.removeEventListener('storage', handleDataReload);
-      }
-    };
+    return () => clearInterval(interval);
   }, []);
 
   const triggerDocUploadPicker = (docId) => {
@@ -578,10 +487,7 @@ export default function ManagerApp({ onLogout }) {
         const record = await api.punchIn({
           date: dateStr,
           checkIn: timeStr,
-          status: 'Present',
-          employeeId: managerProfile?.id || managerProfile?.employeeId || 'MGR-001',
-          employeeName: managerProfile?.name || 'Manager',
-          companyId: managerProfile?.companyId
+          status: 'Present'
         });
         setOwnLogs(prev => [record, ...prev]);
         alert("Attendance Marked Successfully");
@@ -601,10 +507,7 @@ export default function ManagerApp({ onLogout }) {
           checkOut: timeStr,
           breakDuration: '00:00:00',
           workHours: workStr,
-          status: 'Present',
-          employeeId: managerProfile?.id || managerProfile?.employeeId || 'MGR-001',
-          employeeName: managerProfile?.name || 'Manager',
-          companyId: managerProfile?.companyId
+          status: 'Present'
         });
         setOwnLogs(prev => prev.map(r => r.date === dateStr ? record : r));
         alert("Punch Out Successful");

@@ -66,7 +66,6 @@ import {
   type CustomLandingSection 
 } from '../../../types/multiTenant';
 import { useDashboard } from '../context/DashboardContext';
-import { compressImage } from '../../../utils/imageCompressor';
 
 export type CmsSubTab = 'sections' | 'showcase_images' | 'contact' | 'branding' | 'hero' | 'preview';
 
@@ -81,11 +80,11 @@ export const DEFAULT_SHOWCASE_MODULES = [
   },
   { 
     id: 'crm_kanban', 
-    label: 'Sales CRM (Coming Soon)', 
+    label: 'Sales CRM', 
     icon: Kanban, 
     color: '#0284c7',
-    badge: 'COMING SOON ⏳',
-    description: 'Visual Deals Kanban Pipeline & CRM Suite (Coming Soon)' 
+    badge: 'REVENUE & PIPELINE',
+    description: 'Visual Deals Kanban Pipeline, field sales GPS check-ins & deals' 
   },
   { 
     id: 'payroll_engine', 
@@ -322,7 +321,7 @@ export const LandingSettingsTab: React.FC<{
     addToast('Image added to slider successfully!', 'success');
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -331,8 +330,8 @@ export const LandingSettingsTab: React.FC<{
       return;
     }
 
-    if (file.size > 15 * 1024 * 1024) {
-      addToast('Image file size must be under 15MB', 'error');
+    if (file.size > 8 * 1024 * 1024) {
+      addToast('Image file size must be under 8MB', 'error');
       return;
     }
 
@@ -342,21 +341,21 @@ export const LandingSettingsTab: React.FC<{
       return;
     }
 
-    try {
-      addToast('Optimizing and compressing image...', 'info');
-      const dataUrl = await compressImage(file, 1280, 720, 0.75);
-      const updatedList = [...currentList, dataUrl];
-      const updatedObj = { ...showcaseImages, [selectedShowcaseModule]: updatedList };
-      handleSaveShowcaseImages(updatedObj);
-      addToast(`Uploaded "${file.name}" into ${selectedShowcaseModule}!`, 'success');
-    } catch (err) {
-      console.error('Image compression failed:', err);
-      addToast('Failed to optimize image. Please try another file.', 'error');
-    } finally {
-      // Reset file input so user can re-select same file if desired
-      if (filePickerRef.current) {
-        filePickerRef.current.value = '';
+    const reader = new FileReader();
+    reader.onload = (uploadEvent) => {
+      const dataUrl = uploadEvent.target?.result as string;
+      if (dataUrl) {
+        const updatedList = [...currentList, dataUrl];
+        const updatedObj = { ...showcaseImages, [selectedShowcaseModule]: updatedList };
+        handleSaveShowcaseImages(updatedObj);
+        addToast(`Uploaded "${file.name}" from your computer into ${selectedShowcaseModule}!`, 'success');
       }
+    };
+    reader.readAsDataURL(file);
+
+    // Reset file input so user can re-select same file if desired
+    if (filePickerRef.current) {
+      filePickerRef.current.value = '';
     }
   };
 
@@ -1321,7 +1320,7 @@ export const LandingSettingsTab: React.FC<{
                   type="text"
                   value={cmsConfig.whatsappSalesNumber}
                   onChange={(e) => setCmsConfig({ ...cmsConfig, whatsappSalesNumber: e.target.value.replace(/[^0-9]/g, '') })}
-                  placeholder="e.g. 919532341000"
+                  placeholder="e.g. 918368817744"
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
                 <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-mono">digits only</span>
@@ -1364,7 +1363,7 @@ export const LandingSettingsTab: React.FC<{
                 type="email"
                 value={cmsConfig.supportEmail}
                 onChange={(e) => setCmsConfig({ ...cmsConfig, supportEmail: e.target.value })}
-                placeholder="e.g. support@itlcindia.com"
+                placeholder="e.g. support@itlc.in"
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <p className="text-[11px] text-slate-500 dark:text-slate-400">

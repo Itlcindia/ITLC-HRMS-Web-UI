@@ -1,7 +1,7 @@
 {
-  "short_name": "OmniStaff HRMS",
-  "name": "OmniStaff HRMS",
-  "description": "Next-Gen Enterprise HRMS, Geofenced Attendance, Payroll & Cloud CRM Suite",
+  "short_name": "ITLC CRM",
+  "name": "ITLC CRM Enterprise Admin Panel",
+  "description": "Next-Gen Enterprise CRM & Sales Pipeline Management",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",
@@ -9,8 +9,8 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/itlc_logo.png",
-      "type": "image/png",
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
       "sizes": "192x192 512x512"
     }
   ]

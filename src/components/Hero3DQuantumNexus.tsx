@@ -327,14 +327,14 @@ export const Hero3DQuantumNexus: React.FC<Hero3DQuantumNexusProps> = ({
             <div 
               style={{ cursor: 'pointer', padding: '6px 12px', borderRadius: '10px', transition: 'all 0.15s ease' }} 
               onClick={onExploreCrm}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(217, 119, 6, 0.05)'}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(2, 132, 199, 0.05)'}
               onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#d97706', display: 'inline-block' }} />
-                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Sales CRM</span>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0284c7', display: 'inline-block' }} />
+                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Sales Pipeline</span>
               </div>
-              <strong style={{ fontSize: '13px', color: '#d97706', fontWeight: 800 }}>Coming Soon ⏳</strong>
+              <strong style={{ fontSize: '14px', color: '#0284c7', fontWeight: 800 }}>₹4.82 Cr Active Deals</strong>
             </div>
 
           </div>

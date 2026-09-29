@@ -31,20 +31,15 @@ export const IntegrationsTab: React.FC = () => {
   React.useEffect(() => {
     const fetchData = async () => {
       try {
-        const [ints, whs, apiTokenData, globalSettings] = await Promise.all([
+        const [ints, whs, apiTokenData] = await Promise.all([
           api.getIntegrations(),
           api.getWebhooks(),
-          api.getApiToken(),
-          api.getGlobalSettings().catch(() => null)
+          api.getApiToken()
         ]);
         setIntegrations(ints || []);
         setWebhooks(whs || []);
         if (apiTokenData && apiTokenData.token) {
           setApiKey(apiTokenData.token);
-        }
-        if (globalSettings) {
-          if (globalSettings.razorpayKeyId) setRzpKeyId(globalSettings.razorpayKeyId);
-          if (globalSettings.razorpaySecret) setRzpKeySecret(globalSettings.razorpaySecret);
         }
       } catch (e) {
         addToast('Failed to load integrations', 'error');
@@ -126,48 +121,33 @@ export const IntegrationsTab: React.FC = () => {
   // Razorpay Gateway Config State
   const [rzpKeyId, setRzpKeyId] = useState(() => {
     try {
-      const g = localStorage.getItem('hrms_global_settings');
-      if (g && JSON.parse(g).razorpayKeyId) return JSON.parse(g).razorpayKeyId;
       const saved = localStorage.getItem('razorpay_config');
-      if (saved && JSON.parse(saved).keyId) return JSON.parse(saved).keyId;
+      if (saved) return JSON.parse(saved).keyId || '';
     } catch {}
     return '';
   });
   const [rzpKeySecret, setRzpKeySecret] = useState(() => {
     try {
-      const g = localStorage.getItem('hrms_global_settings');
-      if (g && JSON.parse(g).razorpaySecret) return JSON.parse(g).razorpaySecret;
       const saved = localStorage.getItem('razorpay_config');
-      if (saved && JSON.parse(saved).keySecret) return JSON.parse(saved).keySecret;
+      if (saved) return JSON.parse(saved).keySecret || '';
     } catch {}
     return '';
   });
   const [rzpMode, setRzpMode] = useState<'live' | 'test'>('live');
   const [rzpShowSecret, setRzpShowSecret] = useState(false);
 
-  const handleSaveRazorpay = async () => {
-    const cleanKey = rzpKeyId.trim();
-    const cleanSecret = rzpKeySecret.trim();
+  const handleSaveRazorpay = () => {
     const config = {
-      keyId: cleanKey,
-      keySecret: cleanSecret,
+      keyId: rzpKeyId.trim(),
+      keySecret: rzpKeySecret.trim(),
       mode: rzpMode,
-      enabled: !!cleanKey,
+      enabled: !!rzpKeyId.trim(),
       updatedAt: new Date().toISOString()
     };
     localStorage.setItem('razorpay_config', JSON.stringify(config));
-    try {
-      const g = localStorage.getItem('hrms_global_settings');
-      const gParsed = g ? JSON.parse(g) : {};
-      gParsed.razorpayKeyId = cleanKey;
-      gParsed.razorpaySecret = cleanSecret;
-      localStorage.setItem('hrms_global_settings', JSON.stringify(gParsed));
-      await api.updateGlobalSettings(gParsed);
-    } catch {}
     window.dispatchEvent(new CustomEvent('razorpay_config_updated', { detail: config }));
-    window.dispatchEvent(new Event('storage'));
     addToast('Razorpay Gateway credentials saved successfully!', 'success');
-    addLog('Payment Gateway Configured', `Updated Razorpay Key ID: ${cleanKey.slice(0, 10)}...`, 'settings');
+    addLog('Payment Gateway Configured', `Updated Razorpay Key ID: ${rzpKeyId.trim().slice(0, 10)}...`, 'settings');
   };
 
   return (

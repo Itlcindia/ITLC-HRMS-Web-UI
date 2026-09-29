@@ -89,32 +89,6 @@ const DashboardContext = createContext<DashboardContextType | undefined>(undefin
 
 import { api } from '../../../services/api';
 
-export const filterActivePlans = (planList: any[]) => {
-  if (!Array.isArray(planList)) return [];
-  let deletedPlanIds = new Set<string>();
-  try {
-    const deletedRaw = localStorage.getItem('hrms_deleted_plan_ids');
-    if (deletedRaw) {
-      const parsed = JSON.parse(deletedRaw);
-      if (Array.isArray(parsed)) {
-        parsed.forEach(id => {
-          if (id) {
-            deletedPlanIds.add(String(id).toLowerCase());
-            deletedPlanIds.add(String(id).toLowerCase().replace(/[^a-z0-9]/g, ''));
-          }
-        });
-      }
-    }
-  } catch {}
-
-  return planList.filter((p: any) => {
-    if (!p || !p.id) return false;
-    const idLower = String(p.id).toLowerCase();
-    return !deletedPlanIds.has(idLower) && 
-           !deletedPlanIds.has(idLower.replace(/[^a-z0-9]/g, ''));
-  });
-};
-
 export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const defaultSettings: Settings = {
     platformName: 'SUPEROWNER HRMS',
@@ -146,17 +120,42 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   });
 
   const [plans, setPlans] = useState<SubscriptionPlan[]>(() => {
+    let deletedPlanIds = new Set<string>();
+    try {
+      const deletedRaw = localStorage.getItem('hrms_deleted_plan_ids');
+      if (deletedRaw) {
+        const parsed = JSON.parse(deletedRaw);
+        if (Array.isArray(parsed)) {
+          parsed.forEach(id => {
+            if (id) {
+              deletedPlanIds.add(String(id).toLowerCase());
+              deletedPlanIds.add(String(id).toLowerCase().replace(/[^a-z0-9]/g, ''));
+            }
+          });
+        }
+      }
+    } catch {}
+
+    const isNotDeleted = (p: any) => {
+      if (!p || !p.id) return false;
+      const idLower = String(p.id).toLowerCase();
+      const nameLower = String(p.name || '').toLowerCase();
+      return !deletedPlanIds.has(idLower) && 
+             !deletedPlanIds.has(idLower.replace(/[^a-z0-9]/g, '')) &&
+             !deletedPlanIds.has(nameLower);
+    };
+
     try {
       const saved = localStorage.getItem('hrms_subscription_plans');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return filterActivePlans(parsed);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed.filter(isNotDeleted);
       }
       const savedUnified = localStorage.getItem('multi_tenant_subscription_plans');
       if (savedUnified) {
         const parsedUnified = JSON.parse(savedUnified);
         if (Array.isArray(parsedUnified) && parsedUnified.length > 0) {
-          return filterActivePlans(parsedUnified).map((p: any) => ({
+          return parsedUnified.filter(isNotDeleted).map((p: any) => ({
             id: p.id,
             name: p.name,
             price: p.priceMonthly || 999,
@@ -182,7 +181,7 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
       }
     } catch {}
-    return filterActivePlans(INITIAL_PLANS);
+    return INITIAL_PLANS.filter(isNotDeleted);
   });
 
   const [payments, setPayments] = useState<Payment[]>(() => {
@@ -256,97 +255,49 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Unbreakable Permanent Local Storage Synchronization Triggers
   useEffect(() => {
     if (Array.isArray(companies)) {
-      try {
-        const saved = localStorage.getItem('hrms_companies_data');
-        const next = JSON.stringify(companies);
-        if (saved !== next) {
-          localStorage.setItem('hrms_companies_data', next);
-        }
-      } catch {}
+      localStorage.setItem('hrms_companies_data', JSON.stringify(companies));
     }
   }, [companies]);
 
   useEffect(() => {
     if (plans && plans.length > 0) {
-      try {
-        const saved = localStorage.getItem('hrms_subscription_plans');
-        const next = JSON.stringify(plans);
-        if (saved !== next) {
-          syncHrmsPlansListToUnifiedCatalog(plans);
-        }
-      } catch {}
+      syncHrmsPlansListToUnifiedCatalog(plans);
     }
   }, [plans]);
 
   useEffect(() => {
     if (coupons && coupons.length > 0) {
-      try {
-        const saved = localStorage.getItem('hrms_coupons_data');
-        const next = JSON.stringify(coupons);
-        if (saved !== next) {
-          localStorage.setItem('hrms_coupons_data', next);
-        }
-      } catch {}
+      localStorage.setItem('hrms_coupons_data', JSON.stringify(coupons));
     }
   }, [coupons]);
 
   useEffect(() => {
     if (payments && payments.length > 0) {
-      try {
-        const saved = localStorage.getItem('hrms_payments_data');
-        const next = JSON.stringify(payments);
-        if (saved !== next) {
-          localStorage.setItem('hrms_payments_data', next);
-        }
-      } catch {}
+      localStorage.setItem('hrms_payments_data', JSON.stringify(payments));
     }
   }, [payments]);
 
   useEffect(() => {
     if (users && users.length > 0) {
-      try {
-        const saved = localStorage.getItem('hrms_superowner_users');
-        const next = JSON.stringify(users);
-        if (saved !== next) {
-          localStorage.setItem('hrms_superowner_users', next);
-        }
-      } catch {}
+      localStorage.setItem('hrms_superowner_users', JSON.stringify(users));
     }
   }, [users]);
 
   useEffect(() => {
     if (tickets && tickets.length > 0) {
-      try {
-        const saved = localStorage.getItem('hrms_support_tickets');
-        const next = JSON.stringify(tickets);
-        if (saved !== next) {
-          localStorage.setItem('hrms_support_tickets', next);
-        }
-      } catch {}
+      localStorage.setItem('hrms_support_tickets', JSON.stringify(tickets));
     }
   }, [tickets]);
 
   useEffect(() => {
     if (logs && logs.length > 0) {
-      try {
-        const saved = localStorage.getItem('hrms_activity_logs');
-        const next = JSON.stringify(logs);
-        if (saved !== next) {
-          localStorage.setItem('hrms_activity_logs', next);
-        }
-      } catch {}
+      localStorage.setItem('hrms_activity_logs', JSON.stringify(logs));
     }
   }, [logs]);
 
   useEffect(() => {
     if (settings) {
-      try {
-        const saved = localStorage.getItem('hrms_global_settings');
-        const next = JSON.stringify(settings);
-        if (saved !== next) {
-          localStorage.setItem('hrms_global_settings', next);
-        }
-      } catch {}
+      localStorage.setItem('hrms_global_settings', JSON.stringify(settings));
     }
   }, [settings]);
 
@@ -355,12 +306,12 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const handleCompaniesEvent = async (e?: Event) => {
       const customEv = e as CustomEvent;
       if (customEv && customEv.detail && Array.isArray(customEv.detail)) {
-        setCompanies(prev => JSON.stringify(prev) === JSON.stringify(customEv.detail) ? prev : customEv.detail);
+        setCompanies(customEv.detail);
       } else {
         try {
           const fresh = await api.getCompanies();
           if (Array.isArray(fresh)) {
-            setCompanies(prev => JSON.stringify(prev) === JSON.stringify(fresh) ? prev : fresh);
+            setCompanies(fresh);
           }
         } catch {}
       }
@@ -388,48 +339,22 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
     };
 
-    const handlePlansEvent = (e?: Event) => {
-      try {
-        const saved = localStorage.getItem('hrms_subscription_plans');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
-            const filtered = filterActivePlans(parsed);
-            setPlans(prev => JSON.stringify(prev) === JSON.stringify(filtered) ? prev : filtered);
-          }
-        }
-      } catch {}
-    };
-
-    const handlePaymentsEvent = async () => {
-      try {
-        const freshPayments = await api.getSuperOwnerPayments();
-        if (freshPayments && Array.isArray(freshPayments)) {
-          setPayments(prev => JSON.stringify(prev) === JSON.stringify(freshPayments) ? prev : freshPayments);
-        }
-      } catch {}
-    };
-
-    window.addEventListener('subscription_plans_updated', handlePlansEvent);
     window.addEventListener('companies_updated', handleCompaniesEvent);
     window.addEventListener('company_updated', handleSingleCompanyUpdated);
     window.addEventListener('company_created', handleSingleCompanyUpdated);
     window.addEventListener('company_deleted', handleCompanyDeleted);
     window.addEventListener('multi_tenant_updated', handleCompaniesEvent);
     window.addEventListener('superowner_data_updated', handleCompaniesEvent);
-    window.addEventListener('superowner_data_updated', handlePaymentsEvent);
-    window.addEventListener('payment_received', handlePaymentsEvent);
+    window.addEventListener('storage', handleCompaniesEvent);
 
     return () => {
-      window.removeEventListener('subscription_plans_updated', handlePlansEvent);
       window.removeEventListener('companies_updated', handleCompaniesEvent);
       window.removeEventListener('company_updated', handleSingleCompanyUpdated);
       window.removeEventListener('company_created', handleSingleCompanyUpdated);
       window.removeEventListener('company_deleted', handleCompanyDeleted);
       window.removeEventListener('multi_tenant_updated', handleCompaniesEvent);
       window.removeEventListener('superowner_data_updated', handleCompaniesEvent);
-      window.removeEventListener('superowner_data_updated', handlePaymentsEvent);
-      window.removeEventListener('payment_received', handlePaymentsEvent);
+      window.removeEventListener('storage', handleCompaniesEvent);
     };
   }, []);
   
@@ -452,7 +377,7 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             }
             return { ...c, modulesEnabled: mods };
           });
-          setCompanies(prev => JSON.stringify(prev) === JSON.stringify(fixedCompanies) ? prev : fixedCompanies);
+          setCompanies(fixedCompanies);
         }
       } catch (e) {
         console.error("Failed to load companies", e);
@@ -461,7 +386,7 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       try {
         const ticketList = await api.getSuperOwnerTickets();
         if (ticketList && Array.isArray(ticketList)) {
-          setTickets(prev => JSON.stringify(prev) === JSON.stringify(ticketList) ? prev : ticketList);
+          setTickets(ticketList);
         }
       } catch (e) {
         console.error("Failed to load tickets", e);
@@ -470,7 +395,7 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       try {
         const userList = await api.getSuperOwnerUsers();
         if (userList && Array.isArray(userList)) {
-          setUsers(prev => JSON.stringify(prev) === JSON.stringify(userList) ? prev : userList);
+          setUsers(userList);
         }
       } catch (e) {
         console.error("Failed to load users", e);
@@ -479,7 +404,7 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       try {
         const paymentList = await api.getSuperOwnerPayments();
         if (paymentList && Array.isArray(paymentList)) {
-          setPayments(prev => JSON.stringify(prev) === JSON.stringify(paymentList) ? prev : paymentList);
+          setPayments(paymentList);
         }
       } catch (e) {
         console.error("Failed to load payments", e);
@@ -488,25 +413,7 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       try {
         const fetchedPlans = await api.getPlans();
         if (fetchedPlans && Array.isArray(fetchedPlans)) {
-          const safePlans = fetchedPlans.map((p: any) => ({
-            ...p,
-            price: p.price || p.priceMonthly || 499,
-            priceMonthly: p.priceMonthly || p.price || 499,
-            employeeLimit: p.employeeLimit || p.seatLimit || 50,
-            storageLimit: p.storageLimit || p.storageLimitGb || 20,
-            aiCreditsLimit: p.aiCreditsLimit || 500,
-            features: {
-              payroll: true,
-              attendance: true,
-              recruitment: false,
-              faceRecognition: false,
-              gpsAttendance: false,
-              apiAccess: false,
-              whiteLabel: false,
-              ...(typeof p.features === 'object' && p.features !== null ? p.features : {})
-            }
-          }));
-          setPlans(prev => JSON.stringify(prev) === JSON.stringify(safePlans) ? prev : safePlans);
+          setPlans(fetchedPlans);
         }
       } catch (e) {
         console.error("Failed to load plans", e);
@@ -528,7 +435,7 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             usedCount: c.usedCount !== undefined ? c.usedCount : (c.usageCount || 0),
             status: c.status || 'inactive'
           }));
-          setCoupons(prev => JSON.stringify(prev) === JSON.stringify(mappedCoupons) ? prev : mappedCoupons);
+          setCoupons(mappedCoupons);
         }
       } catch (e) {
         console.error("Failed to load coupons", e);
@@ -537,7 +444,7 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       try {
         const analytics = await api.getSuperOwnerAnalytics();
         if (analytics) {
-          setAnalyticsData(prev => JSON.stringify(prev) === JSON.stringify(analytics) ? prev : analytics);
+          setAnalyticsData(analytics);
         }
       } catch (e) {
         console.error("Failed to load analytics", e);
@@ -546,7 +453,7 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       try {
         const fetchedLogs = await api.getLogs();
         if (fetchedLogs && Array.isArray(fetchedLogs)) {
-          setLogs(prev => JSON.stringify(prev) === JSON.stringify(fetchedLogs) ? prev : fetchedLogs);
+          setLogs(fetchedLogs);
         }
       } catch (e) {
         console.error("Failed to load logs", e);
@@ -555,7 +462,7 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       try {
         const globalSettings = await api.getGlobalSettings();
         if (globalSettings) {
-          setSettings(prev => JSON.stringify(prev) === JSON.stringify(globalSettings) ? prev : { ...prev, ...globalSettings });
+          setSettings(prev => ({ ...prev, ...globalSettings }));
         }
       } catch (e) {
         console.error("Failed to load settings", e);
@@ -564,23 +471,20 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     loadData();
 
-    let syncTimer: any = null;
     const handleSyncEvent = () => {
-      if (syncTimer) clearTimeout(syncTimer);
-      syncTimer = setTimeout(() => {
-        loadData();
-      }, 400);
+      loadData();
     };
 
     window.addEventListener('subscription_updated', handleSyncEvent);
     window.addEventListener('multi_tenant_updated', handleSyncEvent);
     window.addEventListener('superowner_data_updated', handleSyncEvent);
+    window.addEventListener('storage', handleSyncEvent);
 
     return () => {
-      if (syncTimer) clearTimeout(syncTimer);
       window.removeEventListener('subscription_updated', handleSyncEvent);
       window.removeEventListener('multi_tenant_updated', handleSyncEvent);
       window.removeEventListener('superowner_data_updated', handleSyncEvent);
+      window.removeEventListener('storage', handleSyncEvent);
     };
   }, []);
 
@@ -642,34 +546,19 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, [selectedCurrency]);
 
-  const formatAmount = (amount: number, paymentCurrency?: string) => {
-    const sourceCurrency = paymentCurrency || 'INR';
-    let amountInINR = Number(amount) || 0;
-    if (sourceCurrency === 'USD') {
-      amountInINR = amount * 83.0;
-    } else if (sourceCurrency === 'EUR') {
-      amountInINR = (amount / 0.92) * 83.0;
-    } else if (sourceCurrency === 'GBP') {
-      amountInINR = (amount / 0.79) * 83.0;
+  const formatAmount = (amountInUSD: number, paymentCurrency?: string) => {
+    let normalizedUSD = amountInUSD;
+    if (paymentCurrency && paymentCurrency !== 'USD') {
+      const pDetails = CURRENCY_DETAILS[paymentCurrency];
+      const pRate = pDetails ? pDetails.rate : 1.0;
+      normalizedUSD = amountInUSD / pRate;
     }
-
-    const target = selectedCurrency || 'INR';
-    let targetAmount = amountInINR;
-    if (target === 'USD') {
-      targetAmount = amountInINR / 83.0;
-    } else if (target === 'EUR') {
-      targetAmount = (amountInINR / 83.0) * 0.92;
-    } else if (target === 'GBP') {
-      targetAmount = (amountInINR / 83.0) * 0.79;
-    } else if (target === 'INR') {
-      targetAmount = amountInINR;
+    const details = CURRENCY_DETAILS[selectedCurrency] || CURRENCY_DETAILS.USD;
+    const converted = normalizedUSD * details.rate;
+    if (selectedCurrency === 'JPY') {
+      return `${details.symbol}${Math.round(converted).toLocaleString()}`;
     }
-
-    const details = CURRENCY_DETAILS[target] || CURRENCY_DETAILS.INR || { symbol: '₹' };
-    if (target === 'INR') {
-      return `${details.symbol}${Math.round(targetAmount).toLocaleString()}`;
-    }
-    return `${details.symbol}${targetAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+    return `${details.symbol}${converted.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
   };
 
   const addToast = (message: string, type: Toast['type'] = 'success') => {
@@ -685,17 +574,6 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const updateSettings = async (newSettings: Partial<Settings>) => {
     try {
       const updated = { ...settings, ...newSettings };
-      localStorage.setItem('hrms_global_settings', JSON.stringify(updated));
-      if (updated.razorpayKeyId) {
-        localStorage.setItem('razorpay_config', JSON.stringify({
-          keyId: updated.razorpayKeyId,
-          keySecret: updated.razorpaySecret || '',
-          enabled: true
-        }));
-      }
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new Event('storage'));
-      }
       await api.updateGlobalSettings(updated);
       setSettings(updated);
       addToast('System settings updated successfully', 'success');

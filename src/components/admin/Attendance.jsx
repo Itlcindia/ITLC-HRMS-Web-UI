@@ -89,17 +89,8 @@ export default function Attendance({ subTab = 'dashboard' }) {
 
   useEffect(() => {
     fetchLogs(false);
-    const handleSync = () => fetchLogs(true);
-    window.addEventListener('attendance_updated', handleSync);
-    window.addEventListener('corrections_updated', handleSync);
-    window.addEventListener('storage', handleSync);
-    const interval = setInterval(() => fetchLogs(true), 3000);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('attendance_updated', handleSync);
-      window.removeEventListener('corrections_updated', handleSync);
-      window.removeEventListener('storage', handleSync);
-    };
+    const interval = setInterval(() => fetchLogs(true), 5000);
+    return () => clearInterval(interval);
   }, [subTab]);
 
   useEffect(() => {
@@ -595,8 +586,8 @@ export default function Attendance({ subTab = 'dashboard' }) {
                       <tr key={log.id || index}>
                         <td style={{ fontWeight: 600 }}>{log.employeeName}</td>
                         <td className="number-font" style={{ fontSize: '0.8rem' }}>{log.date}</td>
-                        <td className="number-font" style={{ fontSize: '0.8rem', color: 'var(--color-success)' }}>{log.checkIn || log.punchIn || '--:--:--'}</td>
-                        <td className="number-font" style={{ fontSize: '0.8rem', color: 'var(--color-danger)' }}>{log.checkOut || log.punchOut || '--:--:--'}</td>
+                        <td className="number-font" style={{ fontSize: '0.8rem', color: 'var(--color-success)' }}>{log.checkIn || '--:--:--'}</td>
+                        <td className="number-font" style={{ fontSize: '0.8rem', color: 'var(--color-danger)' }}>{log.checkOut || '--:--:--'}</td>
                         <td className="number-font" style={{ fontSize: '0.8rem', fontWeight: 600 }}>{log.workHours || '00:00:00'}</td>
                         <td>
                           <span className={`badge ${log.status === 'Present' || log.status === 'On Time' ? 'badge-success' : log.status === 'Late' ? 'badge-warning' : 'badge-danger'}`}>
@@ -891,43 +882,9 @@ export default function Attendance({ subTab = 'dashboard' }) {
             className="premium-card"
             style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-              <div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800 }}>Company Shift Schedules</h3>
-                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>Configure work times across corporate branches</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ 
-                  display: 'inline-flex', 
-                  alignItems: 'center', 
-                  gap: 6, 
-                  fontSize: '0.75rem', 
-                  fontWeight: 600, 
-                  color: '#10b981', 
-                  background: 'rgba(16, 185, 129, 0.1)', 
-                  padding: '5px 12px', 
-                  borderRadius: 20, 
-                  border: '1px solid rgba(16, 185, 129, 0.2)' 
-                }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981' }}></span>
-                  Auto Shift Reminders Active
-                </span>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      await api.sendShiftReminder({ type: 'checkin' });
-                      alert("Shift attendance reminder sent to all pending employees successfully!");
-                    } catch (err) {
-                      alert("Shift attendance reminder dispatched.");
-                    }
-                  }}
-                  className="premium-btn"
-                  style={{ padding: '6px 14px', fontSize: '0.75rem', minWidth: 'auto', background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', color: '#fff' }}
-                >
-                  🔔 Send Shift Reminder Now
-                </button>
-              </div>
+            <div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800 }}>Company Shift Schedules</h3>
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>Configure work times across corporate branches</span>
             </div>
 
             <div className="premium-table-container">
@@ -988,10 +945,6 @@ export default function Attendance({ subTab = 'dashboard' }) {
                 <div className="premium-card" style={{ padding: 24, width: 380, background: 'var(--color-bg)', display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <h3 style={{ fontSize: '1rem', fontWeight: 800 }}>Edit Shift Timing</h3>
                   <p style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>Set company-wide General Shift check-in & check-out limits in 24-hour format.</p>
-                  
-                  <div style={{ padding: '8px 12px', background: 'rgba(99, 102, 241, 0.08)', borderRadius: 8, border: '1px solid rgba(99, 102, 241, 0.2)', fontSize: '0.75rem', color: '#6366f1' }}>
-                    ⏰ <strong>Automated Shift Alerts:</strong> Employees receive attendance check-in reminders at start time and punch-out reminders at end time.
-                  </div>
                   
                   <form onSubmit={handleSaveGeneralShift} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                     <div className="premium-form-group">

@@ -68,7 +68,8 @@ export const secureStorage = {
     if (typeof window === 'undefined') return;
     try {
       const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
-      localStorage.setItem(key, stringValue);
+      const encrypted = encryptClientData(stringValue);
+      localStorage.setItem(key, encrypted);
     } catch (e) {
       console.error('SecureStorage setItem error:', e);
     }

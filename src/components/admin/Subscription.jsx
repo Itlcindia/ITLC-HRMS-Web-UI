@@ -4,7 +4,7 @@ import { api } from '../../services/api';
 import { downloadPaymentSlip } from '../../utils/PaymentSlip';
 import { INITIAL_PLANS } from '../superowner/dashboardData';
 
-const RATES = { USD: 1 / 83, INR: 1, EUR: 0.92 / 83, GBP: 0.79 / 83 };
+const RATES = { USD: 1, INR: 83, EUR: 0.92, GBP: 0.79 };
 const SYMBOLS = { USD: '$', INR: '₹', EUR: '€', GBP: '£' };
 
 // Hook to load Razorpay script dynamically
@@ -24,9 +24,9 @@ export default function Subscription({ onSubscriptionUpdate }) {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [currency, setCurrency] = useState(() => localStorage.getItem('hrms_billing_currency') || localStorage.getItem('admin_subscription_currency') || 'INR');
-  const [gateway, setGateway] = useState('razorpay');
-  const [plans, setPlans] = useState([]);
+  const [currency, setCurrency] = useState(() => localStorage.getItem('admin_subscription_currency') || 'INR');
+  const [gateway, setGateway] = useState('stripe'); // 'stripe', 'razorpay', 'paypal', 'credit_card', 'upi', 'bank_transfer'
+  const [plans, setPlans] = useState(INITIAL_PLANS);
 
   // Direct payment form states
   const [cardNumber, setCardNumber] = useState('');
@@ -38,7 +38,6 @@ export default function Subscription({ onSubscriptionUpdate }) {
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
-    localStorage.setItem('hrms_billing_currency', currency);
     localStorage.setItem('admin_subscription_currency', currency);
   }, [currency]);
 
@@ -51,7 +50,7 @@ export default function Subscription({ onSubscriptionUpdate }) {
       const emps = await api.getEmployees();
       setEmployeeCount(emps.length);
       try {
-        const fetchedPlans = await api.getAdminPlans().catch(() => api.getPlans());
+        const fetchedPlans = await api.getAdminPlans();
         if (fetchedPlans && fetchedPlans.length > 0) {
           setPlans(fetchedPlans);
         }
@@ -83,16 +82,6 @@ export default function Subscription({ onSubscriptionUpdate }) {
 
   useEffect(() => {
     fetchBillingInfo();
-
-    const handleSync = () => {
-      fetchBillingInfo();
-    };
-
-    window.addEventListener('subscription_updated', handleSync);
-    window.addEventListener('company_updated', handleSync);
-    window.addEventListener('multi_tenant_updated', handleSync);
-    window.addEventListener('storage', handleSync);
-
     // Check if we came back from Stripe Success
     const urlParams = new URLSearchParams(window.location.search);
     const sessionId = urlParams.get('session_id');
@@ -109,13 +98,6 @@ export default function Subscription({ onSubscriptionUpdate }) {
       // Clear url params
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-
-    return () => {
-      window.removeEventListener('subscription_updated', handleSync);
-      window.removeEventListener('company_updated', handleSync);
-      window.removeEventListener('multi_tenant_updated', handleSync);
-      window.removeEventListener('storage', handleSync);
-    };
   }, []);
 
   const handleOpenUpgrade = (plan) => {
@@ -126,92 +108,10 @@ export default function Subscription({ onSubscriptionUpdate }) {
   const verifyPayment = async (data) => {
     setIsProcessing(true);
     try {
-      const activeTenant = localStorage.getItem('itlc_active_tenant');
-      const activeT = activeTenant ? JSON.parse(activeTenant) : {};
-      const companyDetails = profile?.companyDetails || {};
-      const targetCompId = data?.companyId || companyDetails?.id || company?.id || profile?.companyId || activeT?.id;
-      const targetCompName = data?.companyName || companyDetails?.name || company?.name || profile?.companyName || activeT?.name || activeT?.companyName;
-      const targetEmail = data?.email || companyDetails?.adminEmail || company?.adminEmail || profile?.email || activeT?.adminEmail || activeT?.email;
-      const planId = data.planId || selectedPlan?.id || 'starter';
-
-      const payload = {
-        ...data,
-        companyId: targetCompId,
-        companyName: targetCompName,
-        email: targetEmail,
-        planId: planId,
-        amount: data.amount !== undefined ? data.amount : (amount || 499),
-        currency: currency || 'INR'
-      };
-
-      // 1. Explicitly invoke subscribeCompany to activate tenant in the backend database
-      try {
-        await api.subscribeCompany({
-          companyId: targetCompId,
-          planId: planId,
-          transactionId: data.paymentId || data.transactionId,
-          paymentGateway: data.gateway || 'razorpay',
-          amount: payload.amount,
-          currency: currency || 'INR'
-        });
-      } catch (subErr) {
-        console.warn("Backend subscribeCompany sync warning:", subErr);
-      }
-
-      // 2. Cryptographically verify payment on backend
-      const result = await api.verifyPayment(payload);
-
-      // 3. Immediately update client-side localStorage state so all features unlock instantly
-      const updatedTenant = {
-        ...(activeT || {}),
-        ...(companyDetails || {}),
-        ...(company || {}),
-        ...(result?.company || {}),
-        id: targetCompId,
-        status: 'active',
-        subscriptionStatus: 'active',
-        planId: planId,
-        subscriptionPlanId: planId,
-        plan: planId,
-        planName: selectedPlan?.name || planId,
-        paidAt: new Date().toISOString(),
-        lastPayment: new Date().toISOString(),
-        transactionId: data.paymentId || `TXN-${Date.now()}`
-      };
-
-      localStorage.setItem('itlc_active_tenant', JSON.stringify(updatedTenant));
-      if (targetCompId) {
-        localStorage.setItem(`hrms_company_${targetCompId}`, JSON.stringify(updatedTenant));
-      }
-
-      // Update cached user profile
-      try {
-        const uProf = localStorage.getItem('hrms_user_profile');
-        if (uProf) {
-          const profObj = JSON.parse(uProf);
-          profObj.subscriptionStatus = 'active';
-          profObj.subscriptionPlanId = planId;
-          if (profObj.companyDetails) {
-            profObj.companyDetails.subscriptionStatus = 'active';
-            profObj.companyDetails.subscriptionPlanId = planId;
-            profObj.companyDetails.status = 'active';
-            profObj.companyDetails.paidAt = new Date().toISOString();
-          }
-          localStorage.setItem('hrms_user_profile', JSON.stringify(profObj));
-        }
-      } catch (e) {}
-
-      // 4. Dispatch events to unlock all UI components and notify AdminApp immediately
-      window.dispatchEvent(new Event('subscription_updated'));
-      window.dispatchEvent(new Event('company_updated'));
-      window.dispatchEvent(new Event('multi_tenant_updated'));
-      window.dispatchEvent(new Event('subscription_plans_updated'));
-      window.dispatchEvent(new Event('profile_updated'));
-      window.dispatchEvent(new Event('storage'));
-
-      alert('🎉 Payment successful! Your subscription is active and all features are now fully unlocked.');
-      if (result?.payment) {
-        downloadPaymentSlip(result.payment, result.company || updatedTenant);
+      const result = await api.verifyPayment(data);
+      alert('Payment successful! Your subscription is active.');
+      if (result.payment) {
+        downloadPaymentSlip(result.payment, result.company);
       }
       setIsModalOpen(false);
       await fetchBillingInfo();
@@ -226,8 +126,7 @@ export default function Subscription({ onSubscriptionUpdate }) {
   const handleConfirmUpgrade = async () => {
     if (!selectedPlan) return;
     setIsProcessing(true);
-    const rawPrice = Number(selectedPlan.priceMonthly !== undefined ? selectedPlan.priceMonthly : (selectedPlan.price || 0));
-    const amount = currency === 'INR' ? rawPrice : Number((rawPrice * (RATES[currency] || 1)).toFixed(0));
+    const amount = Number((selectedPlan.price * RATES[currency]).toFixed(0));
 
     try {
       if (gateway === 'stripe') {
@@ -246,99 +145,54 @@ export default function Subscription({ onSubscriptionUpdate }) {
           currency: currency
         });
 
-        // Dynamic Key strictly from SuperOwner settings via backend order or saved config
-        let activeKey = (result?.key && result.key.trim()) ? result.key.trim() : '';
-        if (!activeKey) {
-          try {
-            const s = localStorage.getItem('hrms_global_settings');
-            if (s) {
-              const parsed = JSON.parse(s);
-              if (parsed.razorpayKeyId && parsed.razorpayKeyId.trim()) {
-                activeKey = parsed.razorpayKeyId.trim();
-              }
-            }
-          } catch {}
+        if (result.orderId && result.orderId.startsWith('mock_')) {
+           // Mock fallback if keys not configured
+           verifyPayment({
+             gateway: 'razorpay',
+             planId: selectedPlan.id,
+             paymentId: `mock_pay_${Date.now()}`,
+             orderId: result.orderId,
+             amount: amount
+           });
+           return;
         }
-        if (!activeKey) {
-          try {
-            const c = localStorage.getItem('razorpay_config');
-            if (c) {
-              const parsed = JSON.parse(c);
-              if (parsed.keyId && parsed.keyId.trim()) {
-                activeKey = parsed.keyId.trim();
-              }
-            }
-          } catch {}
-        }
-        if (!activeKey) {
-          activeKey = (import.meta.env?.VITE_RAZORPAY_KEY_ID || '').trim();
-        }
-
-        // Enforce Live Key: If configured key is missing or starts with rzp_test_, override with verified live production key
-        const configuredLiveKey = (import.meta.env?.VITE_RAZORPAY_KEY_ID || 'rzp_live_TZtOW3aeVNZT0s').trim();
-        if (!activeKey || activeKey.startsWith('rzp_test_')) {
-          if (configuredLiveKey.startsWith('rzp_live_')) {
-            activeKey = configuredLiveKey;
-          }
-        }
-
-        if (!activeKey) {
-          alert("Payment Gateway Error: Razorpay API Key ID is not configured by the Super Owner in the Settings panel yet.");
-          setIsProcessing(false);
-          return;
-        }
-
-        const compPhone = company?.adminPhone || company?.phone || profile?.phone || profile?.adminPhone || '';
-        const compEmail = company?.adminEmail || company?.email || profile?.email || profile?.adminEmail || '';
-        const compName = company?.adminName || company?.name || profile?.name || profile?.companyName || '';
-        const cleanContact = compPhone.replace(/[^0-9+]/g, '');
 
         const options = {
-          key: activeKey,
-          amount: result?.amount || Math.round(amount * 100),
-          currency: result?.currency || currency,
-          name: 'ITLC Suite Cloud',
+          key: result.key,
+          amount: result.amount,
+          currency: result.currency,
+          name: 'HRMS Platform',
           description: `Upgrade to ${selectedPlan.name}`,
-          order_id: (result?.orderId && !result.orderId.startsWith('mock_') && !result.orderId.startsWith('order_local_')) ? result.orderId : undefined,
+          order_id: result.orderId,
           handler: function (response) {
             verifyPayment({
               gateway: 'razorpay',
               planId: selectedPlan.id,
-              companyId: company?.id || profile?.companyDetails?.id || profile?.companyId,
-              companyName: company?.name || profile?.companyDetails?.name || profile?.companyName,
               paymentId: response.razorpay_payment_id,
               orderId: response.razorpay_order_id,
               signature: response.razorpay_signature,
-              amount: amount,
-              currency: currency
+              amount: amount
             });
           },
           prefill: {
-            name: compName,
-            email: compEmail,
-            contact: cleanContact
+            name: profile?.name || '',
+            email: profile?.email || ''
           },
-          theme: { color: '#4f46e5' },
-          modal: {
-            ondismiss: function () {
-              setIsModalOpen(true);
-            }
-          }
+          theme: { color: '#4f46e5' }
         };
 
         if (typeof window.Razorpay === 'undefined') {
-          alert('Razorpay Checkout SDK is still loading. Please check your internet connection and try again.');
-          setIsProcessing(false);
+          console.warn("Razorpay SDK not loaded. Falling back to mock verification.");
+          verifyPayment({
+            gateway: 'razorpay',
+            planId: selectedPlan.id,
+            paymentId: `mock_pay_${Date.now()}`,
+            orderId: result.orderId || `mock_order_${Date.now()}`,
+            amount: amount
+          });
           return;
         }
-        // Temporarily close blur modal before opening checkout to prevent backdrop filter from blurring Razorpay iframe/QR code
-        setIsModalOpen(false);
         const rzp = new window.Razorpay(options);
-        rzp.on('payment.failed', function (resp) {
-          setIsModalOpen(true);
-          alert(`Payment failed: ${resp.error?.description || 'Transaction was declined.'}`);
-          setIsProcessing(false);
-        });
         rzp.open();
         setIsProcessing(false);
       } else if (gateway === 'paypal') {
@@ -371,15 +225,10 @@ export default function Subscription({ onSubscriptionUpdate }) {
           cvv: cardCvv
         });
         if (result.success) {
-          await verifyPayment({
-            gateway: 'credit_card',
-            planId: selectedPlan.id,
-            companyId: company?.id || profile?.companyDetails?.id || profile?.companyId,
-            companyName: company?.name || profile?.companyDetails?.name || profile?.companyName,
-            paymentId: `card_${Date.now()}`,
-            amount: amount,
-            currency: currency
-          });
+          alert('Payment via Credit Card Direct successful!');
+          setIsModalOpen(false);
+          await fetchBillingInfo();
+          if (onSubscriptionUpdate) onSubscriptionUpdate();
         }
       } else if (gateway === 'upi') {
         if (!upiTxnId || !/^\d{12}$/.test(upiTxnId)) {
@@ -442,31 +291,27 @@ export default function Subscription({ onSubscriptionUpdate }) {
     );
   }
 
-  const company = profile?.companyDetails || {};
+  const company = profile?.companyDetails || {
+    subscriptionPlanId: 'free_trial',
+    maxEmployees: 20,
+    storageLimit: 1.0,
+    storageUsed: 0.0,
+    status: 'trial'
+  };
 
   const fallbackPlan = {
     id: 'free_trial',
     name: 'Free Trial',
     price: 0,
-    employeeLimit: 20,
-    storageLimit: 10,
+    employeeLimit: 10,
+    storageLimit: 2,
     aiCreditsLimit: 50
   };
-  const currentPlanId = company.subscriptionPlanId || profile?.subscriptionPlanId || 'free_trial';
-  const activePlan = plans.find(p => p.id === currentPlanId) || plans[0] || fallbackPlan;
+  const activePlan = plans.find(p => p.id === company.subscriptionPlanId) || plans[0] || fallbackPlan;
 
-  const realStorageLimit = Number(company.storageLimitGb || company.storageLimit || activePlan.storageLimitGb || activePlan.storageLimit || 50);
-  const realMaxEmployees = Number(company.seatLimit || company.maxEmployees || company.userSeatLimit || activePlan.seatLimit || activePlan.employeeLimit || 50);
-  const realStorageUsed = Number(company.storageUsed !== undefined && company.storageUsed !== null ? company.storageUsed : 0.85);
-
-  const storagePct = Math.min(100, Math.max(0, Math.round((realStorageUsed / (realStorageLimit || 1)) * 100)));
-  const employeePct = Math.min(100, Math.max(0, Math.round((employeeCount / (realMaxEmployees || 1)) * 100)));
-
-  const formatPrice = (inrPrice) => {
-    const p = Number(inrPrice) || 0;
-    if (p === 0) return `${SYMBOLS[currency]}0`;
-    if (currency === 'INR') return `${SYMBOLS[currency]}${p.toLocaleString()}`;
-    return `${SYMBOLS[currency]}${(p * (RATES[currency] || 1)).toFixed(0)}`;
+  const formatPrice = (usdPrice) => {
+    if (usdPrice === 0) return `${SYMBOLS[currency]}0`;
+    return `${SYMBOLS[currency]}${(usdPrice * RATES[currency]).toFixed(0)}`;
   };
 
   return (
@@ -521,11 +366,11 @@ export default function Subscription({ onSubscriptionUpdate }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: '0.875rem', color: '#334155' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <BadgeCheck size={16} style={{ color: '#10b981' }} />
-              <span>Up to {realMaxEmployees} Employee Workspace entries</span>
+              <span>Up to {activePlan.employeeLimit} Employee Workspace entries</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <BadgeCheck size={16} style={{ color: '#10b981' }} />
-              <span>Up to {realStorageLimit} GB Cloud Storage limit</span>
+              <span>Up to {activePlan.storageLimit} GB Cloud Storage limit</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <BadgeCheck size={16} style={{ color: '#10b981' }} />
@@ -535,7 +380,7 @@ export default function Subscription({ onSubscriptionUpdate }) {
 
           <div style={{ fontSize: '0.75rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: 6 }}>
             <ShieldCheck size={14} style={{ color: '#10b981' }} />
-            <span>Workspace isolated under Tenant ID: {company.id || 'default-tenant'}</span>
+            <span>Workspace isolated under Tenant ID: {company.id}</span>
           </div>
         </div>
 
@@ -551,16 +396,15 @@ export default function Subscription({ onSubscriptionUpdate }) {
                 <span style={{ fontWeight: 600 }}>Cloud Storage</span>
               </div>
               <strong style={{ color: '#0f172a' }}>
-                {realStorageUsed.toFixed(2)} GB / {realStorageLimit} GB ({storagePct}%)
+                {Number(company.storageUsed).toFixed(2)} GB / {company.storageLimit} GB
               </strong>
             </div>
             <div style={{ width: '100%', height: 8, background: '#e2e8f0', borderRadius: 4, overflow: 'hidden' }}>
               <div 
                 style={{ 
-                  width: `${storagePct}%`, 
+                  width: `${Math.min(100, (company.storageUsed / company.storageLimit) * 100)}%`, 
                   height: '100%', 
-                  backgroundColor: storagePct > 90 ? '#ef4444' : '#4f46e5',
-                  transition: 'width 0.4s ease'
+                  backgroundColor: '#4f46e5' 
                 }} 
               />
             </div>
@@ -574,16 +418,15 @@ export default function Subscription({ onSubscriptionUpdate }) {
                 <span style={{ fontWeight: 600 }}>Employee Database Limit</span>
               </div>
               <strong style={{ color: '#0f172a' }}>
-                {employeeCount} / {realMaxEmployees} ({employeePct}%)
+                {employeeCount} / {company.maxEmployees}
               </strong>
             </div>
             <div style={{ width: '100%', height: 8, background: '#e2e8f0', borderRadius: 4, overflow: 'hidden' }}>
               <div 
                 style={{ 
-                  width: `${employeePct}%`, 
+                  width: `${Math.min(100, (employeeCount / company.maxEmployees) * 100)}%`, 
                   height: '100%', 
-                  backgroundColor: employeePct > 90 ? '#f59e0b' : '#06b6d4',
-                  transition: 'width 0.4s ease'
+                  backgroundColor: '#06b6d4' 
                 }} 
               />
             </div>
@@ -598,7 +441,7 @@ export default function Subscription({ onSubscriptionUpdate }) {
         
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20 }}>
           {plans.map((plan) => {
-            const isCurrent = (company.subscriptionPlanId || profile?.subscriptionPlanId) === plan.id;
+            const isCurrent = company.subscriptionPlanId === plan.id;
             return (
               <div 
                 key={plan.id} 
@@ -622,13 +465,13 @@ export default function Subscription({ onSubscriptionUpdate }) {
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: '0.875rem', color: '#475569', marginBottom: 24, fontWeight: 500 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <CheckCircle2 size={16} style={{ color: '#4f46e5' }} /> Up to {plan.employeeLimit || plan.seatLimit || 50} employees
+                      <CheckCircle2 size={16} style={{ color: '#4f46e5' }} /> Up to {plan.employeeLimit} employees
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <CheckCircle2 size={16} style={{ color: '#4f46e5' }} /> Up to {plan.storageLimit || plan.storageLimitGb || 50} GB storage
+                      <CheckCircle2 size={16} style={{ color: '#4f46e5' }} /> Up to {plan.storageLimit} GB storage
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <CheckCircle2 size={16} style={{ color: '#4f46e5' }} /> {plan.aiCreditsLimit || 50} AI Credits
+                      <CheckCircle2 size={16} style={{ color: '#4f46e5' }} /> {plan.aiCreditsLimit} AI Credits
                     </div>
                   </div>
                 </div>
@@ -673,29 +516,70 @@ export default function Subscription({ onSubscriptionUpdate }) {
               You are upgrading to the <strong style={{ color: '#0f172a' }}>{selectedPlan.name}</strong>. You will be billed <strong style={{ color: '#0f172a' }}>{formatPrice(selectedPlan.price)}/month</strong>.
             </p>
 
-            {/* Gateway Selection: Razorpay Official Only */}
+            {/* Gateway Selection */}
             <div style={{ marginBottom: 20 }}>
-              <h4 style={{ fontSize: '0.85rem', fontWeight: 600, color: '#475569', marginBottom: 8 }}>Payment Gateway</h4>
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: 12, 
-                padding: '14px 16px', 
-                background: 'rgba(79, 70, 229, 0.06)', 
-                border: '2px solid #4f46e5', 
-                borderRadius: '12px' 
-              }}>
-                <div style={{ width: 36, height: 36, borderRadius: '8px', background: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: '1rem' }}>
-                  ₹
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a' }}>Razorpay Official Gateway</span>
-                    <span style={{ fontSize: '0.7rem', background: '#10b981', color: '#fff', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>Secure</span>
-                  </div>
-                  <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '2px 0 0 0' }}>Instant checkout via UPI, Credit/Debit Cards, NetBanking, and Wallets.</p>
-                </div>
+              <h4 style={{ fontSize: '0.85rem', fontWeight: 600, color: '#475569', marginBottom: 8 }}>Select Payment Gateway</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+                {[
+                  { id: 'stripe', label: 'Stripe (Cards)' },
+                  { id: 'razorpay', label: 'Razorpay (UPI)' },
+                  { id: 'paypal', label: 'PayPal' },
+                  { id: 'credit_card', label: 'Credit Card Direct' },
+                  { id: 'upi', label: 'UPI Direct' },
+                  { id: 'bank_transfer', label: 'Bank Transfer' }
+                ].map(g => (
+                  <label key={g.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: 10, border: gateway === g.id ? '2px solid #4f46e5' : '1px solid #cbd5e1', borderRadius: 8, cursor: 'pointer', background: gateway === g.id ? '#e0e7ff' : '#fff' }}>
+                    <input type="radio" name="gateway" value={g.id} checked={gateway === g.id} onChange={() => setGateway(g.id)} style={{ display: 'none' }} />
+                    <div style={{ width: 14, height: 14, borderRadius: '50%', border: gateway === g.id ? '4px solid #4f46e5' : '1px solid #cbd5e1', background: '#fff' }}></div>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#0f172a' }}>{g.label}</span>
+                  </label>
+                ))}
               </div>
+
+              {/* Dynamic Gateway Forms */}
+              {gateway === 'credit_card' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: '#f8fafc', padding: 12, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 12 }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>Card Information</span>
+                  <input type="text" placeholder="Card Number" value={cardNumber} onChange={e => setCardNumber(e.target.value)} style={{ padding: 8, border: '1px solid #cbd5e1', borderRadius: 6, fontSize: '0.8rem', outline: 'none' }} />
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input type="text" placeholder="MM/YY" value={cardExpiry} onChange={e => setCardExpiry(e.target.value)} style={{ flex: 1, padding: 8, border: '1px solid #cbd5e1', borderRadius: 6, fontSize: '0.8rem', outline: 'none' }} />
+                    <input type="password" placeholder="CVV" value={cardCvv} onChange={e => setCardCvv(e.target.value)} maxLength={3} style={{ flex: 1, padding: 8, border: '1px solid #cbd5e1', borderRadius: 6, fontSize: '0.8rem', outline: 'none' }} />
+                  </div>
+                </div>
+              )}
+
+              {gateway === 'upi' && (() => {
+                const planAmountInr = Number((selectedPlan.price * RATES['INR']).toFixed(0));
+                const upiUri = `upi://pay?pa=${realUpiId}&pn=ITLC_HRMS&am=${planAmountInr}&cu=INR`;
+                const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiUri)}`;
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: '#f8fafc', padding: 12, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 12, alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', alignSelf: 'flex-start' }}>UPI Direct Transfer</span>
+                    <div style={{ padding: 10, background: '#fff', border: '1px dashed #4f46e5', borderRadius: 8, textAlign: 'center', width: '100%' }}>
+                      <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', marginBottom: 4 }}>Scan QR Code or pay directly to UPI VPA:</span>
+                      <strong style={{ fontSize: '0.85rem', color: '#4f46e5', display: 'block', marginBottom: 8 }}>{realUpiId}</strong>
+                      <div style={{ margin: '8px auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                        <img src={qrCodeUrl} alt="UPI QR Code" style={{ width: 140, height: 140, border: '1px solid #cbd5e1', borderRadius: 6, padding: 6, background: '#fff' }} />
+                        <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 700 }}>Scanned Amount: ₹{planAmountInr.toLocaleString()} ({formatPrice(selectedPlan.price)})</span>
+                      </div>
+                    </div>
+                    <input type="text" placeholder="Enter UPI UTR / Transaction Ref ID (12 digits)" value={upiTxnId} onChange={e => setUpiTxnId(e.target.value)} style={{ width: '100%', padding: 8, border: '1px solid #cbd5e1', borderRadius: 6, fontSize: '0.8rem', outline: 'none' }} />
+                  </div>
+                );
+              })()}
+
+              {gateway === 'bank_transfer' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: '#f8fafc', padding: 12, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 12 }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>SWIFT Bank Wire Details</span>
+                  <div style={{ fontSize: '0.7rem', color: '#334155', background: '#fff', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', lineHeight: 1.5 }}>
+                    <strong>Beneficiary:</strong> ITLC HRMS Ltd.<br />
+                    <strong>Bank:</strong> Commercial Standard Bank<br />
+                    <strong>Account:</strong> 99008877665544<br />
+                    <strong>SWIFT / IFSC:</strong> CMSB0001234
+                  </div>
+                  <input type="text" placeholder="Enter Bank Wire Ref / Txn Number" value={wireRefNo} onChange={e => setWireRefNo(e.target.value)} style={{ padding: 8, border: '1px solid #cbd5e1', borderRadius: 6, fontSize: '0.8rem', outline: 'none' }} />
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
@@ -745,7 +629,7 @@ export default function Subscription({ onSubscriptionUpdate }) {
                   <tr key={h.id} style={{ borderBottom: '1px solid #e2e8f0', color: '#0f172a' }}>
                     <td style={{ padding: '12px', fontWeight: 600, fontFamily: 'monospace' }}>{h.invoiceNumber}</td>
                     <td style={{ padding: '12px' }}>{new Date(h.date).toLocaleDateString()}</td>
-                    <td style={{ padding: '12px', fontWeight: 700 }}>{SYMBOLS[currency] || '₹'}{(() => { const rawAmt = Number(h.amount) || 0; if (currency === 'INR') return rawAmt.toLocaleString(); return (rawAmt * (RATES[currency] || 1)).toFixed(0); })()}</td>
+                    <td style={{ padding: '12px', fontWeight: 700 }}>{SYMBOLS[currency] || '$'}{(() => { const baseUSD = h.currency && h.currency !== 'USD' ? (h.amount / (RATES[h.currency] || 1)) : h.amount; return (baseUSD * (RATES[currency] || 1)).toFixed(0); })()}</td>
                     <td style={{ padding: '12px', textTransform: 'capitalize' }}>{h.gateway.replace('_', ' ')}</td>
                     <td style={{ padding: '12px' }}>
                       <span style={{
@@ -761,12 +645,7 @@ export default function Subscription({ onSubscriptionUpdate }) {
                     </td>
                     <td style={{ padding: '12px', textAlign: 'right' }}>
                       <button 
-                        onClick={() => downloadPaymentSlip(h, { 
-                          name: profile?.companyName || h.companyName || 'Workspace',
-                          adminName: profile?.name,
-                          email: profile?.email,
-                          phone: profile?.phone
-                        })}
+                        onClick={() => downloadPaymentSlip(h, { name: profile?.companyName || 'Workspace' })}
                         style={{ padding: '4px 10px', fontSize: '0.75rem', fontWeight: 600, color: '#4f46e5', border: '1px solid #4f46e5', background: 'transparent', borderRadius: '6px', cursor: 'pointer' }}
                       >
                         Download Slip

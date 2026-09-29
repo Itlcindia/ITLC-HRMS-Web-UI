@@ -25,10 +25,9 @@ export const UsersTab: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    role: 'Super Owner' as UserType['role'],
+    role: 'Employee' as UserType['role'],
     companyName: 'SUPEROWNER Platform',
-    status: 'active' as UserType['status'],
-    password: 'Admin@123'
+    status: 'active' as UserType['status']
   });
 
   // Form Update Helper
@@ -54,10 +53,9 @@ export const UsersTab: React.FC = () => {
     setFormData({
       name: '',
       email: '',
-      role: 'Super Owner',
+      role: 'Employee',
       companyName: 'SUPEROWNER Platform',
-      status: 'active',
-      password: 'Admin@123'
+      status: 'active'
     });
     setIsModalOpen(true);
   };
@@ -70,8 +68,7 @@ export const UsersTab: React.FC = () => {
       email: user.email,
       role: user.role,
       companyName: user.companyName,
-      status: user.status,
-      password: (user as any).password || 'Admin@123'
+      status: user.status
     });
     setIsModalOpen(true);
   };
@@ -116,16 +113,14 @@ export const UsersTab: React.FC = () => {
           name: formData.name,
           email: formData.email,
           role: formData.role,
-          status: formData.status,
-          password: formData.password
+          status: formData.status
         });
         setUsers(prev => prev.map(u => u.id === selectedUser.id ? {
           ...u,
           name: formData.name,
           email: formData.email,
           role: formData.role,
-          status: formData.status,
-          password: formData.password
+          status: formData.status
         } : u));
         addToast(`User "${formData.name}" updated`, 'success');
         addLog('User Updated', `Super admin updated details for user "${formData.name}".`, 'user');
@@ -136,8 +131,7 @@ export const UsersTab: React.FC = () => {
           email: formData.email,
           role: formData.role,
           companyName: formData.companyName,
-          status: formData.status,
-          password: formData.password
+          status: formData.status
         });
         setUsers(prev => [...prev, result]);
         addToast(`User "${formData.name}" added`, 'success');
@@ -196,7 +190,6 @@ export const UsersTab: React.FC = () => {
           >
             <option value="all">All Roles</option>
             <option value="Super Owner">Super Owner</option>
-            <option value="Super Admin">Super Admin</option>
             <option value="Company Admin">Company Admin</option>
             <option value="HR">HR Admin</option>
             <option value="Manager">Manager</option>
@@ -262,7 +255,7 @@ export const UsersTab: React.FC = () => {
                     {/* Role */}
                     <td className="py-4 px-4">
                       <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[10px] uppercase tracking-wide border ${
-                        (u.role === 'Super Owner' || u.role === 'Super Admin') ? 'bg-purple-600 border-purple-500 text-white font-extrabold shadow-sm' :
+                        u.role === 'Super Owner' ? 'bg-purple-600 border-purple-500 text-white font-extrabold shadow-sm' :
                         u.role === 'Company Admin' ? 'bg-indigo-600 border-indigo-500 text-white font-extrabold shadow-sm' :
                         u.role === 'HR' ? 'bg-cyan-600 border-cyan-500 text-white font-extrabold shadow-sm' :
                         u.role === 'Manager' ? 'bg-amber-600 border-amber-500 text-white font-extrabold shadow-sm' :
@@ -407,24 +400,11 @@ export const UsersTab: React.FC = () => {
                       className="glass-input w-full px-3.5 py-2 rounded-xl text-sm text-slate-300"
                     >
                       <option value="Super Owner">Super Owner</option>
-                      <option value="Super Admin">Super Admin</option>
                       <option value="Company Admin">Company Admin</option>
                       <option value="HR">HR Admin</option>
                       <option value="Manager">Manager</option>
                       <option value="Employee">Employee</option>
                     </select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs text-slate-400 font-medium">Account Password</label>
-                    <input
-                      type="text"
-                      value={formData.password}
-                      onChange={(e) => updateForm({ password: e.target.value })}
-                      placeholder="e.g. Admin@123"
-                      className="glass-input w-full px-3.5 py-2 rounded-xl text-sm text-slate-300 font-mono"
-                    />
-                    <p className="text-[10px] text-slate-500">Default password is Admin@123. Can be customized by the user.</p>
                   </div>
 
                   <div className="space-y-1.5">

@@ -4,9 +4,8 @@ import { api } from '../../services/api';
 import { 
   Plus, Search, Edit3, Trash2, ShieldCheck, ShieldAlert, Download, 
   Upload, X, Check, FileText, Image, Mail, Phone, MapPin, ArrowLeft,
-  Key, User, Users, Calendar, Briefcase, DollarSign, Award, Star, Clock, Laptop, Eye, EyeOff, Camera
+  Key, User, Users, Calendar, Briefcase, DollarSign, Award, Star, Clock, Laptop, Eye, EyeOff
 } from 'lucide-react';
-import { compressImage } from '../../utils/imageCompressor';
 
 const AdminDocumentPreviewer = ({ doc, profile }) => {
   if (!doc) return null;
@@ -325,7 +324,7 @@ const AdminDocumentPreviewer = ({ doc, profile }) => {
   }
 };
 
-export default function EmployeeManagement({ employees = [], setEmployees, searchQuery, initialSelectedEmpId, subTab, setActiveTab, currency = 'USD' }) {
+export default function EmployeeManagement({ employees = [], setEmployees, searchQuery, initialSelectedEmpId, subTab, currency = 'USD' }) {
   const currencySymbols = {
     USD: '$',
     INR: '₹',
@@ -349,17 +348,10 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
       : null
   );
 
-  // Keep selected profile in sync with updated employee details and documents
+  // Set default selected profile when employees list changes and we are in profile subTab
   useEffect(() => {
-    if (Array.isArray(employees) && employees.length > 0) {
-      if (selectedProfile) {
-        const fresh = employees.find(e => e && (e.id === selectedProfile.id || e.email?.toLowerCase() === selectedProfile.email?.toLowerCase()));
-        if (fresh && JSON.stringify(fresh) !== JSON.stringify(selectedProfile)) {
-          setSelectedProfile(fresh);
-        }
-      } else if (subTab === 'profile') {
-        setSelectedProfile(employees[0]);
-      }
+    if (subTab === 'profile' && !selectedProfile && Array.isArray(employees) && employees.length > 0) {
+      setSelectedProfile(employees[0]);
     }
   }, [employees, subTab, selectedProfile]);
 
@@ -382,9 +374,6 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
   const [autoGenerateId, setAutoGenerateId] = useState(true);
   const [customId, setCustomId] = useState('');
   const [portalPassword, setPortalPassword] = useState('');
-  const [seatLimit, setSeatLimit] = useState(50);
-  const [storageLimit, setStorageLimit] = useState(50);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
     const loadDepartments = async () => {
@@ -401,35 +390,16 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
 
     const fetchCompanyData = async () => {
       try {
-        const comp = await api.getAdminCompany();
+        const comp = await api.getCompany();
         if (comp) {
           setCompanyName(comp.name || 'ITLC HRMS');
-          const maxSeats = Number(comp.seatLimit || comp.maxEmployees || comp.userSeatLimit || 50);
-          const maxStorage = Number(comp.storageLimitGb || comp.storageLimit || 50);
-          setSeatLimit(maxSeats);
-          setStorageLimit(maxStorage);
         }
       } catch (err) {
         console.error("Failed to load company profile:", err);
       }
     };
     fetchCompanyData();
-
-    const handleSync = () => {
-      fetchCompanyData();
-    };
-    window.addEventListener('subscription_updated', handleSync);
-    window.addEventListener('company_updated', handleSync);
-    window.addEventListener('storage', handleSync);
-    return () => {
-      window.removeEventListener('subscription_updated', handleSync);
-      window.removeEventListener('company_updated', handleSync);
-      window.removeEventListener('storage', handleSync);
-    };
   }, []);
-
-  const currentEmpCount = Array.isArray(employees) ? employees.length : 0;
-  const isSeatLimitReached = currentEmpCount >= seatLimit;
 
   const [companyName, setCompanyName] = useState('ITLC HRMS');
 
@@ -471,24 +441,6 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
       loadAttendance();
     }
   }, [activeProfileTab, selectedProfile]);
-
-  const [newAvatar, setNewAvatar] = useState('');
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
-
-  const handlePhotoUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      setIsUploadingPhoto(true);
-      const compressed = await compressImage(file, 400, 400, 0.75);
-      setNewAvatar(compressed);
-    } catch (err) {
-      console.error("Photo compression failed:", err);
-      alert("Failed to process photo. Please try a different image.");
-    } finally {
-      setIsUploadingPhoto(false);
-    }
-  };
 
   const [newDob, setNewDob] = useState('');
   const [newJoiningDate, setNewJoiningDate] = useState(new Date().toISOString().split('T')[0]);
@@ -543,11 +495,6 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
   const handleAddEmployee = async (e) => {
     e.preventDefault();
     if (!newName || !newEmail || !newRole) return;
-
-    if (isSeatLimitReached) {
-      setShowUpgradeModal(true);
-      return;
-    }
     
     try {
       const generatedPass = (newPassword || `Emp@${Math.floor(1000 + Math.random() * 9000)}`).trim();
@@ -562,7 +509,7 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
         phone: newPhone || '+1 (555) 019-2834',
         joiningDate: newJoiningDate || new Date().toISOString().split('T')[0],
         reportingManager: newManager,
-        avatar: newAvatar || `https://images.unsplash.com/photo-${1500000000000 + Math.floor(Math.random() * 900000)}?w=150&auto=format&fit=crop&q=80`,
+        avatar: `https://images.unsplash.com/photo-${1500000000000 + Math.floor(Math.random() * 900000)}?w=150&auto=format&fit=crop&q=80`,
         password: generatedPass
       });
 
@@ -572,8 +519,7 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
         email: newEmail,
         role: newRole,
         designation: newRole,
-        department: showCustomDeptInput ? newCustomDept : newDept,
-        avatar: newAvatar || result?.avatar
+        department: showCustomDeptInput ? newCustomDept : newDept
       };
       const finalPass = result?.generatedPassword || generatedPass;
 
@@ -596,7 +542,6 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
   const handleStartEdit = (emp) => {
     setEditingEmployee(emp);
     setNewName(emp.name || '');
-    setNewAvatar(emp.avatar || emp.photo || '');
     setNewEmail(emp.email || '');
     setNewRole(emp.designation || emp.role || '');
     setNewSystemRole(emp.role || 'Employee');
@@ -645,7 +590,6 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
         accountNumber: newAccountNumber,
         ifsc: newIfsc,
         reportingManager: newManager,
-        avatar: newAvatar || editingEmployee.avatar,
         permissions: newPermissions,
         password: newPassword || undefined
       });
@@ -680,7 +624,6 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
 
   const resetForm = () => {
     setNewName('');
-    setNewAvatar('');
     setNewEmail('');
     setNewRole('');
     setNewSystemRole('Employee');
@@ -1020,51 +963,6 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
               </div>
             </div>
 
-            {/* Subscription Seat Quota Banner */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '12px 18px',
-              borderRadius: '12px',
-              background: isSeatLimitReached ? 'rgba(239, 68, 68, 0.08)' : 'rgba(99, 102, 241, 0.05)',
-              border: isSeatLimitReached ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(99, 102, 241, 0.2)',
-              marginBottom: 12,
-              flexWrap: 'wrap',
-              gap: 10
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: '1.25rem' }}>{isSeatLimitReached ? '⚠️' : '👥'}</span>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.85rem', color: isSeatLimitReached ? '#ef4444' : 'var(--color-text-primary)' }}>
-                    Subscription Seat Limit: {currentEmpCount} / {seatLimit} Seats Allocated
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: isSeatLimitReached ? '#dc2626' : 'var(--color-text-secondary)' }}>
-                    {isSeatLimitReached 
-                      ? 'Seat quota reached! Cannot create additional employee or manager credentials until upgraded.' 
-                      : `${seatLimit - currentEmpCount} seat(s) remaining for new team members.`}
-                  </div>
-                </div>
-              </div>
-              {isSeatLimitReached && (
-                <button
-                  onClick={() => setShowUpgradeModal(true)}
-                  style={{
-                    padding: '6px 14px',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    background: '#ef4444',
-                    color: '#fff',
-                    borderRadius: '8px',
-                    border: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Upgrade Plan 🚀
-                </button>
-              )}
-            </div>
-
             {/* Directory Sub-tab Switcher */}
             <div style={{ display: 'flex', gap: 12, borderBottom: '1px solid var(--color-border)', paddingBottom: 2, marginBottom: 8 }}>
               <button
@@ -1188,7 +1086,7 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
                     accept=".csv" 
                     style={{ display: 'none' }} 
                   />
-                  <button onClick={() => isSeatLimitReached ? setShowUpgradeModal(true) : handleImport()} className="premium-btn premium-btn-secondary" style={{ padding: '8px 14px' }}>
+                  <button onClick={handleImport} className="premium-btn premium-btn-secondary" style={{ padding: '8px 14px' }}>
                     <Upload size={14} />
                     <span>Import</span>
                   </button>
@@ -1196,9 +1094,9 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
                     <Download size={14} />
                     <span>Export</span>
                   </button>
-                  <button onClick={() => isSeatLimitReached ? setShowUpgradeModal(true) : setViewMode('add')} className="premium-btn premium-btn-primary" style={{ padding: '8px 16px', background: isSeatLimitReached ? '#ef4444' : undefined }}>
+                  <button onClick={() => setViewMode('add')} className="premium-btn premium-btn-primary" style={{ padding: '8px 16px' }}>
                     <Plus size={16} />
-                    <span>{isSeatLimitReached ? 'Seat Limit Reached' : 'Add Employee'}</span>
+                    <span>Add Employee</span>
                   </button>
                 </div>
               </div>
@@ -1272,9 +1170,6 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
                         </th>
                         <th style={{ padding: '14px 16px', fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-secondary)' }}>
                           <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><ShieldCheck size={13} /> Status</span>
-                        </th>
-                        <th style={{ padding: '14px 16px', fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-secondary)' }}>
-                          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><FileText size={13} /> KYC Docs</span>
                         </th>
                         <th style={{ padding: '14px 16px', fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-secondary)' }}>
                           <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Mail size={13} /> Contact</span>
@@ -1355,51 +1250,6 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
                                 <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: emp.status === 'Active' ? '#22c55e' : emp.status === 'On Leave' ? '#eab308' : '#64748b' }} />
                                 <span>{emp.status}</span>
                               </span>
-                            </td>
-
-                            {/* KYC Documents Status */}
-                            <td>
-                              {(() => {
-                                const uploadedDocs = (emp.documents || []).filter(d => d && (d.fileData ? !d.fileData.startsWith('DEFAULT_') : d.status === 'Uploaded'));
-                                const count = uploadedDocs.length;
-                                if (count > 0) {
-                                  return (
-                                    <span 
-                                      onClick={(e) => { e.stopPropagation(); setSelectedProfile(emp); setViewMode('profile'); setActiveProfileTab('Documents Vault'); }}
-                                      style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: 4,
-                                        padding: '3px 9px',
-                                        borderRadius: '999px',
-                                        fontSize: '0.75rem',
-                                        fontWeight: 700,
-                                        background: 'rgba(16, 185, 129, 0.12)',
-                                        color: '#10b981',
-                                        cursor: 'pointer'
-                                      }}
-                                      title="Click to view KYC documents"
-                                    >
-                                      <Check size={11} /> {count} Uploaded
-                                    </span>
-                                  );
-                                }
-                                return (
-                                  <span style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: 4,
-                                    padding: '3px 9px',
-                                    borderRadius: '999px',
-                                    fontSize: '0.72rem',
-                                    fontWeight: 600,
-                                    background: 'rgba(148, 163, 184, 0.1)',
-                                    color: '#64748b'
-                                  }}>
-                                    Pending
-                                  </span>
-                                );
-                              })()}
                             </td>
 
                             {/* Contact */}
@@ -1612,72 +1462,6 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
             </div>
 
             <form onSubmit={handleAddEmployee} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-              {/* Profile Photo / Avatar Upload */}
-              <div className="premium-form-group" style={{ display: 'flex', alignItems: 'center', gap: 16, padding: 12, borderRadius: 12, border: '1px solid var(--color-border)', background: 'rgba(0,0,0,0.01)' }}>
-                <div style={{
-                  position: 'relative',
-                  width: 68,
-                  height: 68,
-                  borderRadius: '50%',
-                  overflow: 'hidden',
-                  background: 'var(--color-bg-secondary, #f1f5f9)',
-                  border: '2px solid var(--color-border, #e2e8f0)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0
-                }}>
-                  {newAvatar ? (
-                    <img src={newAvatar} alt="Employee Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <User size={30} style={{ color: 'var(--color-text-tertiary, #94a3b8)' }} />
-                  )}
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label className="premium-label" style={{ margin: 0, fontWeight: 700 }}>Employee Profile Photo</label>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <label style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      padding: '6px 14px',
-                      background: 'var(--color-primary)',
-                      color: 'white',
-                      borderRadius: 8,
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      cursor: 'pointer'
-                    }}>
-                      <Camera size={14} />
-                      <span>{isUploadingPhoto ? 'Compressing...' : newAvatar ? 'Change Photo' : 'Upload Photo'}</span>
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        onChange={handlePhotoUpload} 
-                        style={{ display: 'none' }} 
-                      />
-                    </label>
-                    {newAvatar && (
-                      <button 
-                        type="button" 
-                        onClick={() => setNewAvatar('')}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#ef4444',
-                          fontSize: '0.75rem',
-                          cursor: 'pointer',
-                          padding: '4px 8px'
-                        }}
-                      >
-                        Remove
-                      </button>
-                    )}
-                  </div>
-                  <span style={{ fontSize: '0.65rem', color: 'var(--color-text-tertiary)' }}>Supports JPG, PNG, WebP (auto compressed)</span>
-                </div>
-              </div>
-
               <div className="premium-form-group">
                 <label className="premium-label">Full Name</label>
                 <input 
@@ -1936,71 +1720,6 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
             </div>
 
             <form onSubmit={handleSaveEdit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-              {/* Profile Photo / Avatar Upload */}
-              <div className="premium-form-group" style={{ display: 'flex', alignItems: 'center', gap: 16, padding: 14, borderRadius: 12, border: '1px solid var(--color-border)', background: 'rgba(0,0,0,0.01)' }}>
-                <div style={{
-                  position: 'relative',
-                  width: 68,
-                  height: 68,
-                  borderRadius: '50%',
-                  overflow: 'hidden',
-                  background: 'var(--color-bg-secondary, #f1f5f9)',
-                  border: '2px solid var(--color-border, #e2e8f0)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0
-                }}>
-                  {newAvatar ? (
-                    <img src={newAvatar} alt="Employee Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <User size={30} style={{ color: 'var(--color-text-tertiary, #94a3b8)' }} />
-                  )}
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label className="premium-label" style={{ margin: 0, fontWeight: 700 }}>Employee Profile Photo</label>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <label style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      padding: '6px 14px',
-                      background: 'var(--color-primary)',
-                      color: 'white',
-                      borderRadius: 8,
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      cursor: 'pointer'
-                    }}>
-                      <Camera size={14} />
-                      <span>{isUploadingPhoto ? 'Compressing...' : newAvatar ? 'Change Photo' : 'Upload Photo'}</span>
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        onChange={handlePhotoUpload} 
-                        style={{ display: 'none' }} 
-                      />
-                    </label>
-                    {newAvatar && (
-                      <button 
-                        type="button" 
-                        onClick={() => setNewAvatar('')}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#ef4444',
-                          fontSize: '0.75rem',
-                          cursor: 'pointer',
-                          padding: '4px 8px'
-                        }}
-                      >
-                        Remove
-                      </button>
-                    )}
-                  </div>
-                  <span style={{ fontSize: '0.65rem', color: 'var(--color-text-tertiary)' }}>Supports JPG, PNG, WebP (auto compressed)</span>
-                </div>
-              </div>
               
               {/* SECTION A: Personal & Contact */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -2276,21 +1995,15 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
                     width: 72,
                     height: 72,
                     borderRadius: '50%',
-                    overflow: 'hidden',
                     background: 'linear-gradient(135deg, #4F46E5 0%, #06B6D4 100%)',
                     color: 'white',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: '1.5rem',
-                    fontWeight: 800,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                    fontWeight: 800
                   }}>
-                    {selectedProfile.avatar || selectedProfile.photo ? (
-                      <img src={selectedProfile.avatar || selectedProfile.photo} alt={selectedProfile.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      selectedProfile.name.split(' ').map(n => n[0]).join('')
-                    )}
+                    {selectedProfile.name.split(' ').map(n => n[0]).join('')}
                   </div>
                   <div>
                     <h4 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>{selectedProfile.name}</h4>
@@ -2524,7 +2237,7 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
                           </label>
                         </div>
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 10 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 10 }}>
                         {(selectedProfile.documents && selectedProfile.documents.length > 0 
                           ? selectedProfile.documents.map(d => typeof d === 'string' ? { id: d.toLowerCase().replace(/[^a-z0-9]+/g, "-"), name: d.replace(/_/g, ' '), fileName: d, fileData: '' } : d)
                           : [
@@ -2539,62 +2252,16 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
                           ]
                         ).map((doc, idx) => {
                           const docName = doc.name || (typeof doc === 'string' ? doc.replace(/_/g, ' ') : 'KYC Document');
-                          const isUploaded = doc.status === 'Uploaded' || (doc.fileData && !doc.fileData.startsWith('DEFAULT_') && doc.fileData.startsWith('data:'));
                           return (
-                            <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 14, borderRadius: 14, border: `1px solid ${isUploaded ? 'rgba(16, 185, 129, 0.3)' : 'var(--color-border)'}`, background: isUploaded ? 'rgba(16, 185, 129, 0.02)' : 'rgba(0,0,0,0.01)' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                  <FileText size={16} style={{ color: isUploaded ? '#10b981' : 'var(--color-text-secondary)' }} />
-                                  <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>{docName}</span>
-                                </div>
-                                <span style={{
-                                  padding: '2px 8px',
-                                  borderRadius: '6px',
-                                  fontSize: '0.65rem',
-                                  fontWeight: 700,
-                                  background: isUploaded ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
-                                  color: isUploaded ? '#10b981' : '#f59e0b',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: 4
-                                }}>
-                                  {isUploaded ? <><Check size={10} /> Uploaded</> : 'Pending'}
-                                </span>
-                              </div>
-
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: 'var(--color-text-secondary)' }}>
-                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }} title={doc.fileName || 'document_file'}>
-                                  📁 {doc.fileName || (isUploaded ? 'uploaded_file' : 'Not submitted')}
-                                </span>
-                                {doc.uploadedDate && (
-                                  <span>{doc.uploadedDate}</span>
-                                )}
-                              </div>
-
-                              <div style={{ display: 'flex', gap: 8, marginTop: 4, borderTop: '1px dashed var(--color-border)', paddingTop: 8 }}>
+                            <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 12, borderRadius: 12, border: '1px solid var(--color-border)', background: 'rgba(0,0,0,0.01)' }}>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{docName}</span>
+                              <div style={{ display: 'flex', gap: 6 }}>
                                 <button 
                                   onClick={() => setActiveDocPreview(doc)} 
-                                  className="premium-btn premium-btn-secondary"
-                                  style={{ padding: '4px 10px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: 4 }}
+                                  style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-primary)', fontSize: '0.75rem', fontWeight: 700 }}
                                 >
-                                  <Eye size={12} /> View
+                                  View
                                 </button>
-                                {isUploaded && doc.fileData && doc.fileData.startsWith('data:') && (
-                                  <button 
-                                    onClick={() => {
-                                      const link = document.createElement("a");
-                                      link.href = doc.fileData;
-                                      link.download = doc.fileName || `${docName.toLowerCase().replace(/\s+/g, '_')}.png`;
-                                      document.body.appendChild(link);
-                                      link.click();
-                                      document.body.removeChild(link);
-                                    }}
-                                    className="premium-btn premium-btn-secondary"
-                                    style={{ padding: '4px 10px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: 4 }}
-                                  >
-                                    <Download size={12} /> Download
-                                  </button>
-                                )}
                                 <button 
                                   onClick={async () => {
                                     if (!window.confirm(`Are you sure you want to delete "${docName}"?`)) return;
@@ -2615,7 +2282,7 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
                                       alert("Failed to delete document: " + err.message);
                                     }
                                   }} 
-                                  style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-danger)', fontSize: '0.72rem', fontWeight: 600, marginLeft: 'auto' }}
+                                  style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-danger)', fontSize: '0.75rem', fontWeight: 700 }}
                                 >
                                   Delete
                                 </button>
@@ -3385,103 +3052,6 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
           </div>
         )}
       </AnimatePresence>
-
-      {/* Seat Limit Exceeded Upgrade Notification Modal */}
-      {showUpgradeModal && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(15, 23, 42, 0.75)',
-          backdropFilter: 'blur(8px)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 9999,
-          padding: 16
-        }}>
-          <div style={{
-            background: 'var(--color-surface, #ffffff)',
-            borderRadius: '20px',
-            maxWidth: '500px',
-            width: '100%',
-            padding: '28px',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 18,
-            textAlign: 'center'
-          }}>
-            <div style={{
-              width: 56,
-              height: 56,
-              borderRadius: '50%',
-              backgroundColor: 'rgba(239, 68, 68, 0.1)',
-              color: '#ef4444',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.8rem',
-              margin: '0 auto'
-            }}>
-              ⚠️
-            </div>
-
-            <div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', margin: '0 0 8px 0' }}>
-                Employee Seat Limit Reached!
-              </h3>
-              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary, #64748b)', margin: 0, lineHeight: 1.5 }}>
-                Your current subscription allows a maximum of <strong>{seatLimit} employee seat{seatLimit > 1 ? 's' : ''}</strong> ({currentEmpCount} / {seatLimit} used). You cannot create a 3rd or additional employee credential under your current plan.
-              </p>
-            </div>
-
-            <div style={{
-              background: 'rgba(239, 68, 68, 0.05)',
-              border: '1px dashed rgba(239, 68, 68, 0.3)',
-              borderRadius: '12px',
-              padding: '12px 16px',
-              fontSize: '0.8rem',
-              color: '#b91c1c',
-              textAlign: 'left',
-              lineHeight: 1.4
-            }}>
-              <strong>🔒 ID & Password Creation Locked:</strong> To register more team members and generate official login credentials, please upgrade your subscription plan.
-            </div>
-
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-              <button
-                type="button"
-                onClick={() => setShowUpgradeModal(false)}
-                className="premium-btn premium-btn-secondary"
-                style={{ flex: 1, padding: '10px 16px', borderRadius: '10px' }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowUpgradeModal(false);
-                  if (setActiveTab) setActiveTab('subscription');
-                }}
-                className="premium-btn premium-btn-primary"
-                style={{
-                  flex: 1.6,
-                  padding: '10px 18px',
-                  borderRadius: '10px',
-                  background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
-                  color: '#fff',
-                  fontWeight: 700,
-                  border: 'none',
-                  cursor: 'pointer'
-                }}
-              >
-                Upgrade Subscription Plan 🚀
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

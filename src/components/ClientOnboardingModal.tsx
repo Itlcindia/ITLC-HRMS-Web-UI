@@ -25,7 +25,6 @@ import {
   type SubscriptionPlanDef 
 } from '../types/multiTenant';
 import { paymentService } from '../services/paymentService';
-import { API_URL } from '../services/api';
 
 interface ClientOnboardingModalProps {
   isOpen: boolean;
@@ -44,7 +43,7 @@ export const ClientOnboardingModal: React.FC<ClientOnboardingModalProps> = ({
 }) => {
   const [plans, setPlans] = useState<SubscriptionPlanDef[]>(getLiveSubscriptionPlans());
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [selectedSuiteOption, setSelectedSuiteOption] = useState<'both' | 'crm' | 'hrms'>('hrms');
+  const [selectedSuiteOption, setSelectedSuiteOption] = useState<'both' | 'crm' | 'hrms'>('both');
   const [selectedPlanId, setSelectedPlanId] = useState<string>(initialPlanId || 'growth');
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -163,56 +162,16 @@ export const ClientOnboardingModal: React.FC<ClientOnboardingModalProps> = ({
       notes: paymentRef ? `Paid via Razorpay (${paymentRef})` : 'Self-onboarded via public portal.'
     };
 
-    const planStorageGb = currentPlan.storageLimitGb || (currentPlan as any).storageLimit || 50;
-    const planSeatLimit = newTenant.userSeatLimit || currentPlan.seatLimit || 50;
-
     syncCompanySubscriptionChange({
       companyId: newTenant.id,
       companyName: newTenant.name,
       email: newTenant.adminEmail,
-      password: 'Admin123',
-      adminPassword: 'Admin123',
       planId: newTenant.planId,
       status: 'active',
       billingCycle: newTenant.billingCycle,
-      maxSeats: planSeatLimit,
-      storageLimitGb: planStorageGb,
+      maxSeats: newTenant.userSeatLimit,
       renewalDate: newTenant.renewalDate
     });
-
-    // Save to hrms_companies_data and individual company key
-    try {
-      const savedComps = localStorage.getItem('hrms_companies_data');
-      const compList = savedComps ? JSON.parse(savedComps) : [];
-      const newCompObj = {
-        id: newTenant.id,
-        name: newTenant.name,
-        logo: '/itlc_logo.png',
-        ownerName: newTenant.adminName,
-        email: newTenant.adminEmail,
-        phone: newTenant.adminPhone,
-        employeesCount: planSeatLimit,
-        maxEmployees: planSeatLimit,
-        seatLimit: planSeatLimit,
-        subscriptionPlanId: newTenant.planId,
-        storageLimit: planStorageGb,
-        storageLimitGb: planStorageGb,
-        storageUsed: 0.85,
-        status: 'active',
-        password: 'Admin123',
-        adminPassword: 'Admin123',
-        createdDate: newTenant.onboardDate,
-        modulesEnabled: {
-          attendance: true, leave: true, payroll: true, recruitment: true,
-          performance: true, assets: true, training: true, aiReports: true,
-          chat: true, projects: true, faceRecognition: true, gpsTracking: true,
-          mobileApp: true, api: true, whiteLabel: false
-        }
-      };
-      const updatedComps = [newCompObj, ...compList.filter((c: any) => c.id !== newTenant.id && c.email?.toLowerCase() !== newTenant.adminEmail.toLowerCase())];
-      localStorage.setItem('hrms_companies_data', JSON.stringify(updatedComps));
-      localStorage.setItem(`hrms_company_${newTenant.id}`, JSON.stringify(newCompObj));
-    } catch (e) {}
 
     // Save credentials to itlc_registered_users
     try {
@@ -296,12 +255,6 @@ export const ClientOnboardingModal: React.FC<ClientOnboardingModalProps> = ({
           name: newTenant.name,
           status: 'active',
           themeColor: '#4f46e5',
-          storageLimit: planStorageGb,
-          storageLimitGb: planStorageGb,
-          maxEmployees: planSeatLimit,
-          seatLimit: planSeatLimit,
-          storageUsed: 0.85,
-          subscriptionPlanId: newTenant.planId,
           modulesEnabled: {
             dashboard: true,
             attendance: true,
@@ -315,61 +268,20 @@ export const ClientOnboardingModal: React.FC<ClientOnboardingModalProps> = ({
           }
         }
       };
-      
-      const currentProfRaw = localStorage.getItem('hrms_user_profile');
-      const currentProf = currentProfRaw ? JSON.parse(currentProfRaw) : null;
-      const isSuperOwner = currentProf?.role === 'Super Owner' || currentProf?.email?.includes('superowner') || currentProf?.email === 'owner@itlc.com';
-      if (!isSuperOwner) {
-        localStorage.setItem('hrms_user_profile', JSON.stringify(mockProfile));
-        localStorage.setItem('hrms_jwt_token', 'token_auth_' + Date.now());
-        localStorage.setItem('crm_auth_session', 'true');
-        sessionStorage.setItem('crm_auth_session', 'true');
+      localStorage.setItem('hrms_user_profile', JSON.stringify(mockProfile));
 
-        const crmUser = {
-          id: mockProfile.id,
-          name: mockProfile.name,
-          email: mockProfile.email,
-          role: 'Admin',
-          companyId: newTenant.id,
-          companyName: newTenant.name,
-          status: 'Active',
-          avatar: mockProfile.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
-        };
-        localStorage.setItem('crm_current_user', JSON.stringify(crmUser));
-      }
+      const crmUser = {
+        id: mockProfile.id,
+        name: mockProfile.name,
+        email: mockProfile.email,
+        role: 'Admin',
+        companyId: newTenant.id,
+        companyName: newTenant.name,
+        status: 'Active',
+        avatar: mockProfile.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
+      };
+      localStorage.setItem('crm_current_user', JSON.stringify(crmUser));
     } catch (e) {}
-
-    // Backend sync
-    try {
-      if (typeof window !== 'undefined' && window.fetch) {
-        fetch(`${API_URL}/tenants`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: newTenant.id,
-            name: newTenant.name,
-            companyName: newTenant.name,
-            email: newTenant.adminEmail,
-            adminEmail: newTenant.adminEmail,
-            ownerName: newTenant.adminName,
-            adminName: newTenant.adminName,
-            phone: newTenant.adminPhone,
-            adminPhone: newTenant.adminPhone,
-            userSeatLimit: planSeatLimit,
-            maxEmployees: planSeatLimit,
-            seatLimit: planSeatLimit,
-            staffCapacity: planSeatLimit,
-            employeesCount: planSeatLimit,
-            storageLimit: planStorageGb,
-            storageLimitGb: planStorageGb,
-            subscriptionPlanId: newTenant.planId,
-            plan: newTenant.planId,
-            password: 'Admin123',
-            adminPassword: 'Admin123'
-          })
-        }).catch(() => {});
-      }
-    } catch {}
 
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('superowner_data_updated'));
@@ -393,10 +305,10 @@ export const ClientOnboardingModal: React.FC<ClientOnboardingModalProps> = ({
         },
         (result) => {
           setIsProcessingPayment(false);
-          if (result && result.paymentId) {
+          if (result && result.paymentId && !result.paymentId.startsWith('pay_sim_')) {
             provisionTenant(result.paymentId);
           } else {
-            alert('Payment checkout was not completed. Workspace can only be provisioned after verified payment.');
+            alert('Payment was not received. Client workspace not created.');
           }
         },
         () => {
@@ -406,7 +318,7 @@ export const ClientOnboardingModal: React.FC<ClientOnboardingModalProps> = ({
     } catch (err: any) {
       console.warn('Payment failed or cancelled:', err);
       setIsProcessingPayment(false);
-      alert('Payment could not be completed. Workspace was not created.');
+      alert('Payment was not completed. Client workspace not created.');
     }
   };
 
@@ -454,42 +366,55 @@ export const ClientOnboardingModal: React.FC<ClientOnboardingModalProps> = ({
         {/* STEP 1: CHOOSE PLAN & SUITES */}
         {step === 1 && (
           <div className="itlc-onboarding-step-body">
-            {/* Suite Focus */}
+            {/* Suite Selection Toggle */}
             <div style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
-                1. Software Suite:
+                1. Which Software Suites do you need?
               </label>
-              <div className="itlc-suite-select-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+              <div className="itlc-suite-select-grid">
                 <button 
                   type="button"
-                  className="itlc-suite-card-btn active-suite"
-                  style={{ border: '2px solid #0284c7', background: '#f0f9ff' }}
-                  onClick={() => setSelectedSuiteOption('hrms')}
+                  className={`itlc-suite-card-btn ${selectedSuiteOption === 'both' ? 'active-suite' : ''}`}
+                  onClick={() => setSelectedSuiteOption('both')}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '8px' }}>
                     <div style={{ display: 'flex', gap: '4px' }}>
-                      <Users size={20} color="#0284c7" />
+                      <Briefcase size={18} color="#0284c7" />
+                      <Users size={18} color="#6366f1" />
                     </div>
-                    <span className="itlc-popular-badge">ACTIVE SUITE</span>
+                    <span className="itlc-popular-badge">RECOMMENDED</span>
                   </div>
-                  <strong style={{ fontSize: '14px', color: '#0f172a' }}>OmniStaff HRMS Enterprise</strong>
+                  <strong style={{ fontSize: '14px', color: '#0f172a' }}>Unified Enterprise Bundle</strong>
                   <span style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
-                    Biometric Radar, GPS Attendance, Payroll & GST Billing
+                    Sales CRM + OmniStaff HRMS connected
                   </span>
                 </button>
 
                 <button 
                   type="button"
-                  className="itlc-suite-card-btn opacity-60 cursor-not-allowed"
-                  onClick={() => alert('🚀 ITLC Sales CRM is Coming Soon! OmniStaff HRMS is currently active.')}
+                  className={`itlc-suite-card-btn ${selectedSuiteOption === 'crm' ? 'active-suite' : ''}`}
+                  onClick={() => setSelectedSuiteOption('crm')}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <Briefcase size={20} color="#64748b" />
-                    <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 6px', borderRadius: '10px', background: '#fef3c7', color: '#b45309' }}>⏳ Coming Soon</span>
+                  <div style={{ marginBottom: '8px' }}>
+                    <Briefcase size={20} color="#0284c7" />
                   </div>
-                  <strong style={{ fontSize: '14px', color: '#64748b' }}>ITLC Sales CRM</strong>
-                  <span style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px' }}>
-                    Deals Kanban, Pipelines & Invoicing (In Active Development)
+                  <strong style={{ fontSize: '14px', color: '#0f172a' }}>ITLC Sales CRM Only</strong>
+                  <span style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                    Pipelines, GPS Field Reps & GST Invoicing
+                  </span>
+                </button>
+
+                <button 
+                  type="button"
+                  className={`itlc-suite-card-btn ${selectedSuiteOption === 'hrms' ? 'active-suite' : ''}`}
+                  onClick={() => setSelectedSuiteOption('hrms')}
+                >
+                  <div style={{ marginBottom: '8px' }}>
+                    <Users size={20} color="#6366f1" />
+                  </div>
+                  <strong style={{ fontSize: '14px', color: '#0f172a' }}>OmniStaff HRMS Only</strong>
+                  <span style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                    Biometric Radar, Geofence & Auto Payslips
                   </span>
                 </button>
               </div>
@@ -812,6 +737,15 @@ export const ClientOnboardingModal: React.FC<ClientOnboardingModalProps> = ({
               </button>
 
               <div style={{ display: 'flex', gap: '10px' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary"
+                  style={{ background: '#f1f5f9', color: '#334155' }}
+                  onClick={() => provisionTenant()}
+                  title="Direct Sandbox Provisioning"
+                >
+                  <span>⚡ Instant Launch (Trial)</span>
+                </button>
 
                 <button 
                   type="button" 

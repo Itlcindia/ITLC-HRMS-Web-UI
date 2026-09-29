@@ -36,9 +36,7 @@ export default function SuperownerLogin({ onSuccessLogin }: { onSuccessLogin: ()
 
     try {
       const res = await api.login({ email, password });
-      const roleLower = String(res?.role || '').toLowerCase();
-      if (res && (res.role === 'Super Owner' || res.role === 'Super Admin' || roleLower.includes('super'))) {
-        localStorage.removeItem('itlc_active_tenant');
+      if (res && res.role === 'Super Owner') {
         onSuccessLogin();
       } else {
         setError('Unauthorized access: This portal is reserved for the Super Owner only.');
@@ -242,29 +240,6 @@ export default function SuperownerLogin({ onSuccessLogin }: { onSuccessLogin: ()
               >
                 {isLoading ? "Authenticating..." : "Authorize Dashboard Access"}
                 <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-
-              <button
-                type="button"
-                onClick={async () => {
-                  setIsLoading(true);
-                  setError('');
-                  try {
-                    const res = await api.login({ email: 'priyanshupushkar263@gmail.com', password: 'Priyanshu8090' });
-                    if (res) onSuccessLogin();
-                  } catch (e: any) {
-                    // Fallback to direct authorization
-                    const token = `token-superowner-${Date.now()}`;
-                    localStorage.setItem('hrms_jwt_token', token);
-                    onSuccessLogin();
-                  } finally {
-                    setIsLoading(false);
-                  }
-                }}
-                className="w-full mt-3 py-2.5 bg-white/5 border border-indigo-500/30 text-indigo-300 rounded-xl text-xs font-bold hover:bg-indigo-500/10 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
-                <span>⚡ 1-Click Super Owner Instant Demo Login</span>
               </button>
             </motion.form>
           )}

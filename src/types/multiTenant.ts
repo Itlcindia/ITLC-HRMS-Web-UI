@@ -75,26 +75,64 @@ export interface SubscriptionPlanDef {
   badge?: string;
   highlightFeatures: string[];
   showOnLandingPage?: boolean;
-  trialDays?: number;
 }
 
 export const defaultSubscriptionPlans: SubscriptionPlanDef[] = [
   {
     id: 'demo',
-    name: 'demo',
-    tagline: 'Enterprise plan',
-    priceMonthly: 1,
-    priceAnnual: 10,
+    name: 'DEMO',
+    tagline: 'Ideal for small businesses and agile teams.',
+    priceMonthly: 199,
+    priceAnnual: 1990,
     defaultSuites: ['crm', 'hrms'],
-    seatLimit: 5,
-    storageLimitGb: 2,
-    badge: 'ACTIVE PLAN',
+    seatLimit: 10,
+    storageLimitGb: 10,
+    badge: 'STARTER TIER',
     showOnLandingPage: true,
     highlightFeatures: [
-      'Up to 5 Employee Seats',
+      'Up to 10 Employee Seats',
       'Real-time Biometric Radar & GPS',
       'Automated GST Tax Invoicing',
+      'Deals & Kanban Sales Pipeline',
+      'Automated Salary Slip Generation'
+    ]
+  },
+  {
+    id: 'starter',
+    name: 'STARTER',
+    tagline: 'Ideal for small businesses and agile teams.',
+    priceMonthly: 499,
+    priceAnnual: 4990,
+    defaultSuites: ['crm', 'hrms'],
+    seatLimit: 50,
+    storageLimitGb: 50,
+    badge: 'MOST POPULAR',
+    showOnLandingPage: true,
+    highlightFeatures: [
+      'Up to 50 Employee Seats',
+      'Real-time Biometric Radar & GPS',
+      'Automated GST Tax Invoicing',
+      'Multi-Branch Attendance Geofencing',
       'Automated 1-Click Payroll Engine'
+    ]
+  },
+  {
+    id: 'premium',
+    name: 'Premium',
+    tagline: 'Ideal for small businesses and agile teams.',
+    priceMonthly: 999,
+    priceAnnual: 9990,
+    defaultSuites: ['crm', 'hrms'],
+    seatLimit: 100,
+    storageLimitGb: 100,
+    badge: 'PREMIUM & SCALING',
+    showOnLandingPage: true,
+    highlightFeatures: [
+      'Up to 100 Employee Seats',
+      'Real-time Biometric Radar & GPS',
+      'Automated GST Tax Invoicing',
+      'Super Owner Multi-Tenant Governance',
+      'Dedicated 24/7 Priority Support'
     ]
   }
 ];
@@ -111,26 +149,8 @@ export interface SuperOwnerTaxConfig {
   enableStateSplit: boolean; // split into CGST (rate/2) + SGST (rate/2)
   panNumber?: string;
   registeredLegalName?: string;
-  platformBrand?: string;
-  registeredAddress?: string;
-  supportEmail?: string;
-  supportPhone?: string;
-  signatoryName?: string;
-  signatoryTitle?: string;
   taxInvoicePrefix?: string;
-  placeOfSupply?: string;
   invoiceTerms?: string;
-  signatureImageUrl?: string; // Base64 data URL or HTTP image URL of signature / stamp
-  // Visibility toggles (what to show/hide on slip)
-  showGstin?: boolean;
-  showPan?: boolean;
-  showSac?: boolean;
-  showAddress?: boolean;
-  showQrCode?: boolean;
-  showSignatory?: boolean;
-  showAmountInWords?: boolean;
-  showTerms?: boolean;
-  showFeatures?: boolean;
 }
 
 export const defaultSuperOwnerTaxConfig: SuperOwnerTaxConfig = {
@@ -142,26 +162,9 @@ export const defaultSuperOwnerTaxConfig: SuperOwnerTaxConfig = {
   isTaxInclusive: false,
   enableStateSplit: true,
   panNumber: 'AABCI8899K',
-  registeredLegalName: 'ITLC Software Technologies Pvt Ltd',
-  platformBrand: 'ITLC ENTERPRISE HRMS',
-  registeredAddress: 'Sector G1/0049, Olive Wood Villa, Sushant Golf City, Lucknow, 226030, India',
-  supportEmail: 'support@itlcindia.com',
-  supportPhone: '+91 9532341000',
-  signatoryName: 'Priya Sharma',
-  signatoryTitle: 'Authorized Signatory',
-  taxInvoicePrefix: 'INV-2026',
-  placeOfSupply: '07 - Delhi / NCR (Intra-State)',
-  invoiceTerms: 'This invoice is issued electronically under Rule 48 of the CGST Rules, 2017. Digital verification requires no physical stamp. Valid for Input Tax Credit (ITC).',
-  signatureImageUrl: '',
-  showGstin: true,
-  showPan: true,
-  showSac: true,
-  showAddress: true,
-  showQrCode: true,
-  showSignatory: true,
-  showAmountInWords: true,
-  showTerms: true,
-  showFeatures: true
+  registeredLegalName: 'ITLC INDIA PRIVATE LIMITED',
+  taxInvoicePrefix: 'INV-ITLC',
+  invoiceTerms: 'Tax invoice issued under Section 31 of CGST Act, 2017. Computer generated receipt.'
 };
 
 export const getLiveSuperOwnerTaxConfig = (): SuperOwnerTaxConfig => {
@@ -281,8 +284,7 @@ export const calculateSubscriptionMetrics = (
   const daysElapsed = Math.max(0, totalDays - daysRemaining);
   const percentageElapsed = Math.min(100, Math.round((daysElapsed / totalDays) * 100));
 
-  const planKey = (tenant.planId || '').toLowerCase();
-  const storageLimit = tenant.storageLimitGb || planDef?.storageLimitGb || (planKey.includes('demo') ? 10 : planKey.includes('premium') || planKey.includes('enterprise') ? 100 : 50);
+  const storageLimit = tenant.storageLimitGb || planDef?.storageLimitGb || (tenant.planId === 'starter' ? 5 : tenant.planId === 'enterprise' ? 250 : 25);
   const storageUsed = Number((tenant.storageUsedGb || 3.42).toFixed(2));
   const storagePercent = Math.min(100, Number(((storageUsed / storageLimit) * 100).toFixed(1)));
 
@@ -386,7 +388,7 @@ export const defaultLandingPageConfig: LandingPageConfig = {
   heroSubtitleEn: 'People • Process • Growth — Streamline employee onboarding, live biometric attendance, 1-click automated payroll, and visual Sales CRM in one living 3D ecosystem.',
   heroSubtitleHi: 'People • Process • Growth — Streamline employee onboarding, live biometric attendance, 1-click automated payroll, and visual Sales CRM in one living 3D ecosystem.',
   whatsappSalesNumber: '9532341000',
-  supportEmail: 'support@itlcindia.com',
+  supportEmail: 'support@itlc.in',
   customDomain: 'https://yourdomain.com',
   primaryColor: '#2563eb',
   accentColor: '#0284c7',
@@ -581,7 +583,6 @@ export const saveLiveLandingSections = (sections: CustomLandingSection[]): void 
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
       localStorage.setItem(STORAGE_KEY_SECTIONS, JSON.stringify(sections));
-      window.dispatchEvent(new CustomEvent('landing_sections_updated', { detail: sections }));
       window.dispatchEvent(new CustomEvent('landing_page_config_updated', { detail: sections }));
     }
   } catch (e) {
@@ -593,7 +594,6 @@ export const resetLandingSections = (): CustomLandingSection[] => {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
       localStorage.setItem(STORAGE_KEY_SECTIONS, JSON.stringify(DEFAULT_LANDING_SECTIONS));
-      window.dispatchEvent(new CustomEvent('landing_sections_updated', { detail: DEFAULT_LANDING_SECTIONS }));
       window.dispatchEvent(new CustomEvent('landing_page_config_updated', { detail: DEFAULT_LANDING_SECTIONS }));
     }
   } catch (e) {
@@ -624,8 +624,10 @@ export const getLiveSubscriptionPlans = (): SubscriptionPlanDef[] => {
       const isNotDeleted = (p: any) => {
         if (!p || !p.id) return false;
         const idLower = String(p.id).toLowerCase();
+        const nameLower = String(p.name || '').toLowerCase();
         return !deletedPlanIds.has(idLower) && 
-               !deletedPlanIds.has(idLower.replace(/[^a-z0-9]/g, ''));
+               !deletedPlanIds.has(idLower.replace(/[^a-z0-9]/g, '')) &&
+               !deletedPlanIds.has(nameLower);
       };
 
       const hrmsRaw = localStorage.getItem('hrms_subscription_plans');
@@ -711,36 +713,32 @@ export const resetSubscriptionPlans = (): SubscriptionPlanDef[] => {
 export const convertHrmsPlanToDef = (plan: any): SubscriptionPlanDef => {
   const monthlyInr = Number(plan.priceMonthly) || Number(plan.price) || 0;
   const annualInr = Number(plan.priceAnnual) || Math.round(monthlyInr * 10);
-  const seats = Number(plan.seatLimit || plan.employeeLimit || 50);
-  const storageGb = Number(plan.storageLimitGb || plan.storageLimit || (seats ? seats : 20));
   
   const feats: string[] = [];
   if (Array.isArray(plan.highlightFeatures) && plan.highlightFeatures.length > 0) {
     feats.push(...plan.highlightFeatures);
-  } else {
-    feats.push(`Up to ${seats === 99999 ? 'Unlimited' : seats} Employee Seats`);
-    feats.push(`${storageGb} GB Cloud Storage`);
-    if (plan.features) {
-      if (plan.features.attendance) feats.push('Live Biometric & Shift Attendance');
-      if (plan.features.payroll) feats.push('Automated 1-Click Salary Slips & Payroll');
-      if (plan.features.gpsAttendance) feats.push('GPS Geofenced Field Meetings');
-      if (plan.features.faceRecognition) feats.push('Face Recognition AI Radar');
-      if (plan.features.recruitment) feats.push('Recruitment & Talent Pipeline');
-      if (plan.features.apiAccess) feats.push('REST Webhook APIs & Integrations');
-      if (plan.features.whiteLabel) feats.push('White Labeling & Custom Brand Portal');
-    }
-    feats.push('Automated GST Tax Invoicing');
+  } else if (plan.features) {
+    if (plan.features.payroll) feats.push('Automated 1-Click Salary Slips & Payroll');
+    if (plan.features.attendance) feats.push('Live Biometric & Shift Attendance');
+    if (plan.features.gpsAttendance) feats.push('GPS Geofenced Field Meetings');
+    if (plan.features.faceRecognition) feats.push('Face Recognition AI Radar');
+    if (plan.features.recruitment) feats.push('Recruitment & Talent Pipeline');
+    if (plan.features.apiAccess) feats.push('REST Webhook APIs & Integrations');
+    if (plan.features.whiteLabel) feats.push('White Labeling & Custom Brand Portal');
+  }
+  if (feats.length === 0) {
+    feats.push(`Up to ${plan.employeeLimit || plan.seatLimit || 50} Employee Seats`, 'Real-time Biometric Radar & GPS', 'Automated GST Tax Invoicing');
   }
 
   return {
     id: plan.id,
     name: plan.name,
-    tagline: plan.tagline || `${plan.name} tier for seamless organization growth.`,
+    tagline: plan.tagline || `${plan.name} plan for seamless organization growth.`,
     priceMonthly: monthlyInr,
     priceAnnual: annualInr,
     defaultSuites: ['crm', 'hrms'],
-    seatLimit: seats,
-    storageLimitGb: storageGb,
+    seatLimit: plan.employeeLimit || plan.seatLimit || 50,
+    storageLimitGb: plan.storageLimit || plan.storageLimitGb || (plan.employeeLimit ? plan.employeeLimit : 20),
     badge: plan.badge,
     showOnLandingPage: plan.showOnLandingPage !== false,
     highlightFeatures: feats
@@ -757,27 +755,17 @@ export const syncHrmsPlansListToUnifiedCatalog = (hrmsPlans: any[]): void => {
       .map(hp => convertHrmsPlanToDef(hp));
 
     // Save strictly to both keys without extra fallback merging
-    const storage = (typeof window !== 'undefined' && window.localStorage) 
-      ? window.localStorage 
-      : (typeof localStorage !== 'undefined' ? localStorage : null);
-
-    if (storage) {
+    if (typeof window !== 'undefined' && window.localStorage) {
       const hrmsStr = JSON.stringify(hrmsPlans);
       const unifiedStr = JSON.stringify(updatedUnified);
-      const prevHrms = storage.getItem('hrms_subscription_plans');
-      const prevUnified = storage.getItem(STORAGE_KEY_PLANS);
+      const prevHrms = localStorage.getItem('hrms_subscription_plans');
+      const prevUnified = localStorage.getItem(STORAGE_KEY_PLANS);
 
-      // Prevent redundant storage writes and infinite re-render loops
-      if (prevHrms === hrmsStr && prevUnified === unifiedStr) {
-        return;
-      }
-
-      storage.setItem('hrms_subscription_plans', hrmsStr);
-      storage.setItem(STORAGE_KEY_PLANS, unifiedStr);
-      if (typeof window !== 'undefined' && window.dispatchEvent) {
-        try {
-          window.dispatchEvent(new CustomEvent('subscription_plans_updated', { detail: updatedUnified }));
-        } catch {}
+      if (prevHrms !== hrmsStr || prevUnified !== unifiedStr) {
+        localStorage.setItem('hrms_subscription_plans', hrmsStr);
+        localStorage.setItem(STORAGE_KEY_PLANS, unifiedStr);
+        window.dispatchEvent(new CustomEvent('subscription_plans_updated', { detail: updatedUnified }));
+        window.dispatchEvent(new Event('storage'));
       }
     }
   } catch (e) {
@@ -808,20 +796,12 @@ export const syncCompanySubscriptionChange = (updateData: {
       const deletedIdsRaw = localStorage.getItem('hrms_deleted_company_ids');
       if (deletedIdsRaw) {
         const parsed = JSON.parse(deletedIdsRaw);
-        if (Array.isArray(parsed)) {
-          parsed.forEach((x: any) => {
-            if (typeof x === 'string') deletedIds.add(x.toLowerCase().trim());
-            else if (x?.id) deletedIds.add(String(x.id).toLowerCase().trim());
-            if (x?.email) deletedIds.add(String(x.email).toLowerCase().trim());
-          });
-        }
+        if (Array.isArray(parsed)) deletedIds = new Set(parsed);
       }
     } catch {}
 
-    const targetCompId = String(updateData.companyId || '').toLowerCase().trim();
-    const targetUpdateEmail = String(updateData.email || '').toLowerCase().trim();
-    if ((targetCompId && deletedIds.has(targetCompId)) || (targetUpdateEmail && deletedIds.has(targetUpdateEmail))) {
-      return; // STRICT SECURITY: Do not resurrect or update deleted company
+    if (updateData.companyId && deletedIds.has(updateData.companyId)) {
+      return; // Do not resurrect or update deleted company
     }
 
     // 1. Update in itlc_multi_tenants
@@ -832,71 +812,43 @@ export const syncCompanySubscriptionChange = (updateData: {
         const parsed = JSON.parse(savedTenants);
         if (Array.isArray(parsed)) tenantsList = parsed.filter(t => t && t.id && !deletedIds.has(t.id));
       } catch {}
-    } else {
+    } else if (deletedIds.size === 0) {
       tenantsList = [...initialSeedTenants];
     }
 
     const normalizedPlanId = (updateData.planId === 'professional' ? 'growth' : updateData.planId) as any;
     const credPass = updateData.password || updateData.adminPassword;
 
-    let activeTenantObj: any = null;
-    try {
-      const atRaw = localStorage.getItem('itlc_active_tenant');
-      if (atRaw) activeTenantObj = JSON.parse(atRaw);
-    } catch {}
-
-    let userProfObj: any = null;
-    try {
-      const upRaw = localStorage.getItem('hrms_user_profile');
-      if (upRaw) userProfObj = JSON.parse(upRaw);
-    } catch {}
-
-    const targetCompanyId = updateData.companyId || activeTenantObj?.id || userProfObj?.companyId || userProfObj?.companyDetails?.id;
-    const targetEmail = updateData.email || activeTenantObj?.adminEmail || userProfObj?.email;
-    const targetCompanyName = updateData.companyName || activeTenantObj?.name || userProfObj?.companyName || userProfObj?.companyDetails?.name;
-
-    // Resolve plan definition to get real quota metrics (e.g. 10GB, 50GB, 100GB)
-    let planDef: SubscriptionPlanDef | undefined;
-    try {
-      const allPlans = getLiveSubscriptionPlans();
-      planDef = allPlans.find(p => p.id === normalizedPlanId || p.name.toLowerCase() === String(normalizedPlanId).toLowerCase());
-    } catch {}
-
-    const planKeyLower = String(normalizedPlanId || '').toLowerCase();
-    const resolvedStorageLimit = updateData.storageLimitGb || planDef?.storageLimitGb || (planKeyLower.includes('demo') || planKeyLower.includes('trial') ? 10 : planKeyLower.includes('premium') || planKeyLower.includes('enterprise') || planKeyLower.includes('pro') ? 100 : 50);
-    const resolvedSeats = updateData.maxSeats || planDef?.seatLimit || (planKeyLower.includes('demo') || planKeyLower.includes('trial') ? 10 : planKeyLower.includes('premium') || planKeyLower.includes('enterprise') || planKeyLower.includes('pro') ? 100 : 50);
-
     let matched = false;
     tenantsList = tenantsList.map(t => {
       if (
-        (targetCompanyId && t.id === targetCompanyId) ||
-        (targetEmail && (t.adminEmail?.toLowerCase() === targetEmail.toLowerCase() || (t as any).email?.toLowerCase() === targetEmail.toLowerCase())) ||
-        (!targetCompanyId && targetCompanyName && t.name?.toLowerCase() === targetCompanyName.toLowerCase())
+        (updateData.companyId && t.id === updateData.companyId) ||
+        (updateData.email && t.adminEmail.toLowerCase() === updateData.email.toLowerCase()) ||
+        (updateData.companyName && t.name.toLowerCase() === updateData.companyName.toLowerCase())
       ) {
         matched = true;
         return {
           ...t,
-          password: credPass || (t as any).password || 'Admin@123',
-          adminPassword: credPass || (t as any).adminPassword || 'Admin@123',
+          password: credPass || (t as any).password,
+          adminPassword: credPass || (t as any).adminPassword,
           planId: normalizedPlanId || t.planId,
           status: updateData.status || t.status,
           billingCycle: updateData.billingCycle || t.billingCycle,
-          userSeatLimit: resolvedSeats,
+          userSeatLimit: updateData.maxSeats || t.userSeatLimit,
           renewalDate: updateData.renewalDate || t.renewalDate,
-          storageLimitGb: resolvedStorageLimit,
+          storageLimitGb: updateData.storageLimitGb || t.storageLimitGb,
           notes: updateData.notes || t.notes
         };
       }
       return t;
     });
 
-    if (!matched && (updateData.companyName || targetCompanyName)) {
+    if (!matched && updateData.companyName) {
       // Create new tenant entry if not found
-      const cName = updateData.companyName || targetCompanyName;
       const newTenant: TenantCompany = {
-        id: targetCompanyId || `TEN-${Date.now()}`,
-        name: cName,
-        domain: cName.toLowerCase().replace(/[^a-z0-9]/g, ''),
+        id: updateData.companyId || `TEN-${Date.now()}`,
+        name: updateData.companyName,
+        domain: updateData.companyName.toLowerCase().replace(/[^a-z0-9]/g, ''),
         industry: 'General Enterprise',
         adminName: updateData.companyName + ' Admin',
         adminEmail: updateData.email || 'admin@' + updateData.companyName.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com',
@@ -907,15 +859,14 @@ export const syncCompanySubscriptionChange = (updateData: {
         onboardDate: new Date().toISOString().split('T')[0],
         renewalDate: updateData.renewalDate || new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
         billingCycle: updateData.billingCycle || 'monthly',
-        mrrAmount: planDef?.priceMonthly || (normalizedPlanId === 'premium' ? 999 : 499),
-        userSeatLimit: resolvedSeats,
-        storageLimitGb: resolvedStorageLimit,
+        mrrAmount: normalizedPlanId === 'enterprise' ? 4999 : normalizedPlanId === 'starter' ? 999 : 1999,
+        userSeatLimit: updateData.maxSeats || 50,
         activeUsersCount: 1,
         features: {
           crmKanban: true,
           crmGstInvoicing: true,
           crmGpsFieldTracking: true,
-          crmAiCopilot: normalizedPlanId === 'enterprise' || normalizedPlanId === 'premium',
+          crmAiCopilot: normalizedPlanId === 'enterprise',
           crmWhatsAppBroadcast: true,
           crmReports: true,
           hrmsBiometricRadar: true,
@@ -923,13 +874,15 @@ export const syncCompanySubscriptionChange = (updateData: {
           hrmsPayrollPayslips: true,
           hrmsShiftLeaveManagement: true,
           hrmsAssetTraining: true,
-          apiWebhooks: normalizedPlanId === 'enterprise' || normalizedPlanId === 'premium',
-          customDomain: normalizedPlanId === 'enterprise' || normalizedPlanId === 'premium',
-          prioritySlaSupport: normalizedPlanId !== 'starter' && normalizedPlanId !== 'demo'
+          apiWebhooks: normalizedPlanId === 'enterprise',
+          customDomain: normalizedPlanId === 'enterprise',
+          prioritySlaSupport: normalizedPlanId !== 'starter'
         }
       };
-      (newTenant as any).password = credPass || 'Admin@123';
-      (newTenant as any).adminPassword = credPass || 'Admin@123';
+      if (credPass) {
+        (newTenant as any).password = credPass;
+        (newTenant as any).adminPassword = credPass;
+      }
       tenantsList.unshift(newTenant);
     }
 
@@ -940,18 +893,15 @@ export const syncCompanySubscriptionChange = (updateData: {
       const savedUsers = localStorage.getItem('itlc_registered_users');
       const userList = savedUsers ? JSON.parse(savedUsers) : [];
       if (updateData.email) {
-        const uIdx = userList.findIndex((u: any) => 
-          u.email?.toLowerCase() === updateData.email?.toLowerCase()
-        );
+        const uIdx = userList.findIndex((u: any) => u.email?.toLowerCase() === updateData.email?.toLowerCase() || (updateData.companyId && u.companyId === updateData.companyId));
         const userEntry = {
-          email: updateData.email.toLowerCase().trim(),
+          email: updateData.email,
           password: credPass || (uIdx >= 0 ? userList[uIdx].password : 'Admin@123'),
-          adminPassword: credPass || (uIdx >= 0 ? userList[uIdx].adminPassword : 'Admin@123'),
           name: updateData.companyName ? `${updateData.companyName} Admin` : 'Admin User',
           companyId: updateData.companyId,
           companyName: updateData.companyName,
           role: 'Company Admin',
-          planId: normalizedPlanId,
+          planId: updateData.planId,
           status: updateData.status || 'active'
         };
         if (uIdx >= 0) {
@@ -969,58 +919,32 @@ export const syncCompanySubscriptionChange = (updateData: {
       try {
         const activeT = JSON.parse(activeTenantSaved);
         if (
-          (targetCompanyId && activeT.id === targetCompanyId) ||
-          (targetEmail && activeT.adminEmail?.toLowerCase() === targetEmail.toLowerCase()) ||
-          (targetCompanyName && activeT.name?.toLowerCase() === targetCompanyName.toLowerCase())
+          (updateData.companyId && activeT.id === updateData.companyId) ||
+          (updateData.email && activeT.adminEmail?.toLowerCase() === updateData.email.toLowerCase()) ||
+          (updateData.companyName && activeT.name?.toLowerCase() === updateData.companyName.toLowerCase())
         ) {
           const updatedActive = {
             ...activeT,
-            password: credPass || activeT.password || 'Admin@123',
-            adminPassword: credPass || activeT.adminPassword || 'Admin@123',
             planId: normalizedPlanId || activeT.planId,
             status: updateData.status || activeT.status,
-            userSeatLimit: resolvedSeats,
-            maxEmployees: resolvedSeats,
-            seatLimit: resolvedSeats,
-            storageLimitGb: resolvedStorageLimit,
-            storageLimit: resolvedStorageLimit
+            userSeatLimit: updateData.maxSeats || activeT.userSeatLimit
           };
           localStorage.setItem('itlc_active_tenant', JSON.stringify(updatedActive));
         }
       } catch (e) {}
     }
 
-    // 3. Update hrms_user_profile ONLY if it is NOT Super Owner and matches the targeted company
+    // 3. Update hrms_user_profile if matching
     const hrmsProfile = localStorage.getItem('hrms_user_profile');
     if (hrmsProfile) {
       try {
         const hp = JSON.parse(hrmsProfile);
-        const isTargetCompany = 
-          hp.role !== 'Super Owner' && (
-            (targetCompanyId && (hp.companyId === targetCompanyId || hp.companyDetails?.id === targetCompanyId)) ||
-            (targetEmail && hp.email?.toLowerCase() === targetEmail.toLowerCase()) ||
-            (targetCompanyName && (hp.companyName?.toLowerCase() === targetCompanyName.toLowerCase() || hp.companyDetails?.name?.toLowerCase() === targetCompanyName.toLowerCase()))
-          );
-        if (isTargetCompany) {
-          hp.subscriptionPlanId = normalizedPlanId;
-          hp.subscriptionPlan = normalizedPlanId;
-          if (targetCompanyId) hp.companyId = targetCompanyId;
-          if (targetCompanyName) hp.companyName = targetCompanyName;
-          if (updateData.status) hp.subscriptionStatus = updateData.status;
-          hp.companyDetails = {
-            ...(hp.companyDetails || {}),
-            id: targetCompanyId || hp.companyId || hp.companyDetails?.id,
-            name: targetCompanyName || hp.companyName || hp.companyDetails?.name,
-            subscriptionPlanId: normalizedPlanId,
-            storageLimit: resolvedStorageLimit,
-            storageLimitGb: resolvedStorageLimit,
-            maxEmployees: resolvedSeats,
-            seatLimit: resolvedSeats,
-            userSeatLimit: resolvedSeats,
-            status: updateData.status || hp.subscriptionStatus || 'active'
-          };
-          localStorage.setItem('hrms_user_profile', JSON.stringify(hp));
-        }
+        hp.subscriptionPlanId = updateData.planId;
+        hp.subscriptionPlan = updateData.planId;
+        if (updateData.companyId) hp.companyId = updateData.companyId;
+        if (updateData.companyName) hp.companyName = updateData.companyName;
+        if (updateData.status) hp.subscriptionStatus = updateData.status;
+        localStorage.setItem('hrms_user_profile', JSON.stringify(hp));
       } catch (e) {}
     }
 
@@ -1033,46 +957,34 @@ export const syncCompanySubscriptionChange = (updateData: {
           let compMatched = false;
           const updatedCompList = compList.map((c: any) => {
             if (
-              (targetCompanyId && c.id === targetCompanyId) ||
-              (targetEmail && c.email?.toLowerCase() === targetEmail.toLowerCase()) ||
-              (targetCompanyName && c.name?.toLowerCase() === targetCompanyName.toLowerCase())
+              (updateData.companyId && c.id === updateData.companyId) ||
+              (updateData.email && c.email?.toLowerCase() === updateData.email.toLowerCase()) ||
+              (updateData.companyName && c.name?.toLowerCase() === updateData.companyName.toLowerCase())
             ) {
               compMatched = true;
               return {
                 ...c,
-                subscriptionPlanId: normalizedPlanId || c.subscriptionPlanId,
+                subscriptionPlanId: updateData.planId || c.subscriptionPlanId,
                 status: updateData.status || c.status,
-                employeesCount: resolvedSeats,
-                maxEmployees: resolvedSeats,
-                seatLimit: resolvedSeats,
-                storageLimit: resolvedStorageLimit,
-                storageLimitGb: resolvedStorageLimit,
-                ...(credPass ? { password: credPass, adminPassword: credPass, customPassword: credPass } : {})
+                employeesCount: updateData.maxSeats || c.employeesCount
               };
             }
             return c;
           });
 
-          if (!compMatched && targetCompanyName) {
+          if (!compMatched && updateData.companyName) {
             updatedCompList.unshift({
-              id: targetCompanyId || `comp_${Date.now()}`,
-              name: targetCompanyName,
-              logo: '/itlc_logo.png',
-              ownerName: targetCompanyName + ' Admin',
-              email: targetEmail || 'admin@' + targetCompanyName.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com',
+              id: updateData.companyId || `comp_${Date.now()}`,
+              name: updateData.companyName,
+              logo: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=100&auto=format&fit=crop&q=80',
+              ownerName: updateData.companyName + ' Admin',
+              email: updateData.email || 'admin@' + updateData.companyName.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com',
               phone: '+91 98765 43210',
-              employeesCount: resolvedSeats,
-              maxEmployees: resolvedSeats,
-              seatLimit: resolvedSeats,
-              subscriptionPlanId: normalizedPlanId,
-              storageLimit: resolvedStorageLimit,
-              storageLimitGb: resolvedStorageLimit,
-              storageUsed: 0.85,
+              employeesCount: updateData.maxSeats || 50,
+              subscriptionPlanId: updateData.planId,
+              storageUsed: 0.5,
               status: updateData.status || 'active',
               createdDate: new Date().toISOString().split('T')[0],
-              password: credPass || 'Admin@123',
-              adminPassword: credPass || 'Admin@123',
-              customPassword: credPass || 'Admin@123',
               modulesEnabled: {
                 attendance: true, leave: true, payroll: true, recruitment: true,
                 performance: true, assets: true, training: true, aiReports: true,
@@ -1087,104 +999,49 @@ export const syncCompanySubscriptionChange = (updateData: {
       }
     } catch (e) {}
 
-    // 5. Update company-scoped storage hrms_company_${compId}
-    const finalCompId = targetCompanyId || (activeTenantObj && activeTenantObj.id);
-    if (finalCompId) {
-      try {
-        const compKey = `hrms_company_${finalCompId}`;
-        const rawComp = localStorage.getItem(compKey);
-        const compObj = rawComp ? JSON.parse(rawComp) : {};
-        const updatedCompObj = {
-          ...compObj,
-          id: finalCompId,
-          name: targetCompanyName || compObj.name,
-          subscriptionPlanId: normalizedPlanId,
-          storageLimit: resolvedStorageLimit,
-          storageLimitGb: resolvedStorageLimit,
-          maxEmployees: resolvedSeats,
-          seatLimit: resolvedSeats,
-          userSeatLimit: resolvedSeats,
-          employeesCount: resolvedSeats,
-          status: updateData.status || compObj.status || 'active',
-          ...(credPass ? { password: credPass, adminPassword: credPass, customPassword: credPass } : {})
-        };
-        localStorage.setItem(compKey, JSON.stringify(updatedCompObj));
-      } catch (e) {}
-    }
-
-    // 6. Record activity log
-    try {
-      const logsRaw = localStorage.getItem('hrms_activity_logs');
-      const logs = logsRaw ? JSON.parse(logsRaw) : [];
-      logs.unshift({
-        id: `act_${Date.now()}`,
-        action: 'Subscription Plan Synchronized',
-        category: 'Billing',
-        details: `Company "${updateData.companyName || updateData.companyId}" quota updated: Plan=${normalizedPlanId}, Storage=${resolvedStorageLimit}GB, Seats=${resolvedSeats}`,
-        timestamp: new Date().toISOString(),
-        actorName: updateData.email || 'Super Owner'
-      });
-      localStorage.setItem('hrms_activity_logs', JSON.stringify(logs.slice(0, 100)));
-    } catch (e) {}
-
-    // 6.1 Sync directly with backend server database (/api/tenants)
-    try {
-      if (typeof window !== 'undefined' && window.fetch) {
-        const getSafeBase = () => {
-          if (typeof window !== 'undefined' && (
-            Boolean((window as any).Capacitor) || 
-            window.location.protocol === 'capacitor:' ||
-            (window.location.hostname === 'localhost' && (!window.location.port || window.location.port === '' || window.location.port === '80' || window.location.port === '443'))
-          )) {
-            return 'https://lemonchiffon-mink-999414.hostingersite.com/api';
-          }
-          if (typeof window !== 'undefined' && (window.location.port === '5173' || window.location.port === '3000')) {
-            return '/api';
-          }
-          let url = (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env.VITE_API_URL) || 'https://lemonchiffon-mink-999414.hostingersite.com/api';
-          url = url.trim().replace(/\/+$/, '');
-          return url.endsWith('/api') ? url : `${url}/api`;
-        };
-        const backendApiBase = getSafeBase();
-        fetch(`${backendApiBase}/tenants`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: targetCompanyId || finalCompId,
-            name: targetCompanyName || updateData.companyName,
-            companyName: targetCompanyName || updateData.companyName,
-            email: targetEmail,
-            adminEmail: targetEmail,
-            planId: normalizedPlanId,
-            plan: normalizedPlanId,
-            status: updateData.status || 'active',
-            billingCycle: updateData.billingCycle || 'monthly',
-            seatLimit: resolvedSeats,
-            maxEmployees: resolvedSeats,
-            staffCapacity: resolvedSeats,
-            userSeatLimit: resolvedSeats,
-            employeesCount: resolvedSeats,
-            storageLimit: resolvedStorageLimit,
-            storageLimitGb: resolvedStorageLimit,
-            password: credPass,
-            adminPassword: credPass
-          })
-        }).catch(() => {});
-      }
-    } catch {}
-
-    // 7. Dispatch global events across all panels
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('subscription_plans_updated'));
-      window.dispatchEvent(new CustomEvent('superowner_data_updated'));
-      window.dispatchEvent(new CustomEvent('company_updated', { detail: { id: updateData.companyId, planId: normalizedPlanId, storageLimit: resolvedStorageLimit, maxEmployees: resolvedSeats } }));
-      window.dispatchEvent(new CustomEvent('companies_updated'));
-      window.dispatchEvent(new CustomEvent('subscription_updated'));
-      window.dispatchEvent(new CustomEvent('multi_tenant_updated'));
-    }
+    // Dispatch global event
+    window.dispatchEvent(new CustomEvent('subscription_plans_updated'));
+    window.dispatchEvent(new CustomEvent('superowner_data_updated'));
   } catch (error) {
     console.error('Failed to sync company subscription changes:', error);
   }
 };
 
-export const initialSeedTenants: TenantCompany[] = [];
+export const initialSeedTenants: TenantCompany[] = [
+  {
+    id: 'TEN-485',
+    name: 'Pushkar Enterprises & Solutions',
+    domain: 'pushkarsolutions',
+    gstin: '09AABCP2630P1Z1',
+    industry: 'IT & Enterprise Services',
+    adminName: 'Priyanshu Pushkar',
+    adminEmail: 'priyanshupushkar263@gmail.com',
+    adminPhone: '+91 95323 41000',
+    planId: 'growth',
+    suites: ['crm', 'hrms'],
+    status: 'active',
+    onboardDate: '2026-09-01',
+    renewalDate: '2026-10-01',
+    billingCycle: 'monthly',
+    mrrAmount: 1999,
+    userSeatLimit: 50,
+    activeUsersCount: 1,
+    features: {
+      crmKanban: true,
+      crmGstInvoicing: true,
+      crmGpsFieldTracking: true,
+      crmAiCopilot: true,
+      crmWhatsAppBroadcast: true,
+      crmReports: true,
+      hrmsBiometricRadar: true,
+      hrmsGeofenceAttendance: true,
+      hrmsPayrollPayslips: true,
+      hrmsShiftLeaveManagement: true,
+      hrmsAssetTraining: true,
+      apiWebhooks: true,
+      customDomain: true,
+      prioritySlaSupport: true
+    },
+    notes: 'Registered corporate company workspace.'
+  }
+];

@@ -107,9 +107,9 @@ export const SubscriptionQuotaMeterModal: React.FC<SubscriptionQuotaMeterModalPr
         planId: targetPlan.id,
         amount: taxCalc.total,
         companyName: tenant.name,
-        customerName: tenant.adminName || tenant.name,
-        customerEmail: tenant.adminEmail || tenant.email || '',
-        customerPhone: tenant.adminPhone || tenant.phone || ''
+        customerName: tenant.adminName,
+        customerEmail: tenant.adminEmail,
+        customerPhone: tenant.adminPhone
       },
       (result) => {
         setIsProcessing(false);
@@ -176,9 +176,9 @@ export const SubscriptionQuotaMeterModal: React.FC<SubscriptionQuotaMeterModalPr
         planId: `addon_storage_${extraGb}gb`,
         amount: taxCalc.total,
         companyName: tenant.name,
-        customerName: tenant.adminName || tenant.name,
-        customerEmail: tenant.adminEmail || tenant.email || '',
-        customerPhone: tenant.adminPhone || tenant.phone || ''
+        customerName: tenant.adminName,
+        customerEmail: tenant.adminEmail,
+        customerPhone: tenant.adminPhone
       },
       () => {
         setIsProcessing(false);
@@ -307,7 +307,7 @@ export const SubscriptionQuotaMeterModal: React.FC<SubscriptionQuotaMeterModalPr
         <div style="margin-top: 36px; padding: 16px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 11px; color: #64748b; line-height: 1.6;">
           <strong>Legal Terms & Regulatory Note:</strong><br/>
           ${metrics.invoiceTerms || 'Tax invoice issued in accordance with Section 31 of CGST Act, 2017. Computer generated receipt.'}<br/>
-          <strong>Platform Super Owner:</strong> ${metrics.registeredLegalName} • Helpline: +91 9532341000 • Email: support@itlcindia.com
+          <strong>Platform Super Owner:</strong> ${metrics.registeredLegalName} • Helpline: +91 83688 17744 • Email: billing@itlc.in
         </div>
         <script>
           window.print();

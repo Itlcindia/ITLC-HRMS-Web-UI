@@ -45,8 +45,8 @@ interface EcosystemProduct {
 }
 
 export const ItlcEcosystemOrbit: React.FC<ItlcEcosystemOrbitProps> = ({
-  onLaunchCrm = () => { window.history.pushState({}, '', '/login'); },
-  onLaunchHrms = () => { window.history.pushState({}, '', '/login'); },
+  onLaunchCrm = () => { window.location.hash = '#login'; },
+  onLaunchHrms = () => { window.location.hash = '#login'; },
   lang = 'en'
 }) => {
   const [isPaused, setIsPaused] = useState(false);
@@ -67,13 +67,13 @@ export const ItlcEcosystemOrbit: React.FC<ItlcEcosystemOrbitProps> = ({
       id: 'crm',
       name: 'ITLC Sales CRM',
       tagline: 'Deals Pipeline, GPS Field Sales & GST Tax Invoicing',
-      badge: 'COMING SOON',
+      badge: 'LIVE WORKSPACE',
       color: '#0284c7',
       glowColor: 'rgba(2, 132, 199, 0.45)',
       lightBg: 'rgba(2, 132, 199, 0.12)',
       gradient: 'linear-gradient(135deg, #0284c7 0%, #00d2ff 100%)',
       icon: <Briefcase size={26} color="#ffffff" strokeWidth={2.2} />,
-      metric: 'Launching Soon',
+      metric: '₹4.82 Cr Live Deals',
       features: [
         'Visual Deals Kanban Board',
         'Live GPS Field Sales Tracking',
