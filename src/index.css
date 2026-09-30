@@ -11676,3 +11676,193 @@ img[src*="qr"] {
   color: #ffffff !important;
 }
 
+/* From Uiverse.io by Madflows - Blue Card Buttons Only */
+.uiverse-blue-card-btn {
+  position: relative;
+  overflow: hidden;
+  height: 3rem;
+  padding: 0 2rem;
+  border-radius: 1.5rem;
+  background: #ffffff;
+  background-size: 400%;
+  color: #0f172a;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 13px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.uiverse-blue-card-btn:hover {
+  color: #ffffff;
+}
+
+.uiverse-blue-card-btn:hover::before {
+  transform: scaleX(1);
+}
+
+.uiverse-btn-content {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800 !important;
+  transition: color 0.3s ease;
+}
+
+.uiverse-blue-card-btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  width: 100%;
+  height: inherit;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    82.3deg,
+    rgba(150, 93, 233, 1) 10.8%,
+    rgba(99, 88, 238, 1) 94.3%
+  );
+  transition: all 0.475s;
+}
+
+.blue-card-heading {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  font-size: 20px !important;
+  letter-spacing: -0.02em !important;
+  margin: 0 0 8px 0 !important;
+  line-height: 1.25 !important;
+}
+
+.blue-card-description {
+  color: #ffffff !important;
+  font-weight: 500 !important;
+  font-size: 12.5px !important;
+  line-height: 1.5 !important;
+  max-width: 285px !important;
+  margin: 0 0 20px 0 !important;
+  opacity: 1 !important;
+}
+
+/* From Uiverse.io by xopc333 - Animated Back Button */
+.uiverse-back-btn,
+.button.uiverse-back-btn {
+  display: block;
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 56px;
+  height: 56px;
+  margin: 0;
+  overflow: hidden;
+  outline: none;
+  background-color: transparent;
+  cursor: pointer;
+  border: 0;
+  z-index: 30;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.uiverse-back-btn:before,
+.uiverse-back-btn:after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  inset: 7px;
+  box-sizing: border-box;
+}
+
+.uiverse-back-btn:before {
+  border: 4px solid #334155;
+  transition: opacity 0.4s cubic-bezier(0.77, 0, 0.175, 1) 80ms,
+    transform 0.5s cubic-bezier(0.455, 0.03, 0.515, 0.955) 80ms;
+}
+
+.uiverse-back-btn:after {
+  border: 4px solid #0284c7;
+  transform: scale(1.3);
+  transition: opacity 0.4s cubic-bezier(0.165, 0.84, 0.44, 1),
+    transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  opacity: 0;
+}
+
+.uiverse-back-btn:hover:before,
+.uiverse-back-btn:focus:before {
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.4s cubic-bezier(0.165, 0.84, 0.44, 1),
+    transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.uiverse-back-btn:hover:after,
+.uiverse-back-btn:focus:after {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.4s cubic-bezier(0.77, 0, 0.175, 1) 80ms,
+    transform 0.5s cubic-bezier(0.455, 0.03, 0.515, 0.955) 80ms;
+}
+
+.uiverse-back-btn .button-box {
+  display: flex;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.uiverse-back-btn .button-elem {
+  display: block;
+  width: 20px;
+  height: 20px;
+  margin: 17px 18px 0 18px;
+  transform: rotate(180deg);
+  fill: #334155;
+  transition: fill 0.3s ease;
+}
+
+.uiverse-back-btn .button-elem svg {
+  width: 100%;
+  height: 100%;
+  fill: inherit;
+  display: block;
+  pointer-events: none;
+}
+
+.uiverse-back-btn:hover .button-box,
+.uiverse-back-btn:focus .button-box {
+  transition: 0.4s;
+  transform: translateX(-56px);
+}
+
+.uiverse-back-btn:hover .button-elem,
+.uiverse-back-btn:focus .button-elem {
+  fill: #0284c7;
+}
+
+.button-box {
+  display: flex;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.button-elem {
+  display: block;
+  width: 20px;
+  height: 20px;
+  margin: 17px 18px 0 18px;
+  transform: rotate(180deg);
+  fill: #334155;
+}
+
+

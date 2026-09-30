@@ -18,7 +18,7 @@ const slides = [
   { id: 6, title: "AI-Powered Insights", image: "/dashboards/ai_insights.png" }
 ];
 
-// Floating input component for login visual excellence
+// Floating input component matching Friday screenshot exactly
 const FloatingInput = ({ 
   id, label, type, value, onChange, icon: Icon, required = false 
 }: {
@@ -33,12 +33,13 @@ const FloatingInput = ({
   const [focused, setFocused] = useState(false);
   const active = focused || !!value;
   return (
-    <div className="relative w-full">
-      {!active && (
-        <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 pointer-events-none">
-          <Icon className="w-4 h-4" />
-        </span>
-      )}
+    <div className="relative w-full" style={{ position: 'relative', width: '100%' }}>
+      <span 
+        className="absolute inset-y-0 left-0 flex items-center pointer-events-none z-10"
+        style={{ position: 'absolute', top: 0, bottom: 0, left: '14px', display: 'flex', alignItems: 'center', pointerEvents: 'none', zIndex: 10, color: '#94a3b8' }}
+      >
+        <Icon className="w-4 h-4" style={{ width: '17px', height: '17px', color: '#94a3b8' }} />
+      </span>
       <input
         id={id}
         type={type}
@@ -47,17 +48,50 @@ const FloatingInput = ({
         onChange={onChange}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        className="w-full pr-4 py-2.5 premium-input rounded-xl text-slate-900 text-xs peer placeholder-transparent focus:ring-4 focus:ring-indigo-500/10"
-        style={{ paddingLeft: active ? '12px' : '40px' }}
+        className="w-full rounded-xl outline-none transition-all placeholder-transparent"
+        style={{
+          width: '100%',
+          height: '48px',
+          paddingLeft: '44px',
+          paddingRight: '16px',
+          backgroundColor: '#ffffff',
+          border: focused ? '1.5px solid #4f46e5' : '1.5px solid #94a3b8',
+          borderRadius: '12px',
+          fontSize: '13px',
+          fontWeight: 500,
+          color: '#0f172a',
+          outline: 'none',
+          boxShadow: focused ? '0 0 0 3px rgba(79, 70, 229, 0.1)' : '0 1px 2px rgba(0, 0, 0, 0.03)',
+          transition: 'all 0.2s ease-in-out',
+          boxSizing: 'border-box'
+        }}
         placeholder={label}
       />
       <label
         htmlFor={id}
-        className={`absolute transition-all duration-200 pointer-events-none text-slate-400 text-xs select-none
-          ${active 
-            ? '-top-2 left-3 bg-white px-1.5 text-[9px] font-bold text-indigo-650 rounded shadow-sm border border-indigo-100' 
-            : 'top-3 left-10 text-xs'
-          }`}
+        className="absolute transition-all duration-200 pointer-events-none select-none"
+        style={active ? {
+          position: 'absolute',
+          top: '-10px',
+          left: '12px',
+          backgroundColor: '#ffffff',
+          padding: '0 6px',
+          fontSize: '10px',
+          fontWeight: 700,
+          color: '#4f46e5',
+          borderRadius: '4px',
+          border: '1px solid #e0e7ff',
+          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
+          zIndex: 20
+        } : {
+          position: 'absolute',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          left: '44px',
+          fontSize: '13px',
+          color: '#94a3b8',
+          fontWeight: 400
+        }}
       >
         {label} {required && '*'}
       </label>
@@ -65,7 +99,7 @@ const FloatingInput = ({
   );
 };
 
-// Floating password input with toggle button
+// Floating password input with toggle button matching Friday screenshot exactly
 const FloatingPasswordInput = ({ 
   id, label, value, onChange, showPassword, setShowPassword, required = false 
 }: {
@@ -80,12 +114,13 @@ const FloatingPasswordInput = ({
   const [focused, setFocused] = useState(false);
   const active = focused || !!value;
   return (
-    <div className="relative w-full">
-      {!active && (
-        <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 pointer-events-none">
-          <Lock className="w-4 h-4" />
-        </span>
-      )}
+    <div className="relative w-full" style={{ position: 'relative', width: '100%' }}>
+      <span 
+        className="absolute inset-y-0 left-0 flex items-center pointer-events-none z-10"
+        style={{ position: 'absolute', top: 0, bottom: 0, left: '14px', display: 'flex', alignItems: 'center', pointerEvents: 'none', zIndex: 10, color: '#94a3b8' }}
+      >
+        <Lock className="w-4 h-4" style={{ width: '17px', height: '17px', color: '#94a3b8' }} />
+      </span>
       <input
         id={id}
         type={showPassword ? 'text' : 'password'}
@@ -94,26 +129,60 @@ const FloatingPasswordInput = ({
         onChange={onChange}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        className="w-full pr-10 py-2.5 premium-input rounded-xl text-slate-900 text-xs peer placeholder-transparent focus:ring-4 focus:ring-indigo-500/10"
-        style={{ paddingLeft: active ? '12px' : '40px' }}
+        className="w-full rounded-xl outline-none transition-all placeholder-transparent"
+        style={{
+          width: '100%',
+          height: '48px',
+          paddingLeft: '44px',
+          paddingRight: '44px',
+          backgroundColor: '#ffffff',
+          border: focused ? '1.5px solid #4f46e5' : '1.5px solid #94a3b8',
+          borderRadius: '12px',
+          fontSize: '13px',
+          fontWeight: 500,
+          color: '#0f172a',
+          outline: 'none',
+          boxShadow: focused ? '0 0 0 3px rgba(79, 70, 229, 0.1)' : '0 1px 2px rgba(0, 0, 0, 0.03)',
+          transition: 'all 0.2s ease-in-out',
+          boxSizing: 'border-box'
+        }}
         placeholder={label}
       />
       <label
         htmlFor={id}
-        className={`absolute transition-all duration-200 pointer-events-none text-slate-400 text-xs select-none
-          ${active 
-            ? '-top-2 left-3 bg-white px-1.5 text-[9px] font-bold text-indigo-650 rounded shadow-sm border border-indigo-100' 
-            : 'top-3 left-10 text-xs'
-          }`}
+        className="absolute transition-all duration-200 pointer-events-none select-none"
+        style={active ? {
+          position: 'absolute',
+          top: '-10px',
+          left: '12px',
+          backgroundColor: '#ffffff',
+          padding: '0 6px',
+          fontSize: '10px',
+          fontWeight: 700,
+          color: '#4f46e5',
+          borderRadius: '4px',
+          border: '1px solid #e0e7ff',
+          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
+          zIndex: 20
+        } : {
+          position: 'absolute',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          left: '44px',
+          fontSize: '13px',
+          color: '#94a3b8',
+          fontWeight: 400
+        }}
       >
         {label} {required && '*'}
       </label>
       <button
         type="button"
         onClick={() => setShowPassword(!showPassword)}
-        className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-indigo-500 hover:text-indigo-700 transition-colors"
+        className="absolute inset-y-0 right-0 flex items-center cursor-pointer z-10"
+        style={{ position: 'absolute', top: 0, bottom: 0, right: '14px', display: 'flex', alignItems: 'center', cursor: 'pointer', background: 'transparent', border: 'none', padding: 0, color: '#94a3b8' }}
       >
-        {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
       </button>
     </div>
   );
@@ -644,7 +713,7 @@ export default function LoginForm({
 
   return (
     <div 
-      className="w-full max-w-[480px] lg:max-w-[960px] h-auto lg:h-[580px] min-h-[520px] py-8 lg:py-0 rounded-3xl glass-panel relative overflow-hidden flex flex-col group border-indigo-100 shadow-[0_20px_50px_-12px_rgba(79,70,229,0.06)] hover:shadow-[0_24px_60px_-10px_rgba(79,70,229,0.09)] transition-all duration-500"
+      className="w-full max-w-[480px] lg:max-w-[960px] h-auto lg:h-[620px] min-h-[560px] py-8 lg:py-0 rounded-3xl bg-white relative overflow-hidden flex flex-col group border border-slate-100 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.08),0_10px_20px_-10px_rgba(0,0,0,0.04)] transition-all duration-500"
       style={{ perspective: "1500px", transformStyle: "preserve-3d" }}
     >
       <div className="absolute -top-24 -left-20 w-52 h-52 bg-gradient-to-tr from-indigo-500/10 to-violet-500/5 rounded-full blur-3xl pointer-events-none" />
@@ -672,7 +741,7 @@ export default function LoginForm({
         <div className="flex-grow relative z-10 h-full">
           
           <motion.div
-            className="absolute inset-y-0 left-0 w-full lg:w-1/2 p-4 sm:p-6 lg:p-8 flex flex-col justify-center space-y-2.5 overflow-y-auto no-scrollbar"
+            className="absolute inset-y-0 left-0 w-full lg:w-1/2 p-6 sm:p-8 lg:py-10 lg:pl-10 lg:pr-14 flex flex-col justify-center overflow-y-auto no-scrollbar"
             animate={{
               opacity: isSignUp ? 0 : 1,
               x: isSignUp ? "-30px" : "0px",
@@ -682,228 +751,284 @@ export default function LoginForm({
             transition={springTransition}
             style={{ display: isMobile ? (isSignUp ? 'none' : 'flex') : 'flex' }}
           >
-            <div>
-              <div className="inline-flex items-center justify-center p-2.5 bg-gradient-to-tr from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl text-indigo-650 shadow-sm mb-3">
-                <ShieldCheck className="w-5 h-5" />
+            <div style={{ maxWidth: '360px', width: '100%', margin: '0 auto' }}>
+              <div>
+                <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', margin: 0, lineHeight: 1.2 }}>
+                  {isSuperownerMode ? "Superowner Login" : "Welcome back"}
+                </h2>
+                <p 
+                  style={{ 
+                    fontSize: '10px',
+                    transform: 'scale(0.8)',
+                    transformOrigin: 'left center',
+                    display: 'inline-block',
+                    color: '#64748b', 
+                    marginTop: '2px', 
+                    marginBottom: 0, 
+                    whiteSpace: 'nowrap',
+                    lineHeight: '1.2'
+                  }}
+                >
+                  {isSuperownerMode ? "Enter credentials for Superowner Dashboard access." : "Enter your credentials to access your workspaces."}
+                </p>
               </div>
-              <h2 className="text-xl sm:text-2xl font-bold font-display text-slate-900 tracking-tight">
-                {isSuperownerMode ? (
-                  <>Superowner <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent">Login</span></>
-                ) : (
-                  <>Welcome <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent">back</span></>
-                )}
-              </h2>
-              <p className="text-slate-400 text-xs mt-0.5">
-                {isSuperownerMode ? "Enter credentials for Superowner Dashboard access." : "Enter your credentials to access your workspaces."}
-              </p>
-            </div>
 
-            {error && !isSignUp && (
-              <div className="p-2.5 my-2.5 bg-rose-50 border border-rose-100 text-rose-600 text-[10px] rounded-lg">
-                {error}
-              </div>
-            )}
+              {error && !isSignUp && (
+                <div className="p-2.5 my-2.5 bg-rose-50 border border-rose-100 text-rose-600 text-[10px] rounded-lg">
+                  {error}
+                </div>
+              )}
 
-            {otpRequired ? (
-              <form onSubmit={handleOtpSubmit} className="space-y-4 mt-2">
-                <div className="p-3 bg-indigo-50 border border-indigo-100 text-indigo-700 text-[11px] rounded-xl flex items-start gap-2 leading-relaxed">
-                  <Sparkles className="w-4 h-4 shrink-0 mt-0.5" />
-                  <div className="flex-1 min-w-0">
-                    <div>A secure 6-digit verification code has been sent to <strong>{loginEmail}</strong>. Please enter the OTP to authenticate.</div>
-                    {devOtp && (
-                      <div 
-                        onClick={() => setOtpCode(devOtp)}
-                        title="Click to copy into input"
-                        className="mt-2 flex items-center justify-between bg-white border border-indigo-200/80 px-2.5 py-1.5 rounded-lg shadow-xs cursor-pointer hover:bg-indigo-50/50 transition"
-                      >
-                        <span className="text-[10px] uppercase font-bold text-indigo-500 tracking-wider">Quick Code:</span>
-                        <span className="font-mono font-extrabold text-indigo-700 text-sm tracking-widest">{devOtp}</span>
-                      </div>
-                    )}
+              {otpRequired ? (
+                <form onSubmit={handleOtpSubmit} className="space-y-4 mt-2">
+                  <div className="p-3 bg-indigo-50 border border-indigo-100 text-indigo-700 text-[11px] rounded-xl flex items-start gap-2 leading-relaxed">
+                    <Sparkles className="w-4 h-4 shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <div>A secure 6-digit verification code has been sent to <strong>{loginEmail}</strong>. Please enter the OTP to authenticate.</div>
+                      {devOtp && (
+                        <div 
+                          onClick={() => setOtpCode(devOtp)}
+                          title="Click to copy into input"
+                          className="mt-2 flex items-center justify-between bg-white border border-indigo-200/80 px-2.5 py-1.5 rounded-lg shadow-xs cursor-pointer hover:bg-indigo-50/50 transition"
+                        >
+                          <span className="text-[10px] uppercase font-bold text-indigo-500 tracking-wider">Quick Code:</span>
+                          <span className="font-mono font-extrabold text-indigo-700 text-sm tracking-widest">{devOtp}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                <FloatingInput 
-                  id="login-otp"
-                  label="Enter 6-Digit OTP Code"
-                  type="text"
-                  required
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
-                  icon={ShieldCheck}
-                />
+                  <FloatingInput 
+                    id="login-otp"
+                    label="Enter 6-Digit OTP Code"
+                    type="text"
+                    required
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
+                    icon={ShieldCheck}
+                  />
 
-                {devOtp && (
-                  <button
-                    type="button"
-                    disabled={isLoading}
-                    onClick={() => {
-                      setOtpCode(devOtp);
-                      setTimeout(() => {
-                        api.verifyOtp({ email: loginEmail, otp: devOtp })
-                          .then(() => {
-                            setSuccess(true);
-                            setSuccessMsg('OTP verified successfully! Redirecting...');
-                            setTimeout(() => {
-                              setIsLoading(false);
-                              if (onSuccessLogin) onSuccessLogin(loginEmail, loginPassword);
-                            }, 500);
-                          })
-                          .catch((err) => {
-                            setError(err.message || 'Verification failed');
-                          });
-                      }, 50);
-                    }}
-                    className="w-full py-2 px-3 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-                    ⚡ Auto-fill Code & Login Instantly
-                  </button>
-                )}
+                  {devOtp && (
+                    <button
+                      type="button"
+                      disabled={isLoading}
+                      onClick={() => {
+                        setOtpCode(devOtp);
+                        setTimeout(() => {
+                          api.verifyOtp({ email: loginEmail, otp: devOtp })
+                            .then(() => {
+                              setSuccess(true);
+                              setSuccessMsg('OTP verified successfully! Redirecting...');
+                              setTimeout(() => {
+                                setIsLoading(false);
+                                if (onSuccessLogin) onSuccessLogin(loginEmail, loginPassword);
+                              }, 500);
+                            })
+                            .catch((err) => {
+                              setError(err.message || 'Verification failed');
+                            });
+                        }, 50);
+                      }}
+                      className="w-full py-2 px-3 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                      ⚡ Auto-fill Code & Login Instantly
+                    </button>
+                  )}
 
-                <div className="flex items-center justify-between text-xs px-1">
-                  <span className="text-slate-500 text-[11px]">Didn't receive code?</span>
-                  <button
-                    type="button"
-                    disabled={isResendingOtp}
-                    onClick={async () => {
-                      setIsResendingOtp(true);
-                      setError('');
-                      try {
-                        const res = await api.resendOtp(loginEmail);
-                        if (res.devOtp) {
-                          setDevOtp(res.devOtp);
-                          setOtpCode(res.devOtp);
+                  <div className="flex items-center justify-between text-xs px-1">
+                    <span className="text-slate-500 text-[11px]">Didn't receive code?</span>
+                    <button
+                      type="button"
+                      disabled={isResendingOtp}
+                      onClick={async () => {
+                        setIsResendingOtp(true);
+                        setError('');
+                        try {
+                          const res = await api.resendOtp(loginEmail);
+                          if (res.devOtp) {
+                            setDevOtp(res.devOtp);
+                            setOtpCode(res.devOtp);
+                          }
+                          setSuccessMsg(res.message || 'A fresh OTP has been sent to your email.');
+                        } catch (err: any) {
+                          setError(err.message || 'Failed to resend OTP.');
+                        } finally {
+                          setIsResendingOtp(false);
                         }
-                        setSuccessMsg(res.message || 'A fresh OTP has been sent to your email.');
-                      } catch (err: any) {
-                        setError(err.message || 'Failed to resend OTP.');
-                      } finally {
-                        setIsResendingOtp(false);
-                      }
-                    }}
-                    className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer"
-                  >
-                    {isResendingOtp ? 'Sending...' : 'Resend Code'}
-                  </button>
+                      }}
+                      className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer"
+                    >
+                      {isResendingOtp ? 'Sending...' : 'Resend Code'}
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-3 mt-2">
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="flex-1 py-2.5 px-3 bg-gradient-to-r from-indigo-600 to-violet-700 hover:from-indigo-500 hover:to-violet-600 text-white font-extrabold text-xs rounded-xl shadow-[0_4px_12px_rgba(79,70,229,0.22)] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-1"
+                    >
+                      {isLoading ? (
+                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          Verify & Login
+                          <ArrowRight className="w-3 h-3" />
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isLoading}
+                      onClick={handleDirectPasswordLogin}
+                      className="flex-1 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 shadow-sm"
+                    >
+                      🔑 Direct Password Login
+                    </button>
+                  </div>
+
+                  <div className="text-center pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOtpRequired(false);
+                        setOtpCode('');
+                        setDevOtp('');
+                        setError('');
+                      }}
+                      className="text-[11px] text-slate-500 hover:text-slate-700 hover:underline cursor-pointer"
+                    >
+                      ← Back to Login
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '22px' }}>
+                  <FloatingInput 
+                    id="login-email"
+                    label="Email Address"
+                    type="email"
+                    required
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    icon={Mail}
+                  />
+
+                  <FloatingPasswordInput 
+                    id="login-password"
+                    label="Password"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    showPassword={showPassword}
+                    setShowPassword={setShowPassword}
+                    required
+                  />
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', marginTop: '4px', userSelect: 'none' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', color: '#64748b' }}>
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        style={{ width: '16px', height: '16px', borderRadius: '4px', marginRight: '8px', cursor: 'pointer', accentColor: '#4f46e5' }}
+                      />
+                      Remember me
+                    </label>
+                    <a href="#forgot" style={{ color: '#4f46e5', fontWeight: 600, textDecoration: 'none' }}>Forgot password?</a>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', width: '100%', marginTop: '16px' }}>
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      style={{
+                        width: '100%',
+                        height: '44px',
+                        background: 'linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)',
+                        color: '#ffffff',
+                        fontWeight: 800,
+                        fontSize: '13px',
+                        borderRadius: '12px',
+                        border: 'none',
+                        boxShadow: '0 4px 14px rgba(79, 70, 229, 0.25)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {isLoading ? (
+                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <span>Sign In</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCreateAccountClick}
+                      style={{
+                        width: '100%',
+                        height: '44px',
+                        background: '#ffffff',
+                        border: '1.5px solid #94a3b8',
+                        color: '#334155',
+                        fontWeight: 800,
+                        fontSize: '13px',
+                        borderRadius: '12px',
+                        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      Create Account
+                    </button>
+                  </div>
+                </form>
+              )}
+
+            <div style={{ marginTop: '24px', width: '100%' }}>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center' }}>
+                  <div style={{ width: '100%', borderTop: '1px solid #f1f5f9' }}></div>
                 </div>
-
-                <div className="flex items-center gap-3 mt-2">
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="flex-1 py-2.5 px-3 bg-gradient-to-r from-indigo-600 to-violet-700 hover:from-indigo-500 hover:to-violet-600 text-white font-semibold text-xs rounded-xl shadow-[0_4px_12px_rgba(79,70,229,0.22)] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-1"
-                  >
-                    {isLoading ? (
-                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        Verify & Login
-                        <ArrowRight className="w-3 h-3" />
-                      </>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isLoading}
-                    onClick={handleDirectPasswordLogin}
-                    className="flex-1 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 shadow-sm"
-                  >
-                    🔑 Direct Password Login
-                  </button>
-                </div>
-
-                <div className="text-center pt-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOtpRequired(false);
-                      setOtpCode('');
-                      setDevOtp('');
-                      setError('');
-                    }}
-                    className="text-[11px] text-slate-500 hover:text-slate-700 hover:underline cursor-pointer"
-                  >
-                    ← Back to Login
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <form onSubmit={handleLoginSubmit} className="space-y-3 mt-2">
-                <FloatingInput 
-                  id="login-email"
-                  label="Email Address"
-                  type="email"
-                  required
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  icon={Mail}
-                />
-
-                <FloatingPasswordInput 
-                  id="login-password"
-                  label="Password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  showPassword={showPassword}
-                  setShowPassword={setShowPassword}
-                  required
-                />
-
-                <div className="flex items-center justify-between text-xs pt-1 select-none">
-                  <label className="flex items-center cursor-pointer text-slate-500">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="h-3.5 w-3.5 rounded bg-white border-indigo-200/80 text-indigo-600 focus:ring-0 cursor-pointer mr-1.5"
-                    />
-                    Remember me
-                  </label>
-                  <a href="#forgot" className="text-indigo-600 hover:underline font-semibold">Forgot password?</a>
-                </div>
-
-                <div className="flex items-center gap-3 mt-2">
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="flex-1 py-2.5 px-3 bg-gradient-to-r from-indigo-600 to-violet-700 hover:from-indigo-500 hover:to-violet-600 text-white font-semibold text-xs rounded-xl shadow-[0_4px_12px_rgba(79,70,229,0.22)] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-1"
-                  >
-                    {isLoading ? (
-                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        Sign In
-                        <ArrowRight className="w-3 h-3" />
-                      </>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleCreateAccountClick}
-                    className="flex-1 py-2.5 px-3 border border-indigo-200 hover:border-indigo-400 bg-white text-indigo-600 hover:bg-indigo-50/30 font-semibold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1"
-                  >
-                    Create Account
-                  </button>
-                </div>
-              </form>
-            )}
-
-            <div className="mt-3.5">
-              <div className="relative my-1.5">
-                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
-                <div className="relative flex justify-center text-[9px] uppercase font-bold text-slate-400">
-                  <span className="bg-white px-1.5">Or connect with</span>
+                <div style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
+                  <span style={{ backgroundColor: '#ffffff', padding: '0 12px', fontSize: '9px', textTransform: 'uppercase', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.08em' }}>
+                    Or connect with
+                  </span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '16px' }}>
                 <button
                   type="button"
                   onClick={() => handleSSOClick('google')}
-                  className="flex items-center justify-center gap-1.5 py-2 px-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-semibold text-slate-600 transition-all cursor-pointer"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    height: '44px',
+                    backgroundColor: '#ffffff',
+                    border: '1.5px solid #94a3b8',
+                    borderRadius: '12px',
+                    fontSize: '12.5px',
+                    fontWeight: 800,
+                    color: '#334155',
+                    cursor: 'pointer',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+                    transition: 'all 0.2s'
+                  }}
                 >
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
                     <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
@@ -914,23 +1039,35 @@ export default function LoginForm({
                 <button
                   type="button"
                   onClick={() => handleSSOClick('apple')}
-                  className="flex items-center justify-center gap-1.5 py-2 px-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-semibold text-slate-600 transition-all cursor-pointer"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    height: '44px',
+                    backgroundColor: '#ffffff',
+                    border: '1.5px solid #94a3b8',
+                    borderRadius: '12px',
+                    fontSize: '12.5px',
+                    fontWeight: 800,
+                    color: '#334155',
+                    cursor: 'pointer',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+                    transition: 'all 0.2s'
+                  }}
                 >
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.17c.66-.81 1.11-1.93.99-3.06-1 .04-2.22.67-2.94 1.5-.62.71-1.16 1.85-1.02 2.96 1.1.09 2.23-.55 2.97-1.4z" />
                   </svg>
                   Apple
                 </button>
               </div>
-
-
-
-
             </div>
+          </div>
           </motion.div>
 
           <motion.div
-            className="absolute inset-y-0 left-0 lg:left-auto lg:right-0 w-full lg:w-1/2 p-4 sm:p-6 lg:p-8 flex flex-col justify-center space-y-2.5 overflow-y-auto no-scrollbar"
+            className="absolute inset-y-0 left-0 lg:left-auto lg:right-0 w-full lg:w-1/2 p-6 sm:p-8 lg:py-10 flex flex-col justify-center overflow-y-auto no-scrollbar"
             initial={{ opacity: 0 }}
             animate={{
               opacity: isSignUp ? 1 : 0,
@@ -941,363 +1078,555 @@ export default function LoginForm({
             transition={springTransition}
             style={{ display: isMobile ? (isSignUp ? 'flex' : 'none') : 'flex' }}
           >
-            <div className="flex items-start justify-between gap-2">
+            <div style={{ maxWidth: '400px', width: '100%', margin: '0 auto' }}>
               <div>
-                <div className="inline-flex items-center justify-center p-1.5 bg-gradient-to-tr from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl mb-1.5 text-indigo-655 shadow-sm">
-                  <Sparkles className="w-4 h-4 animate-pulse text-indigo-600" />
-                </div>
-                <h2 className="text-lg sm:text-xl font-bold font-display text-slate-900 tracking-tight">
-                  {setupRequired ? (
-                    <>Setup <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent">Super Owner</span></>
-                  ) : (
-                    <>Create <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent">Account</span></>
-                  )}
+                <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', margin: 0, lineHeight: 1.2 }}>
+                  {setupRequired ? "Setup Super Owner" : "Create Account"}
                 </h2>
-                <p className="text-slate-400 text-[11px] mt-0.5">
-                  {setupRequired ? 'First-time setup detected. Configure the platform master administrator.' : 'Sign up today and get onboarded to the Apex Suite platform.'}
-                </p>
               </div>
 
-              {!setupRequired && (
-                <button
-                  type="button"
-                  onClick={handleCopyRegisterLink}
-                  title="Copy direct registration link to share"
-                  className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[11px] font-semibold transition-all cursor-pointer ${
-                    copiedLink 
-                      ? 'bg-emerald-50 border-emerald-300 text-emerald-700 shadow-xs' 
-                      : 'bg-white hover:bg-indigo-50/70 border-indigo-200 text-indigo-600 shadow-xs hover:border-indigo-300'
-                  }`}
-                >
-                  {copiedLink ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>Link Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Share2 className="w-3.5 h-3.5 text-indigo-600" />
-                      <span>Copy Direct Link</span>
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
+              <p 
+                style={{ 
+                  fontSize: '10px',
+                  transform: 'scale(0.8)',
+                  transformOrigin: 'left center',
+                  display: 'inline-block',
+                  color: '#64748b', 
+                  marginTop: '2px', 
+                  marginBottom: 0, 
+                  whiteSpace: 'nowrap',
+                  lineHeight: '1.2'
+                }}
+              >
+                {setupRequired ? 'First-time setup detected. Configure the platform master administrator.' : 'Sign up today and get onboarded to the ITLC HRMS platform.'}
+              </p>
 
-            {/* Step progress bar */}
-            <div className="w-full flex items-center justify-between text-[9px] font-bold uppercase tracking-wider text-slate-450 select-none py-1">
-              <span className={signUpStep === 1 ? 'text-indigo-600' : ''}>1. Company</span>
-              <div className="flex-1 mx-2 h-1 bg-slate-100 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-indigo-600 transition-all duration-300" 
-                  style={{ width: signUpStep === 1 ? '50%' : '100%' }}
-                />
-              </div>
-              <span className={signUpStep === 2 ? 'text-indigo-600' : ''}>2. Location & Credentials</span>
-            </div>
-
-            {error && isSignUp && (
-              <div className="p-2.5 my-2 bg-rose-50 border border-rose-100 text-rose-600 text-[10px] rounded-lg">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleSignUpSubmit} className="space-y-3 mt-1.5">
-              {signUpStep === 1 ? (
-                /* STEP 1 FIELDS */
-                <div className="space-y-2.5">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <div className="space-y-0.5">
-                      <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">{setupRequired ? 'Full Name *' : 'Company Name *'}</label>
-                      <div className="relative">
-                        {!(focusCompanyName || companyName) && (
-                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-indigo-500 pointer-events-none">
-                            <Building2 className="w-3.5 h-3.5" />
-                          </span>
-                        )}
-                        <input
-                          type="text"
-                          required
-                          value={companyName}
-                          onFocus={() => setFocusCompanyName(true)}
-                          onBlur={() => setFocusCompanyName(false)}
-                          onChange={(e) => setCompanyName(e.target.value)}
-                          className="w-full pr-3 py-1.5 premium-input rounded-xl text-slate-900 text-xs focus:ring-4 focus:ring-indigo-500/10"
-                          style={{ paddingLeft: (focusCompanyName || companyName) ? '12px' : '36px' }}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-0.5">
-                      <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">{setupRequired ? 'Email Address *' : 'Company Email *'}</label>
-                      <div className="relative">
-                        {!(focusCompanyEmail || companyEmail) && (
-                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-indigo-500 pointer-events-none">
-                            <Mail className="w-3.5 h-3.5" />
-                          </span>
-                        )}
-                        <input
-                          type="email"
-                          required
-                          value={companyEmail}
-                          onFocus={() => setFocusCompanyEmail(true)}
-                          onBlur={() => setFocusCompanyEmail(false)}
-                          onChange={(e) => setCompanyEmail(e.target.value)}
-                          className="w-full pr-3 py-1.5 premium-input rounded-xl text-slate-900 text-xs focus:ring-4 focus:ring-indigo-500/10"
-                          style={{ paddingLeft: (focusCompanyEmail || companyEmail) ? '12px' : '36px' }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <div className="space-y-0.5">
-                      <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">{setupRequired ? 'Mobile Number *' : 'Company Phone *'}</label>
-                      <div className="relative">
-                        {!(focusCompanyPhone || companyPhone) && (
-                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-indigo-500 pointer-events-none">
-                            <Phone className="w-3.5 h-3.5" />
-                          </span>
-                        )}
-                        <input
-                          type="text"
-                          required
-                          value={companyPhone}
-                          onFocus={() => setFocusCompanyPhone(true)}
-                          onBlur={() => setFocusCompanyPhone(false)}
-                          onChange={(e) => setCompanyPhone(e.target.value)}
-                          className="w-full pr-3 py-1.5 premium-input rounded-xl text-slate-900 text-xs focus:ring-4 focus:ring-indigo-500/10"
-                          style={{ paddingLeft: (focusCompanyPhone || companyPhone) ? '12px' : '36px' }}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-0.5">
-                      <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Company Website</label>
-                      <div className="relative">
-                        {!(focusCompanyWebsite || companyWebsite) && (
-                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-indigo-500 pointer-events-none">
-                            <Globe className="w-3.5 h-3.5" />
-                          </span>
-                        )}
-                        <input
-                          type="url"
-                          value={companyWebsite}
-                          onFocus={() => setFocusCompanyWebsite(true)}
-                          onBlur={() => setFocusCompanyWebsite(false)}
-                          onChange={(e) => setCompanyWebsite(e.target.value)}
-                          className="w-full pr-3 py-1.5 premium-input rounded-xl text-slate-900 text-xs focus:ring-4 focus:ring-indigo-500/10"
-                          style={{ paddingLeft: (focusCompanyWebsite || companyWebsite) ? '12px' : '36px' }}
-                          placeholder="https://example.com"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <div className="space-y-0.5">
-                      <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Industry Type</label>
-                      <select
-                        value={industryType}
-                        onChange={(e) => setIndustryType(e.target.value)}
-                        className="w-full px-2.5 py-1.5 premium-input rounded-xl text-slate-900 text-xs cursor-pointer focus:ring-4 focus:ring-indigo-500/10"
-                      >
-                        <option value="IT">IT & Software</option>
-                        <option value="Healthcare">Healthcare</option>
-                        <option value="Education">Education</option>
-                        <option value="Finance">Finance & Banking</option>
-                        <option value="Other">Other Services</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-0.5">
-                      <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Company Size *</label>
-                      <select
-                        value={companySize}
-                        onChange={(e) => setCompanySize(e.target.value)}
-                        className="w-full px-2.5 py-1.5 premium-input rounded-xl text-slate-900 text-xs cursor-pointer focus:ring-4 focus:ring-indigo-500/10"
-                      >
-                        <option value="1-10 Employees">1-10 Employees</option>
-                        <option value="11-50 Employees">11-50 Employees</option>
-                        <option value="51-200 Employees">51-200 Employees</option>
-                        <option value="200+ Employees">200+ Employees</option>
-                        <option value="Custom">Custom</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {companySize === 'Custom' && (
-                    <div className="space-y-0.5 animate-fade-in">
-                      <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Employee Count *</label>
-                      <input
-                        type="number"
-                        min="1"
-                        required
-                        value={customEmployeesCount}
-                        onChange={(e) => setCustomEmployeesCount(e.target.value)}
-                        className="w-full px-3 py-1.5 premium-input rounded-xl text-slate-900 text-xs focus:ring-4 focus:ring-indigo-500/10"
-                        placeholder="Enter custom employees count"
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-2.5 pt-1.5">
-                    <button
-                      type="button"
-                      onClick={handleNextStep}
-                      className="flex-grow py-2 px-4 bg-gradient-to-r from-indigo-650 to-indigo-700 hover:from-indigo-600 hover:to-indigo-650 text-white font-semibold text-xs rounded-xl shadow-[0_3px_10px_rgba(79,70,229,0.18)] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                    >
-                      Next Step
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleToggleMode(false)}
-                      className="py-2 px-4 border border-indigo-200 hover:border-indigo-400 bg-white text-indigo-600 hover:bg-indigo-50/20 font-semibold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center"
-                    >
-                      Sign In
-                    </button>
-                  </div>
+              {/* Step progress bar */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#94a3b8', userSelect: 'none', padding: '8px 0', margin: '6px 0 10px 0' }}>
+                <span style={{ color: signUpStep === 1 ? '#4f46e5' : '#94a3b8', fontWeight: signUpStep === 1 ? 800 : 700 }}>1. Company</span>
+                <div style={{ flex: 1, margin: '0 12px', height: '4px', backgroundColor: '#f1f5f9', borderRadius: '9999px', overflow: 'hidden' }}>
+                  <div 
+                    style={{ height: '100%', backgroundColor: '#4f46e5', transition: 'all 0.3s ease', width: signUpStep === 1 ? '50%' : '100%' }}
+                  />
                 </div>
-              ) : (
-                /* STEP 2 FIELDS */
-                <div className="space-y-2.5">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <div className="space-y-0.5">
-                      <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Full Address *</label>
-                      <div className="relative">
-                        {!(focusAddress || fullAddress) && (
-                          <span className="absolute top-2 left-3 text-indigo-500 pointer-events-none">
-                            <MapPin className="w-3.5 h-3.5" />
+                <span style={{ color: signUpStep === 2 ? '#4f46e5' : '#94a3b8', fontWeight: signUpStep === 2 ? 800 : 700 }}>2. Location & Credentials</span>
+              </div>
+
+              {error && isSignUp && (
+                <div className="p-2.5 my-2 bg-rose-50 border border-rose-100 text-rose-600 text-[10px] rounded-lg">
+                  {error}
+                </div>
+              )}
+
+              <form onSubmit={handleSignUpSubmit} className="mt-2">
+                {signUpStep === 1 ? (
+                  /* STEP 1 FIELDS */
+                  <div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                      <div>
+                        <label style={{ fontSize: '10px', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', display: 'block' }}>
+                          {setupRequired ? 'Full Name *' : 'Company Name *'}
+                        </label>
+                        <div style={{ position: 'relative' }}>
+                          <span style={{ position: 'absolute', top: 0, bottom: 0, left: '14px', display: 'flex', alignItems: 'center', pointerEvents: 'none', color: '#94a3b8' }}>
+                            <Building2 style={{ width: '16px', height: '16px' }} />
                           </span>
-                        )}
-                        <textarea
-                          rows={1}
-                          required
-                          value={fullAddress}
-                          onFocus={() => setFocusAddress(true)}
-                          onBlur={() => setFocusAddress(false)}
-                          onChange={(e) => setFullAddress(e.target.value)}
-                          className="w-full pr-3 py-1 premium-input rounded-xl text-slate-900 text-xs resize-none focus:ring-4 focus:ring-indigo-500/10"
-                          style={{ paddingLeft: (focusAddress || fullAddress) ? '12px' : '36px' }}
-                          placeholder="Street details..."
-                        />
+                          <input
+                            type="text"
+                            required
+                            value={companyName}
+                            onChange={(e) => setCompanyName(e.target.value)}
+                            style={{
+                              width: '100%',
+                              height: '44px',
+                              paddingLeft: '40px',
+                              paddingRight: '12px',
+                              backgroundColor: '#ffffff',
+                              border: '1.5px solid #94a3b8',
+                              borderRadius: '12px',
+                              fontSize: '12.5px',
+                              color: '#1e293b',
+                              outline: 'none',
+                              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+                              boxSizing: 'border-box'
+                            }}
+                            placeholder={setupRequired ? "Your Full Name" : "Company Name"}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label style={{ fontSize: '10px', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', display: 'block' }}>
+                          {setupRequired ? 'Email Address *' : 'Company Email *'}
+                        </label>
+                        <div style={{ position: 'relative' }}>
+                          <span style={{ position: 'absolute', top: 0, bottom: 0, left: '14px', display: 'flex', alignItems: 'center', pointerEvents: 'none', color: '#94a3b8' }}>
+                            <Mail style={{ width: '16px', height: '16px' }} />
+                          </span>
+                          <input
+                            type="email"
+                            required
+                            value={companyEmail}
+                            onChange={(e) => setCompanyEmail(e.target.value)}
+                            style={{
+                              width: '100%',
+                              height: '44px',
+                              paddingLeft: '40px',
+                              paddingRight: '12px',
+                              backgroundColor: '#ffffff',
+                              border: '1.5px solid #94a3b8',
+                              borderRadius: '12px',
+                              fontSize: '12.5px',
+                              color: '#1e293b',
+                              outline: 'none',
+                              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+                              boxSizing: 'border-box'
+                            }}
+                            placeholder="name@company.com"
+                          />
+                        </div>
                       </div>
                     </div>
 
-                    <div className="space-y-0.5">
-                      <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Country *</label>
-                      <input
-                        type="text"
-                        required
-                        value={country}
-                        onChange={(e) => setCountry(e.target.value)}
-                        className="w-full px-3 py-1.5 premium-input rounded-xl text-slate-900 text-xs focus:ring-4 focus:ring-indigo-500/10"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <div className="space-y-0.5">
-                      <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">State *</label>
-                      <input
-                        type="text"
-                        required
-                        value={stateName}
-                        onChange={(e) => setStateName(e.target.value)}
-                        className="w-full px-3 py-1.5 premium-input rounded-xl text-slate-900 text-xs focus:ring-4 focus:ring-indigo-500/10"
-                      />
-                    </div>
-                    <div className="space-y-0.5">
-                      <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">City *</label>
-                      <input
-                        type="text"
-                        required
-                        value={cityName}
-                        onChange={(e) => setCityName(e.target.value)}
-                        className="w-full px-3 py-1.5 premium-input rounded-xl text-slate-900 text-xs focus:ring-4 focus:ring-indigo-500/10"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <div className="space-y-0.5">
-                      <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Password *</label>
-                      <div className="relative">
-                        {!(focusPassword || password) && (
-                          <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-indigo-500 pointer-events-none">
-                            <Lock className="w-3.5 h-3.5" />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '12px' }}>
+                      <div>
+                        <label style={{ fontSize: '10px', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', display: 'block' }}>
+                          {setupRequired ? 'Mobile Number *' : 'Company Phone *'}
+                        </label>
+                        <div style={{ position: 'relative' }}>
+                          <span style={{ position: 'absolute', top: 0, bottom: 0, left: '14px', display: 'flex', alignItems: 'center', pointerEvents: 'none', color: '#94a3b8' }}>
+                            <Phone style={{ width: '16px', height: '16px' }} />
                           </span>
-                        )}
-                        <input
-                          type={showPassword ? 'text' : 'password'}
-                          required
-                          value={password}
-                          onFocus={() => setFocusPassword(true)}
-                          onBlur={() => setFocusPassword(false)}
-                          onChange={(e) => setPassword(e.target.value)}
-                          className="w-full pr-9 py-1.5 premium-input rounded-xl text-slate-900 text-xs focus:ring-4 focus:ring-indigo-500/10"
-                          style={{ paddingLeft: (focusPassword || password) ? '14px' : '38px' }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-indigo-500 hover:text-indigo-700"
+                          <input
+                            type="text"
+                            required
+                            value={companyPhone}
+                            onChange={(e) => setCompanyPhone(e.target.value)}
+                            style={{
+                              width: '100%',
+                              height: '44px',
+                              paddingLeft: '40px',
+                              paddingRight: '12px',
+                              backgroundColor: '#ffffff',
+                              border: '1.5px solid #94a3b8',
+                              borderRadius: '12px',
+                              fontSize: '12.5px',
+                              color: '#1e293b',
+                              outline: 'none',
+                              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+                              boxSizing: 'border-box'
+                            }}
+                            placeholder="+91 98765 43210"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label style={{ fontSize: '10px', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', display: 'block' }}>
+                          Company Website
+                        </label>
+                        <div style={{ position: 'relative' }}>
+                          <span style={{ position: 'absolute', top: 0, bottom: 0, left: '14px', display: 'flex', alignItems: 'center', pointerEvents: 'none', color: '#94a3b8' }}>
+                            <Globe style={{ width: '16px', height: '16px' }} />
+                          </span>
+                          <input
+                            type="url"
+                            value={companyWebsite}
+                            onChange={(e) => setCompanyWebsite(e.target.value)}
+                            style={{
+                              width: '100%',
+                              height: '44px',
+                              paddingLeft: '40px',
+                              paddingRight: '12px',
+                              backgroundColor: '#ffffff',
+                              border: '1.5px solid #94a3b8',
+                              borderRadius: '12px',
+                              fontSize: '12.5px',
+                              color: '#1e293b',
+                              outline: 'none',
+                              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+                              boxSizing: 'border-box'
+                            }}
+                            placeholder="https://example.com"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '12px' }}>
+                      <div>
+                        <label style={{ fontSize: '10px', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', display: 'block' }}>
+                          Industry Type
+                        </label>
+                        <select
+                          value={industryType}
+                          onChange={(e) => setIndustryType(e.target.value)}
+                          style={{
+                            width: '100%',
+                            height: '44px',
+                            paddingLeft: '14px',
+                            paddingRight: '12px',
+                            backgroundColor: '#ffffff',
+                            border: '1.5px solid #94a3b8',
+                            borderRadius: '12px',
+                            fontSize: '12.5px',
+                            color: '#1e293b',
+                            outline: 'none',
+                            boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+                            boxSizing: 'border-box',
+                            cursor: 'pointer'
+                          }}
                         >
-                          {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                        </button>
+                          <option value="IT">IT & Software</option>
+                          <option value="Healthcare">Healthcare</option>
+                          <option value="Education">Education</option>
+                          <option value="Finance">Finance & Banking</option>
+                          <option value="Other">Other Services</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label style={{ fontSize: '10px', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', display: 'block' }}>
+                          Company Size *
+                        </label>
+                        <select
+                          value={companySize}
+                          onChange={(e) => setCompanySize(e.target.value)}
+                          style={{
+                            width: '100%',
+                            height: '44px',
+                            paddingLeft: '14px',
+                            paddingRight: '12px',
+                            backgroundColor: '#ffffff',
+                            border: '1.5px solid #94a3b8',
+                            borderRadius: '12px',
+                            fontSize: '12.5px',
+                            color: '#1e293b',
+                            outline: 'none',
+                            boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+                            boxSizing: 'border-box',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <option value="1-10 Employees">1-10 Employees</option>
+                          <option value="11-50 Employees">11-50 Employees</option>
+                          <option value="51-200 Employees">51-200 Employees</option>
+                          <option value="200+ Employees">200+ Employees</option>
+                          <option value="Custom">Custom</option>
+                        </select>
                       </div>
                     </div>
 
-                    <div className="space-y-0.5">
-                      <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Confirm Password *</label>
-                      <div className="relative">
-                        {!(focusConfirmPassword || confirmPassword) && (
-                          <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-indigo-500 pointer-events-none">
-                            <Lock className="w-3.5 h-3.5" />
-                          </span>
-                        )}
+                    {companySize === 'Custom' && (
+                      <div className="mt-3 animate-fade-in">
+                        <label style={{ fontSize: '10px', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', display: 'block' }}>
+                          Employee Count *
+                        </label>
                         <input
-                          type={showPassword ? 'text' : 'password'}
+                          type="number"
+                          min="1"
                           required
-                          value={confirmPassword}
-                          onFocus={() => setFocusConfirmPassword(true)}
-                          onBlur={() => setFocusConfirmPassword(false)}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="w-full pr-3 py-1.5 premium-input rounded-xl text-slate-900 text-xs focus:ring-4 focus:ring-indigo-500/10"
-                          style={{ paddingLeft: (focusConfirmPassword || confirmPassword) ? '14px' : '38px' }}
+                          value={customEmployeesCount}
+                          onChange={(e) => setCustomEmployeesCount(e.target.value)}
+                          style={{
+                            width: '100%',
+                            height: '44px',
+                            paddingLeft: '14px',
+                            paddingRight: '12px',
+                            backgroundColor: '#ffffff',
+                            border: '1.5px solid #94a3b8',
+                            borderRadius: '12px',
+                            fontSize: '12.5px',
+                            color: '#1e293b',
+                            outline: 'none',
+                            boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+                            boxSizing: 'border-box'
+                          }}
+                          placeholder="Enter custom employees count"
+                        />
+                      </div>
+                    )}
+
+                    <div style={{ width: '100%', marginTop: '20px' }}>
+                      <button
+                        type="button"
+                        onClick={handleNextStep}
+                        style={{
+                          width: '100%',
+                          height: '44px',
+                          backgroundColor: '#4338ca',
+                          color: '#ffffff',
+                          fontWeight: 800,
+                          fontSize: '13px',
+                          borderRadius: '12px',
+                          border: 'none',
+                          boxShadow: '0 4px 14px rgba(67, 56, 202, 0.25)',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        <span>Next Step</span>
+                        <ArrowRight style={{ width: '15px', height: '15px' }} />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* STEP 2 FIELDS */
+                  <div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                      <div>
+                        <label style={{ fontSize: '10px', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', display: 'block' }}>Full Address *</label>
+                        <div style={{ position: 'relative' }}>
+                          <span style={{ position: 'absolute', top: 0, bottom: 0, left: '14px', display: 'flex', alignItems: 'center', pointerEvents: 'none', color: '#94a3b8' }}>
+                            <MapPin style={{ width: '16px', height: '16px' }} />
+                          </span>
+                          <input
+                            type="text"
+                            required
+                            value={fullAddress}
+                            onChange={(e) => setFullAddress(e.target.value)}
+                            style={{
+                              width: '100%',
+                              height: '44px',
+                              paddingLeft: '40px',
+                              paddingRight: '12px',
+                              backgroundColor: '#ffffff',
+                              border: '1.5px solid #94a3b8',
+                              borderRadius: '12px',
+                              fontSize: '12.5px',
+                              color: '#1e293b',
+                              outline: 'none',
+                              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+                              boxSizing: 'border-box'
+                            }}
+                            placeholder="Street details..."
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label style={{ fontSize: '10px', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', display: 'block' }}>Country *</label>
+                        <div style={{ position: 'relative' }}>
+                          <span style={{ position: 'absolute', top: 0, bottom: 0, left: '14px', display: 'flex', alignItems: 'center', pointerEvents: 'none', color: '#94a3b8' }}>
+                            <Globe style={{ width: '16px', height: '16px' }} />
+                          </span>
+                          <input
+                            type="text"
+                            required
+                            value={country}
+                            onChange={(e) => setCountry(e.target.value)}
+                            style={{
+                              width: '100%',
+                              height: '44px',
+                              paddingLeft: '40px',
+                              paddingRight: '12px',
+                              backgroundColor: '#ffffff',
+                              border: '1.5px solid #94a3b8',
+                              borderRadius: '12px',
+                              fontSize: '12.5px',
+                              color: '#1e293b',
+                              outline: 'none',
+                              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+                              boxSizing: 'border-box'
+                            }}
+                            placeholder="Country name"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '12px' }}>
+                      <div>
+                        <label style={{ fontSize: '10px', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', display: 'block' }}>State *</label>
+                        <input
+                          type="text"
+                          required
+                          value={stateName}
+                          onChange={(e) => setStateName(e.target.value)}
+                          style={{
+                            width: '100%',
+                            height: '44px',
+                            paddingLeft: '14px',
+                            paddingRight: '12px',
+                            backgroundColor: '#ffffff',
+                            border: '1.5px solid #94a3b8',
+                            borderRadius: '12px',
+                            fontSize: '12.5px',
+                            color: '#1e293b',
+                            outline: 'none',
+                            boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+                            boxSizing: 'border-box'
+                          }}
+                          placeholder="State"
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '10px', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', display: 'block' }}>City *</label>
+                        <input
+                          type="text"
+                          required
+                          value={cityName}
+                          onChange={(e) => setCityName(e.target.value)}
+                          style={{
+                            width: '100%',
+                            height: '44px',
+                            paddingLeft: '14px',
+                            paddingRight: '12px',
+                            backgroundColor: '#ffffff',
+                            border: '1.5px solid #94a3b8',
+                            borderRadius: '12px',
+                            fontSize: '12.5px',
+                            color: '#1e293b',
+                            outline: 'none',
+                            boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+                            boxSizing: 'border-box'
+                          }}
+                          placeholder="City"
                         />
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-2.5 pt-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setSignUpStep(1)}
-                      className="py-2 px-3 border border-slate-200 hover:border-slate-400 bg-white text-slate-600 font-semibold text-xs rounded-xl transition-all cursor-pointer"
-                    >
-                      Back
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isLoading}
-                      className="flex-grow py-2 px-4 bg-gradient-to-r from-indigo-650 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs rounded-xl shadow-[0_3px_10px_rgba(79,70,229,0.18)] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                    >
-                      {isLoading ? (
-                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <>
-                          {setupRequired ? 'Initialize Platform' : 'Create Account'}
-                          <Check className="w-3.5 h-3.5" />
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </form>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '12px' }}>
+                      <div>
+                        <label style={{ fontSize: '10px', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', display: 'block' }}>Password *</label>
+                        <div style={{ position: 'relative' }}>
+                          <span style={{ position: 'absolute', top: 0, bottom: 0, left: '14px', display: 'flex', alignItems: 'center', pointerEvents: 'none', color: '#94a3b8' }}>
+                            <Lock style={{ width: '16px', height: '16px' }} />
+                          </span>
+                          <input
+                            type={showPassword ? 'text' : 'password'}
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            style={{
+                              width: '100%',
+                              height: '44px',
+                              paddingLeft: '40px',
+                              paddingRight: '38px',
+                              backgroundColor: '#ffffff',
+                              border: '1.5px solid #94a3b8',
+                              borderRadius: '12px',
+                              fontSize: '12.5px',
+                              color: '#1e293b',
+                              outline: 'none',
+                              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+                              boxSizing: 'border-box'
+                            }}
+                            placeholder="Password"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              bottom: 0,
+                              right: '12px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              color: '#94a3b8',
+                              padding: 0
+                            }}
+                          >
+                            {showPassword ? <EyeOff style={{ width: '16px', height: '16px' }} /> : <Eye style={{ width: '16px', height: '16px' }} />}
+                          </button>
+                        </div>
+                      </div>
 
+                      <div>
+                        <label style={{ fontSize: '10px', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', display: 'block' }}>Confirm Password *</label>
+                        <div style={{ position: 'relative' }}>
+                          <span style={{ position: 'absolute', top: 0, bottom: 0, left: '14px', display: 'flex', alignItems: 'center', pointerEvents: 'none', color: '#94a3b8' }}>
+                            <Lock style={{ width: '16px', height: '16px' }} />
+                          </span>
+                          <input
+                            type={showPassword ? 'text' : 'password'}
+                            required
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            style={{
+                              width: '100%',
+                              height: '44px',
+                              paddingLeft: '40px',
+                              paddingRight: '38px',
+                              backgroundColor: '#ffffff',
+                              border: '1.5px solid #94a3b8',
+                              borderRadius: '12px',
+                              fontSize: '12.5px',
+                              color: '#1e293b',
+                              outline: 'none',
+                              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+                              boxSizing: 'border-box'
+                            }}
+                            placeholder="Confirm Password"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '20px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setSignUpStep(1)}
+                        style={{
+                          flex: 1,
+                          height: '44px',
+                          backgroundColor: '#ffffff',
+                          color: '#334155',
+                          border: '1.5px solid #94a3b8',
+                          fontWeight: 800,
+                          fontSize: '13px',
+                          borderRadius: '12px',
+                          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        Back
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isLoading}
+                        style={{
+                          flex: 3,
+                          height: '44px',
+                          backgroundColor: '#4338ca',
+                          color: '#ffffff',
+                          fontWeight: 800,
+                          fontSize: '13px',
+                          borderRadius: '12px',
+                          border: 'none',
+                          boxShadow: '0 4px 14px rgba(67, 56, 202, 0.25)',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        {isLoading ? (
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <>
+                            <span>{setupRequired ? 'Initialize Platform' : 'Create Account'}</span>
+                            <Check style={{ width: '15px', height: '15px' }} />
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </form>
+            </div>
           </motion.div>
 
           {/* ==========================================================
@@ -1309,7 +1638,7 @@ export default function LoginForm({
             onMouseLeave={handleMouseLeave}
             animate={{
               x: isSignUp ? "0%" : "100%",
-              borderRadius: isSignUp ? "0px 120px 120px 0px" : "120px 0px 0px 120px"
+              borderRadius: isSignUp ? "0px 85px 85px 0px" : "85px 0px 0px 85px"
             }}
             transition={springTransition}
             style={{
@@ -1317,6 +1646,79 @@ export default function LoginForm({
               transformStyle: "preserve-3d"
             }}
           >
+            {/* Scoped style for Blue Card button from Uiverse.io */}
+            <style>{`
+              .uiverse-blue-card-btn {
+                position: relative;
+                overflow: hidden;
+                height: 3rem;
+                padding: 0 2rem;
+                border-radius: 1.5rem;
+                background: #ffffff;
+                background-size: 400%;
+                color: #0f172a;
+                border: none;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 800;
+                font-size: 13px;
+                box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+                transition: all 0.3s ease;
+                text-decoration: none;
+              }
+              .uiverse-blue-card-btn:hover {
+                color: #ffffff;
+              }
+              .uiverse-blue-card-btn:hover::before {
+                transform: scaleX(1);
+              }
+              .uiverse-btn-content {
+                position: relative;
+                z-index: 1;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 800 !important;
+                transition: color 0.3s ease;
+              }
+              .uiverse-blue-card-btn::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                transform: scaleX(0);
+                transform-origin: 0 50%;
+                width: 100%;
+                height: 100%;
+                border-radius: inherit;
+                background: linear-gradient(
+                  82.3deg,
+                  rgba(150, 93, 233, 1) 10.8%,
+                  rgba(99, 88, 238, 1) 94.3%
+                );
+                transition: all 0.475s;
+              }
+              .blue-card-heading {
+                color: #ffffff !important;
+                font-weight: 800 !important;
+                font-size: 20px !important;
+                letter-spacing: -0.02em !important;
+                margin: 0 0 8px 0 !important;
+                line-height: 1.25 !important;
+              }
+              .blue-card-description {
+                color: #ffffff !important;
+                font-weight: 500 !important;
+                font-size: 12.5px !important;
+                line-height: 1.5 !important;
+                max-width: 285px !important;
+                margin: 0 0 20px 0 !important;
+                opacity: 1 !important;
+              }
+            `}</style>
+
             {/* Background design accents in the overlay panel */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent opacity-60 z-0 pointer-events-none" />
             <div className="absolute top-10 right-10 w-24 h-24 rounded-full bg-white/5 blur-xl pointer-events-none" />
@@ -1375,8 +1777,8 @@ export default function LoginForm({
                   </div>
                 </div>
                 
-                {/* Pagination Dots centered below image */}
-                <div className="flex justify-center gap-1.5 mt-2">
+                {/* Pagination Dots centered below image with proper breathing room */}
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginTop: '18px', marginBottom: '0px' }}>
                   {scrollSnaps.map((_, index) => (
                     <button
                       key={index}
@@ -1392,8 +1794,8 @@ export default function LoginForm({
                 </div>
               </div>
 
-              {/* Text content below slideshow */}
-              <div className="w-full">
+              {/* Text content below slideshow with equal gap matching dots */}
+              <div style={{ width: '100%', marginTop: '18px' }}>
                 <AnimatePresence mode="wait">
                   {isSignUp ? (
                     <motion.div
@@ -1402,18 +1804,28 @@ export default function LoginForm({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -15 }}
                       transition={{ duration: 0.3 }}
-                      className="space-y-4"
+                      className="text-center flex flex-col items-center"
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}
                     >
-                      <h3 className="text-xl font-bold font-display tracking-tight">Already registered?</h3>
-                      <p className="text-indigo-100 text-xs leading-relaxed">
+                      <h3 
+                        className="blue-card-heading text-white"
+                        style={{ fontSize: '20px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.02em', margin: '0 0 8px 0', lineHeight: 1.25 }}
+                      >
+                        Already registered?
+                      </h3>
+                      <p 
+                        className="blue-card-description text-white"
+                        style={{ color: '#ffffff', fontSize: '12.5px', fontWeight: 500, lineHeight: '1.5', maxWidth: '280px', margin: '0 0 20px 0', opacity: 1 }}
+                      >
                         To keep connected with your workspaces and teams, please sign in with your credentials.
                       </p>
                       <button
                         type="button"
                         onClick={() => handleToggleMode(false)}
-                        className="py-2.5 px-6 border border-white hover:bg-white hover:text-indigo-900 font-bold text-xs rounded-xl shadow-md transition-all active:scale-[0.96] cursor-pointer"
+                        className="uiverse-blue-card-btn active:scale-[0.96]"
+                        style={{ fontWeight: 800 }}
                       >
-                        Sign In
+                        <span className="uiverse-btn-content" style={{ fontWeight: 800 }}>Sign In</span>
                       </button>
                     </motion.div>
                   ) : (
@@ -1423,18 +1835,28 @@ export default function LoginForm({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -15 }}
                       transition={{ duration: 0.3 }}
-                      className="space-y-4"
+                      className="text-center flex flex-col items-center"
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}
                     >
-                      <h3 className="text-xl font-bold font-display tracking-tight">New to Apex Suite?</h3>
-                      <p className="text-indigo-100 text-xs leading-relaxed">
+                      <h3 
+                        className="blue-card-heading text-white"
+                        style={{ fontSize: '20px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.02em', margin: '0 0 8px 0', lineHeight: 1.25 }}
+                      >
+                        New to Apex Suite?
+                      </h3>
+                      <p 
+                        className="blue-card-description text-white"
+                        style={{ color: '#ffffff', fontSize: '12.5px', fontWeight: 500, lineHeight: '1.5', maxWidth: '280px', margin: '0 0 20px 0', opacity: 1 }}
+                      >
                         Enter your organizational details and start managing your company analytics forecasts.
                       </p>
                       <button
                         type="button"
                         onClick={handleCreateAccountClick}
-                        className="py-2.5 px-6 border border-white hover:bg-white hover:text-indigo-900 font-bold text-xs rounded-xl shadow-md transition-all active:scale-[0.96] cursor-pointer"
+                        className="uiverse-blue-card-btn active:scale-[0.96]"
+                        style={{ fontWeight: 800 }}
                       >
-                        Create Account
+                        <span className="uiverse-btn-content" style={{ fontWeight: 800 }}>Create Account</span>
                       </button>
                     </motion.div>
                   )}
