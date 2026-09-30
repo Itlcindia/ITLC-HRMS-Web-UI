@@ -169,6 +169,15 @@ export const SubscriptionsTab: React.FC = () => {
     const { id, name } = deleteConfirmPlan;
     try {
       try {
+        const deletedRaw = localStorage.getItem('hrms_deleted_plan_ids');
+        const deletedList: string[] = deletedRaw ? JSON.parse(deletedRaw) : [];
+        if (!deletedList.includes(id)) {
+          deletedList.push(id);
+          localStorage.setItem('hrms_deleted_plan_ids', JSON.stringify(deletedList));
+        }
+      } catch (e) {}
+
+      try {
         await api.deletePlan(id);
       } catch (err) {
         console.warn('Backend deletePlan failed, deleting locally:', err);

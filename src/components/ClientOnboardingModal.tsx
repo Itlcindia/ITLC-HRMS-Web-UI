@@ -1,3 +1,4 @@
+import { api } from '../omnistaff/services/api';
 import React, { useState, useEffect } from 'react';
 import { 
   X, 
@@ -172,6 +173,33 @@ export const ClientOnboardingModal: React.FC<ClientOnboardingModalProps> = ({
       maxSeats: newTenant.userSeatLimit,
       renewalDate: newTenant.renewalDate
     });
+
+    // Save directly to backend server database so company appears in Superowner and users can login
+    api.createCompany({
+      id: newTenant.id,
+      name: newTenant.name,
+      companyName: newTenant.name,
+      ownerName: newTenant.adminName,
+      adminName: newTenant.adminName,
+      email: newTenant.adminEmail,
+      adminEmail: newTenant.adminEmail,
+      phone: newTenant.adminPhone,
+      adminPhone: newTenant.adminPhone,
+      employeesCount: newTenant.userSeatLimit,
+      seatLimit: newTenant.userSeatLimit,
+      subscriptionPlanId: newTenant.planId,
+      planId: newTenant.planId,
+      status: 'active',
+      billingCycle: newTenant.billingCycle,
+      password: 'Admin@123',
+      adminPassword: 'Admin@123',
+      customPassword: 'Admin@123',
+      createdDate: newTenant.onboardDate,
+      renewalDate: newTenant.renewalDate,
+      mrr: newTenant.mrrAmount,
+      industry: newTenant.industry,
+      gstin: newTenant.gstin || ''
+    }).catch(err => console.warn('Server createCompany error:', err));
 
     // Save credentials to itlc_registered_users
     try {

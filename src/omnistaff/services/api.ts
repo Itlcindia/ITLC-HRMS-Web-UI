@@ -459,26 +459,28 @@ export const api = {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(credentials)
-      }, 2500);
+      }, 3000);
       
       if (res.ok) {
         const result = await res.json();
-        if (result && result.token) {
-          localStorage.setItem('hrms_jwt_token', result.token);
-          secureStorage.setItem('hrms_jwt_token', result.token);
-          localStorage.setItem('hrms_user_profile', JSON.stringify(result));
-          secureStorage.setItem('hrms_user_profile', result);
-          localStorage.setItem('crm_auth_session', 'true');
-          sessionStorage.setItem('crm_auth_session', 'true');
-          secureStorage.setItem('crm_auth_session', 'true');
-          localStorage.setItem('crm_current_user', JSON.stringify({
-            id: result.id || result.user?.id || 1,
-            name: result.name || result.fullName || result.user?.name || 'Authorized User',
-            email: result.email || email,
-            role: result.role === 'Super Owner' ? 'Super Admin' : (result.role === 'Company Admin' || result.role === 'HR' ? 'Admin' : result.role === 'Manager' ? 'Sales Manager' : 'Sales Rep'),
-            status: 'Active',
-            avatar: ((result.name || result.user?.name || 'AU') as string).slice(0, 2).toUpperCase()
-          }));
+        if (result && (result.token || result.otpRequired)) {
+          if (result.token) {
+            localStorage.setItem('hrms_jwt_token', result.token);
+            secureStorage.setItem('hrms_jwt_token', result.token);
+            localStorage.setItem('hrms_user_profile', JSON.stringify(result));
+            secureStorage.setItem('hrms_user_profile', result);
+            localStorage.setItem('crm_auth_session', 'true');
+            sessionStorage.setItem('crm_auth_session', 'true');
+            secureStorage.setItem('crm_auth_session', 'true');
+            localStorage.setItem('crm_current_user', JSON.stringify({
+              id: result.id || result.user?.id || 1,
+              name: result.name || result.fullName || result.user?.name || 'Authorized User',
+              email: result.email || email,
+              role: result.role === 'Super Owner' ? 'Super Admin' : (result.role === 'Company Admin' || result.role === 'HR' ? 'Admin' : result.role === 'Manager' ? 'Sales Manager' : 'Sales Rep'),
+              status: 'Active',
+              avatar: ((result.name || result.user?.name || 'AU') as string).slice(0, 2).toUpperCase()
+            }));
+          }
           return result;
         }
       }
@@ -1969,10 +1971,27 @@ export const api = {
       const res = await fetchWithTimeout(`${API_URL}/superowner/companies`, {
         method: 'GET',
         headers: getHeaders()
-      }, 2000);
+      }, 3500);
       const data = await handleResponse(res);
-      if (Array.isArray(data)) {
-        data.forEach(upsertCompany);
+      const serverList = Array.isArray(data) 
+        ? data 
+        : (Array.isArray(data?.companies) ? data.companies : (Array.isArray(data?.tenants) ? data.tenants : []));
+      serverList.forEach(upsertCompany);
+
+      // Auto-sync any locally created companies (like "itlc india pvt limit") to server
+      for (const [id, localComp] of companyMap.entries()) {
+        const onServer = serverList.some((s: any) => 
+          String(s.id).toLowerCase() === String(id).toLowerCase() || 
+          (s.name && localComp.name && s.name.toLowerCase().trim() === localComp.name.toLowerCase().trim()) ||
+          (s.email && localComp.email && s.email.toLowerCase().trim() === localComp.email.toLowerCase().trim())
+        );
+        if (!onServer && !deletedIds.has(String(id))) {
+          fetchWithTimeout(`${API_URL}/superowner/companies`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(localComp)
+          }, 3000).catch(() => {});
+        }
       }
     } catch {}
 
@@ -2467,6 +2486,17 @@ export const api = {
   },
 
   async getPlans() {
+    let deletedPlanIds = new Set<string>();
+    try {
+      const delRaw = localStorage.getItem('hrms_deleted_plan_ids');
+      if (delRaw) {
+        const parsed = JSON.parse(delRaw);
+        if (Array.isArray(parsed)) parsed.forEach(id => deletedPlanIds.add(String(id).toLowerCase().trim()));
+      }
+    } catch {}
+
+    const isNotDeleted = (p: any) => p && p.id && !deletedPlanIds.has(String(p.id).toLowerCase().trim()) && !deletedPlanIds.has(String(p.name || '').toLowerCase().trim());
+
     // 1. Try public backend plans endpoint first
     try {
       const res = await fetchWithTimeout(`${API_URL}/auth/public-plans?t=${new Date().getTime()}`, {
@@ -2475,11 +2505,12 @@ export const api = {
       }, 3000);
       const data = await handleResponse(res);
       if (Array.isArray(data) && data.length > 0) {
+        const filtered = data.filter(isNotDeleted);
         try {
-          localStorage.setItem('hrms_subscription_plans', JSON.stringify(data));
-          syncHrmsPlansListToUnifiedCatalog(data);
+          localStorage.setItem('hrms_subscription_plans', JSON.stringify(filtered));
+          syncHrmsPlansListToUnifiedCatalog(filtered);
         } catch {}
-        return data;
+        return filtered;
       }
     } catch {}
 
@@ -2491,11 +2522,12 @@ export const api = {
       }, 2000);
       const data = await handleResponse(res);
       if (Array.isArray(data) && data.length > 0) {
+        const filtered = data.filter(isNotDeleted);
         try {
-          localStorage.setItem('hrms_subscription_plans', JSON.stringify(data));
-          syncHrmsPlansListToUnifiedCatalog(data);
+          localStorage.setItem('hrms_subscription_plans', JSON.stringify(filtered));
+          syncHrmsPlansListToUnifiedCatalog(filtered);
         } catch {}
-        return data;
+        return filtered;
       }
     } catch {}
 

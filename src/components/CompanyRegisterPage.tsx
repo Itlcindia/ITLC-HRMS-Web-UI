@@ -1,3 +1,4 @@
+import { api } from '../omnistaff/services/api';
 import React, { useState, useEffect } from 'react';
 import { 
   Building2, 
@@ -300,6 +301,33 @@ export const CompanyRegisterPage: React.FC<CompanyRegisterPageProps> = ({
           maxSeats: newTenant.userSeatLimit,
           renewalDate: newTenant.renewalDate
         });
+
+        // Save directly to backend server database so company immediately shows in Superowner
+        api.createCompany({
+          id: newTenant.id,
+          name: newTenant.name,
+          companyName: newTenant.name,
+          ownerName: newTenant.adminName,
+          adminName: newTenant.adminName,
+          email: newTenant.adminEmail,
+          adminEmail: newTenant.adminEmail,
+          phone: newTenant.adminPhone,
+          adminPhone: newTenant.adminPhone,
+          employeesCount: newTenant.userSeatLimit,
+          seatLimit: newTenant.userSeatLimit,
+          subscriptionPlanId: newTenant.planId,
+          planId: newTenant.planId,
+          status: 'active',
+          billingCycle: newTenant.billingCycle,
+          password: credPass,
+          adminPassword: credPass,
+          customPassword: credPass,
+          createdDate: newTenant.onboardDate,
+          renewalDate: newTenant.renewalDate,
+          mrr: newTenant.mrrAmount,
+          industry: newTenant.industry,
+          gstin: newTenant.gstin || ''
+        }).catch(err => console.warn('Server createCompany error:', err));
 
         // 2. Save credentials to itlc_registered_users
         try {
