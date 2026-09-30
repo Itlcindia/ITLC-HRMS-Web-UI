@@ -5,7 +5,8 @@ import {
   Search, Filter, Download, Plus, Edit2, ShieldAlert, 
   UserPlus, Check, X, ShieldCheck, Eye, Trash2, LogIn,
   Building, Mail, Phone, Calendar, HardDrive, Users,
-  ArrowLeft, Activity, ToggleLeft, User, Clock, XCircle
+  ArrowLeft, Activity, ToggleLeft, User, Clock, XCircle,
+  Crown, Sparkles
 } from 'lucide-react';
 import { useDashboard } from '../context/DashboardContext';
 import { Company } from '../types';
@@ -236,6 +237,51 @@ export const CompaniesTab: React.FC = () => {
       if (detailsCompany?.id === id) setDetailsCompany(prev => prev ? { ...prev, status: 'expired' } : null);
     } catch (err: any) {
       addToast(err.message || 'Action failed', 'error');
+    }
+  };
+
+  // Toggle Subscription Bypass (Allow without Subscription by Superowner)
+  const handleToggleBypassSubscription = async (id: string, name: string, currentVal: boolean) => {
+    const nextVal = !currentVal;
+    try {
+      const updatePayload: any = {
+        bypassSubscription: nextVal
+      };
+      if (nextVal) {
+        updatePayload.status = 'active';
+        updatePayload.subscriptionStatus = 'active';
+      }
+      const updated = await api.updateCompany(id, updatePayload);
+      setCompanies(prev => prev.map(c => c.id === id ? { 
+        ...c, 
+        ...updated, 
+        bypassSubscription: nextVal, 
+        ...(nextVal ? { status: 'active', subscriptionStatus: 'active' } : {}) 
+      } : c));
+      if (detailsCompany?.id === id) {
+        setDetailsCompany(prev => prev ? { 
+          ...prev, 
+          ...updated, 
+          bypassSubscription: nextVal, 
+          ...(nextVal ? { status: 'active', subscriptionStatus: 'active' } : {}) 
+        } : null);
+      }
+      syncCompanySubscriptionChange({ 
+        companyId: id, 
+        companyName: name, 
+        planId: updated?.subscriptionPlanId || detailsCompany?.subscriptionPlanId || 'growth', 
+        status: nextVal ? 'active' : (detailsCompany?.status || 'active'),
+        bypassSubscription: nextVal
+      });
+      if (nextVal) {
+        addToast(`👑 Superowner Pass: ${name} is now ALLOWED without subscription!`, 'success');
+        addLog('Superowner Free Pass Activated', `Superowner granted subscription-free access to company "${name}".`, 'company');
+      } else {
+        addToast(`Superowner Pass Disabled for ${name}. Subscription required.`, 'warning');
+        addLog('Superowner Free Pass Deactivated', `Subscription-free bypass was turned OFF for company "${name}".`, 'company');
+      }
+    } catch (err: any) {
+      addToast(err.message || 'Failed to update subscription bypass', 'error');
     }
   };
 
@@ -502,6 +548,96 @@ export const CompaniesTab: React.FC = () => {
                 </div>
               </div>
               
+              {/* Superowner Free Pass (Allow without Subscription) */}
+              <div className={`p-5 rounded-2xl border transition-all duration-300 ${
+                detailsCompany.bypassSubscription 
+                  ? 'bg-gradient-to-br from-amber-500/15 via-emerald-500/10 to-slate-900 border-amber-500/40 shadow-[0_0_25px_-5px_rgba(245,158,11,0.25)]' 
+                  : 'glass-card border-slate-200/30 dark:border-white/5'
+              }`}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className={`p-2 rounded-xl ${
+                      detailsCompany.bypassSubscription 
+                        ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-[0_0_12px_-2px_rgba(245,158,11,0.3)]' 
+                        : 'bg-slate-800 text-slate-400 border border-white/5'
+                    }`}>
+                      <Crown className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                        Free Access Pass
+                        {detailsCompany.bypassSubscription && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold normal-case">
+                            Active
+                          </span>
+                        )}
+                      </h4>
+                      <span className="text-[10px] text-slate-400 block">
+                        Allow without buying subscription
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Switch Toggle */}
+                  <button
+                    type="button"
+                    onClick={() => handleToggleBypassSubscription(detailsCompany.id, detailsCompany.name, !!detailsCompany.bypassSubscription)}
+                    className={`relative inline-flex h-6 w-12 shrink-0 items-center rounded-full transition-colors cursor-pointer ${
+                      detailsCompany.bypassSubscription ? 'bg-emerald-500' : 'bg-slate-700'
+                    }`}
+                    title={detailsCompany.bypassSubscription ? 'Click to turn OFF Free Access' : 'Click to turn ON Free Access'}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${
+                        detailsCompany.bypassSubscription ? 'translate-x-7' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                <div className="p-3 rounded-xl bg-black/30 border border-white/5 text-[11px] leading-relaxed">
+                  {detailsCompany.bypassSubscription ? (
+                    <div className="text-emerald-300 flex items-start gap-1.5">
+                      <Sparkles className="h-4 w-4 shrink-0 text-amber-400 mt-0.5" />
+                      <span>
+                        <strong>Allowed Without Subscription:</strong> This company has full Superowner approval. They can log in and use all portal features without purchasing or renewing any subscription plan.
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="text-slate-400 flex items-start gap-1.5">
+                      <ShieldAlert className="h-4 w-4 shrink-0 text-slate-500 mt-0.5" />
+                      <span>
+                        <strong>Standard Mode:</strong> Normal subscription rules apply. Company must purchase a plan. Toggle ON above to grant free access without payment.
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleBypassSubscription(detailsCompany.id, detailsCompany.name, !!detailsCompany.bypassSubscription)}
+                    className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm ${
+                      detailsCompany.bypassSubscription
+                        ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                        : 'bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-500 hover:from-amber-400 hover:to-emerald-400 text-slate-950 shadow-[0_0_15px_-3px_rgba(245,158,11,0.35)]'
+                    }`}
+                  >
+                    {detailsCompany.bypassSubscription ? (
+                      <>
+                        <X className="h-3.5 w-3.5" />
+                        Turn OFF Free Pass (Require Subscription)
+                      </>
+                    ) : (
+                      <>
+                        <Crown className="h-3.5 w-3.5" />
+                        Allow Access Without Subscription (Turn ON)
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
               {/* Status / Suspend Action card */}
               <div className="glass-card p-6 rounded-2xl border border-slate-200/30 dark:border-white/5 space-y-4">
                 <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Management Actions</h4>
@@ -914,7 +1050,15 @@ export const CompaniesTab: React.FC = () => {
 
                         {/* Subscription */}
                         <td className="py-4 px-4">
-                          <span className="font-semibold text-indigo-400">{plan ? plan.name : 'Unknown Plan'}</span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-semibold text-indigo-400">{plan ? plan.name : 'Unknown Plan'}</span>
+                            {c.bypassSubscription && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                <Crown className="w-2.5 h-2.5 text-amber-400 fill-amber-400" />
+                                Free Pass
+                              </span>
+                            )}
+                          </div>
                           <span className="text-[10px] text-slate-500 block">Joined {c.createdDate}</span>
                         </td>
 
@@ -931,6 +1075,22 @@ export const CompaniesTab: React.FC = () => {
                         {/* Actions */}
                         <td className="py-4 px-5 text-right">
                           <div className="flex justify-end gap-1.5">
+                            {/* Toggle Free Pass (Bypass Subscription) */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleBypassSubscription(c.id, c.name, !!c.bypassSubscription);
+                              }}
+                              title={c.bypassSubscription ? "Turn OFF Free Pass (Require Subscription)" : "Grant Free Pass (Allow without Subscription)"}
+                              className={`p-1.5 rounded-lg border transition ${
+                                c.bypassSubscription
+                                  ? 'bg-amber-500/20 hover:bg-amber-500 hover:text-white border-amber-500/40 text-amber-300 shadow-sm'
+                                  : 'bg-white/5 hover:bg-amber-500/20 hover:text-amber-300 border-white/10 text-slate-400'
+                              }`}
+                            >
+                              <Crown className={`h-3.5 w-3.5 ${c.bypassSubscription ? 'fill-amber-400 text-amber-300' : ''}`} />
+                            </button>
+
                             {/* Impersonate */}
                             <button
                               onClick={(e) => { e.stopPropagation(); handleLoginAs(c); }}

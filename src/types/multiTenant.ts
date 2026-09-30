@@ -61,6 +61,8 @@ export interface TenantCompany {
   paymentHistory?: PaymentReceiptRecord[];
   features: TenantFeatureFlags;
   notes?: string;
+  bypassSubscription?: boolean;
+  subscriptionStatus?: string;
 }
 
 export interface SubscriptionPlanDef {
@@ -786,6 +788,7 @@ export const syncCompanySubscriptionChange = (updateData: {
   renewalDate?: string;
   storageLimitGb?: number;
   notes?: string;
+  bypassSubscription?: boolean;
 }): void => {
   try {
     if (typeof window === 'undefined' || !window.localStorage) return;
@@ -832,7 +835,9 @@ export const syncCompanySubscriptionChange = (updateData: {
           password: credPass || (t as any).password,
           adminPassword: credPass || (t as any).adminPassword,
           planId: normalizedPlanId || t.planId,
-          status: updateData.status || t.status,
+          status: updateData.status || (updateData.bypassSubscription ? 'active' : t.status),
+          bypassSubscription: updateData.bypassSubscription !== undefined ? updateData.bypassSubscription : t.bypassSubscription,
+          subscriptionStatus: updateData.bypassSubscription ? 'active' : (t.subscriptionStatus || 'active'),
           billingCycle: updateData.billingCycle || t.billingCycle,
           userSeatLimit: updateData.maxSeats || t.userSeatLimit,
           renewalDate: updateData.renewalDate || t.renewalDate,
@@ -926,8 +931,14 @@ export const syncCompanySubscriptionChange = (updateData: {
           const updatedActive = {
             ...activeT,
             planId: normalizedPlanId || activeT.planId,
-            status: updateData.status || activeT.status,
-            userSeatLimit: updateData.maxSeats || activeT.userSeatLimit
+            status: updateData.status || (updateData.bypassSubscription ? 'active' : activeT.status),
+            bypassSubscription: updateData.bypassSubscription !== undefined ? updateData.bypassSubscription : activeT.bypassSubscription,
+            subscriptionStatus: updateData.bypassSubscription ? 'active' : (activeT.subscriptionStatus || 'active'),
+            userSeatLimit: resolvedSeats,
+            maxEmployees: resolvedSeats,
+            seatLimit: resolvedSeats,
+            storageLimitGb: resolvedStorageLimit,
+            storageLimit: resolvedStorageLimit
           };
           localStorage.setItem('itlc_active_tenant', JSON.stringify(updatedActive));
         }
@@ -939,12 +950,39 @@ export const syncCompanySubscriptionChange = (updateData: {
     if (hrmsProfile) {
       try {
         const hp = JSON.parse(hrmsProfile);
-        hp.subscriptionPlanId = updateData.planId;
-        hp.subscriptionPlan = updateData.planId;
-        if (updateData.companyId) hp.companyId = updateData.companyId;
-        if (updateData.companyName) hp.companyName = updateData.companyName;
-        if (updateData.status) hp.subscriptionStatus = updateData.status;
-        localStorage.setItem('hrms_user_profile', JSON.stringify(hp));
+        const isTargetCompany = 
+          hp.role !== 'Super Owner' && (
+            (targetCompanyId && (hp.companyId === targetCompanyId || hp.companyDetails?.id === targetCompanyId)) ||
+            (targetEmail && hp.email?.toLowerCase() === targetEmail.toLowerCase()) ||
+            (targetCompanyName && (hp.companyName?.toLowerCase() === targetCompanyName.toLowerCase() || hp.companyDetails?.name?.toLowerCase() === targetCompanyName.toLowerCase()))
+          );
+        if (isTargetCompany) {
+          hp.subscriptionPlanId = normalizedPlanId;
+          hp.subscriptionPlan = normalizedPlanId;
+          if (targetCompanyId) hp.companyId = targetCompanyId;
+          if (targetCompanyName) hp.companyName = targetCompanyName;
+          if (updateData.status) hp.subscriptionStatus = updateData.status;
+          if (updateData.bypassSubscription !== undefined) {
+            hp.bypassSubscription = updateData.bypassSubscription;
+            if (updateData.bypassSubscription) {
+              hp.subscriptionStatus = 'active';
+            }
+          }
+          hp.companyDetails = {
+            ...(hp.companyDetails || {}),
+            id: targetCompanyId || hp.companyId || hp.companyDetails?.id,
+            name: targetCompanyName || hp.companyName || hp.companyDetails?.name,
+            subscriptionPlanId: normalizedPlanId,
+            storageLimit: resolvedStorageLimit,
+            storageLimitGb: resolvedStorageLimit,
+            maxEmployees: resolvedSeats,
+            seatLimit: resolvedSeats,
+            userSeatLimit: resolvedSeats,
+            bypassSubscription: updateData.bypassSubscription !== undefined ? updateData.bypassSubscription : hp.companyDetails?.bypassSubscription,
+            status: updateData.bypassSubscription ? 'active' : (updateData.status || hp.companyDetails?.status || 'active')
+          };
+          localStorage.setItem('hrms_user_profile', JSON.stringify(hp));
+        }
       } catch (e) {}
     }
 

@@ -2135,7 +2135,9 @@ export const api = {
               adminEmail: data.email || t.adminEmail,
               adminPhone: data.phone !== undefined ? data.phone : t.adminPhone,
               planId: data.subscriptionPlanId || data.planId || t.planId,
-              status: data.status || t.status,
+              status: data.status || (data.bypassSubscription ? 'active' : t.status),
+              bypassSubscription: data.bypassSubscription !== undefined ? data.bypassSubscription : t.bypassSubscription,
+              subscriptionStatus: data.bypassSubscription ? 'active' : (data.subscriptionStatus || t.subscriptionStatus || 'active'),
               userSeatLimit: data.employeesCount !== undefined ? Number(data.employeesCount) : t.userSeatLimit
             };
           }
@@ -2187,7 +2189,9 @@ export const api = {
             adminEmail: updatedObj.email || activeT.adminEmail,
             adminPhone: updatedObj.phone !== undefined ? updatedObj.phone : activeT.adminPhone,
             planId: updatedObj.subscriptionPlanId || activeT.planId,
-            status: updatedObj.status || activeT.status,
+            status: updatedObj.status || (data.bypassSubscription ? 'active' : activeT.status),
+            bypassSubscription: data.bypassSubscription !== undefined ? data.bypassSubscription : activeT.bypassSubscription,
+            subscriptionStatus: data.bypassSubscription ? 'active' : (activeT.subscriptionStatus || 'active'),
             userSeatLimit: updatedObj.employeesCount || activeT.userSeatLimit
           };
           localStorage.setItem('itlc_active_tenant', JSON.stringify(updatedActive));
@@ -2201,6 +2205,18 @@ export const api = {
         if (hp.companyId === id || hp.companyDetails?.id === id) {
           hp.companyName = updatedObj.name || hp.companyName;
           hp.subscriptionPlanId = updatedObj.subscriptionPlanId || hp.subscriptionPlanId;
+          if (data.bypassSubscription !== undefined) {
+            hp.bypassSubscription = data.bypassSubscription;
+            if (data.bypassSubscription) {
+              hp.subscriptionStatus = 'active';
+            }
+          }
+          if (hp.companyDetails) {
+            hp.companyDetails.bypassSubscription = data.bypassSubscription !== undefined ? data.bypassSubscription : hp.companyDetails.bypassSubscription;
+            if (data.bypassSubscription) {
+              hp.companyDetails.status = 'active';
+            }
+          }
           hp.subscriptionStatus = updatedObj.status || hp.subscriptionStatus;
           localStorage.setItem('hrms_user_profile', JSON.stringify(hp));
         }

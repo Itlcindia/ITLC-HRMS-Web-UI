@@ -15,6 +15,8 @@ export interface Company {
   lat?: number | null;
   lng?: number | null;
   radius?: number;
+  bypassSubscription?: boolean;
+  subscriptionStatus?: string;
 }
 
 export interface SubscriptionPlan {
