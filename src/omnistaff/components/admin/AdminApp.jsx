@@ -34,7 +34,7 @@ import { api } from '../../services/api';
 import { applyThemeColor } from '../../utils/theme';
 import { syncCompanySubscriptionChange } from '../../../types/multiTenant';
 
-export default function App({ onLogout, loggedInEmail, onSwitchToCRM }) {
+export default function App({ onLogout, loggedInEmail }) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [collapsed, setCollapsed] = useState(false);
@@ -266,6 +266,7 @@ export default function App({ onLogout, loggedInEmail, onSwitchToCRM }) {
     window.addEventListener('multi_tenant_updated', handleLiveSync);
     window.addEventListener('profile_updated', handleLiveSync);
     window.addEventListener('company_updated', handleLiveSync);
+    window.addEventListener('hrms_attendance_updated', handleLiveSync);
     window.addEventListener('storage', handleLiveSync);
 
     const interval = setInterval(loadAdminData, 10000);
@@ -276,6 +277,7 @@ export default function App({ onLogout, loggedInEmail, onSwitchToCRM }) {
       window.removeEventListener('multi_tenant_updated', handleLiveSync);
       window.removeEventListener('profile_updated', handleLiveSync);
       window.removeEventListener('company_updated', handleLiveSync);
+      window.removeEventListener('hrms_attendance_updated', handleLiveSync);
       window.removeEventListener('storage', handleLiveSync);
     };
   }, []);
@@ -346,7 +348,7 @@ export default function App({ onLogout, loggedInEmail, onSwitchToCRM }) {
   const renderActiveView = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardOverview employeesList={employees} notifications={notifications} setActiveTab={setActiveTab} currency={profile.currency} onSwitchToCRM={onSwitchToCRM} />;
+        return <DashboardOverview employeesList={employees} notifications={notifications} setActiveTab={setActiveTab} currency={profile.currency} />;
       case 'people':
       case 'people-dashboard':
       case 'directory':
@@ -430,7 +432,7 @@ export default function App({ onLogout, loggedInEmail, onSwitchToCRM }) {
       case 'ai-assistant':
         return <AiFeatures setActiveTab={setActiveTab} employees={employees} />;
       default:
-        return <DashboardOverview employeesList={employees} notifications={notifications} setActiveTab={setActiveTab} currency={profile.currency} onSwitchToCRM={onSwitchToCRM} />;
+        return <DashboardOverview employeesList={employees} notifications={notifications} setActiveTab={setActiveTab} currency={profile.currency} />;
     }
   };
 
@@ -842,7 +844,6 @@ export default function App({ onLogout, loggedInEmail, onSwitchToCRM }) {
         companyLogo={profile.companyLogo}
         featureFlags={featureFlags}
         subscriptionPlanId={company?.subscriptionPlanId}
-        onSwitchToCRM={onSwitchToCRM}
       />
 
       {/* Main Panel Wrapper */}
@@ -864,7 +865,6 @@ export default function App({ onLogout, loggedInEmail, onSwitchToCRM }) {
           userProfile={profile}
           onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
           onLogout={onLogout}
-          onSwitchToCRM={onSwitchToCRM}
         />
 
         {/* Dynamic Inner Page Transitions */}

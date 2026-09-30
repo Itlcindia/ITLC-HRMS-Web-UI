@@ -153,7 +153,7 @@ const compressImage = (base64Str, maxWidth = 800, maxHeight = 800) => {
   });
 };
 
-export default function ManagerApp({ onLogout, onSwitchToCRM }) {
+export default function ManagerApp({ onLogout }) {
   const [activeTab, setActiveTab] = useState('attendance');
   const [isMobile, setIsMobile] = useState(false);
 
@@ -824,16 +824,7 @@ export default function ManagerApp({ onLogout, onSwitchToCRM }) {
 
         {/* Navigation Menu */}
         <nav className="flex-1 py-4 overflow-y-auto px-2 space-y-1 scrollbar-none">
-          {onSwitchToCRM && (
-            <button
-              onClick={onSwitchToCRM}
-              className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-black rounded-xl bg-gradient-to-r from-indigo-500/15 via-blue-500/15 to-purple-500/15 border border-indigo-500/30 text-indigo-400 hover:text-white hover:bg-gradient-to-r hover:from-indigo-600 hover:to-blue-600 transition-all shadow-sm cursor-pointer mb-2 group"
-            >
-              <Briefcase className="h-4 w-4 text-indigo-400 group-hover:text-white transition-colors" />
-              <span className="flex-1 text-left tracking-wide">Sales CRM</span>
-              <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-extrabold group-hover:bg-white/20 group-hover:text-white">Suite</span>
-            </button>
-          )}
+          
           {[
             { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
             { id: 'team', label: 'Team Directory', icon: Users },
@@ -919,16 +910,7 @@ export default function ManagerApp({ onLogout, onSwitchToCRM }) {
           </button>
 
           <div className="flex items-center gap-3 ml-auto relative">
-            {onSwitchToCRM && (
-              <button
-                onClick={onSwitchToCRM}
-                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-500 via-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-700 text-white text-xs font-black tracking-wide shadow-md shadow-indigo-600/30 transition-all flex items-center gap-1.5 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-                title="Switch to ITLC Sales CRM Workspace"
-              >
-                <Briefcase className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Sales CRM</span>
-              </button>
-            )}
+            
 
             {/* Bell Dropdown */}
             <div className="relative">

@@ -22,7 +22,7 @@ import { TrainingLMS } from "./modules/TrainingLMS";
 import { NotificationsCenter } from "./modules/NotificationsCenter";
 import { Settings } from "./modules/Settings";
 
-function DashboardContent({ onLogout, onSwitchToCRM }: { onLogout?: () => void; onSwitchToCRM?: () => void }) {
+function DashboardContent({ onLogout }: { onLogout?: () => void }) {
   const { activeTab, setActiveTab, profile } = useHRMS();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -161,7 +161,6 @@ function DashboardContent({ onLogout, onSwitchToCRM }: { onLogout?: () => void; 
         setCollapsed={setSidebarCollapsed}
         mobileOpen={mobileSidebarOpen}
         setMobileOpen={setMobileSidebarOpen}
-        onSwitchToCRM={onSwitchToCRM}
       />
 
       {/* Main Container */}
@@ -171,7 +170,6 @@ function DashboardContent({ onLogout, onSwitchToCRM }: { onLogout?: () => void; 
         <Navbar 
           onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)} 
           onLogout={onLogout}
-          onSwitchToCRM={onSwitchToCRM}
         />
 
         {/* Content Wrapper */}
@@ -268,11 +266,11 @@ function HydrationLoadingSkeleton() {
   );
 }
 
-function AppShell({ onLogout, onSwitchToCRM }: { onLogout?: () => void; onSwitchToCRM?: () => void }) {
-  return <DashboardContent onLogout={onLogout} onSwitchToCRM={onSwitchToCRM} />;
+function AppShell({ onLogout }: { onLogout?: () => void }) {
+  return <DashboardContent onLogout={onLogout} />;
 }
 
-export default function Home({ loggedInEmail, onLogout, onSwitchToCRM }: { loggedInEmail?: string; onLogout?: () => void; onSwitchToCRM?: () => void }) {
+export default function Home({ loggedInEmail, onLogout }: { loggedInEmail?: string; onLogout?: () => void }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -285,7 +283,7 @@ export default function Home({ loggedInEmail, onLogout, onSwitchToCRM }: { logge
 
   return (
     <HRMSProvider loggedInEmail={loggedInEmail}>
-      <AppShell onLogout={onLogout} onSwitchToCRM={onSwitchToCRM} />
+      <AppShell onLogout={onLogout} />
     </HRMSProvider>
   );
 }

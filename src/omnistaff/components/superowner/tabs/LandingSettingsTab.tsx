@@ -79,8 +79,8 @@ export const DEFAULT_SHOWCASE_MODULES = [
     description: 'OmniStaff HRMS Command Center, biometric attendance, live radar & shifts' 
   },
   { 
-    id: 'crm_kanban', 
-    label: 'Sales CRM', 
+    id: 'attendance_radar',
+    label: 'Biometrics & Attendance', 
     icon: Kanban, 
     color: '#0284c7',
     badge: 'REVENUE & PIPELINE',
@@ -1565,7 +1565,7 @@ export const LandingSettingsTab: React.FC<{
                 rows={3}
                 value={cmsConfig.heroSubtitleEn}
                 onChange={(e) => setCmsConfig({ ...cmsConfig, heroSubtitleEn: e.target.value })}
-                placeholder="Modern HRMS & CRM platform to manage your people, payroll, attendance, and business growth — all in one place."
+                placeholder="Modern HRMS platform to manage your people, payroll, attendance, and business growth — all in one place."
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
             </div>

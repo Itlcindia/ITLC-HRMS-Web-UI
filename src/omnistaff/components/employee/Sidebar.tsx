@@ -30,10 +30,9 @@ interface SidebarProps {
   setCollapsed: (c: boolean) => void;
   mobileOpen: boolean;
   setMobileOpen: (open: boolean) => void;
-  onSwitchToCRM?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed, mobileOpen, setMobileOpen, onSwitchToCRM }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) => {
   const { activeTab, setActiveTab, activeSubTab, setActiveSubTab, notifications, leaveRequests, tickets, profile } = useHRMS();
 
   const [isMobile, setIsMobile] = useState(false);
@@ -220,25 +219,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed, mobil
 
       {/* Navigation Menu */}
       <nav className="flex-1 py-4 overflow-y-auto px-2 space-y-1 scrollbar-none">
-        {onSwitchToCRM && (
-          <button
-            onClick={onSwitchToCRM}
-            className={cn(
-              "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-black transition-all duration-150 cursor-pointer mb-2 group",
-              "bg-gradient-to-r from-indigo-500/15 via-blue-500/15 to-purple-500/15 border border-indigo-500/30 text-indigo-400 hover:text-white hover:bg-gradient-to-r hover:from-indigo-600 hover:to-blue-600 shadow-sm",
-              collapsed && "justify-center px-0"
-            )}
-            title="Switch to ITLC Sales CRM Workspace"
-          >
-            <Briefcase className="h-4 w-4 text-indigo-400 group-hover:text-white transition-colors shrink-0" />
-            {!collapsed && (
-              <>
-                <span className="flex-1 text-left tracking-wide">Sales CRM</span>
-                <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-extrabold group-hover:bg-white/20 group-hover:text-white">Suite</span>
-              </>
-            )}
-          </button>
-        )}
         {filteredMenuItems.map((item) => {
           const isActive = activeTab === item.id;
           const isExpanded = expandedMenus[item.id];

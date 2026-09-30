@@ -99,7 +99,7 @@ const recentActivities = [
   { type: 'job', title: 'Senior Product Designer vacancy published', time: '3 days ago', desc: 'Active hiring post listed on LinkedIn.', color: '#EC4899' },
 ];
 
-export default function DashboardOverview({ employeesList = [], notifications = [], setActiveTab, currency = 'USD', onSwitchToCRM }) {
+export default function DashboardOverview({ employeesList = [], notifications = [], setActiveTab, currency = 'USD' }) {
   const [loading, setLoading] = useState(true);
   const [company, setCompany] = useState(null);
   const [activities, setActivities] = useState([]);
@@ -127,7 +127,7 @@ export default function DashboardOverview({ employeesList = [], notifications = 
           api.getAdminAuditLogs().catch(() => []),
           api.getAttendanceTrends().catch(() => []),
           api.getPayrollTrends().catch(() => []),
-          api.getAdminAttendanceLogs().catch(() => []),
+          api.getAdminAttendance().catch(() => []),
           api.getAdminBranches().catch(() => []),
           api.getAdminJobs().catch(() => [])
         ]);
@@ -165,7 +165,18 @@ export default function DashboardOverview({ employeesList = [], notifications = 
 
         // Calculate dynamic counts
         const todayStr = new Date().toISOString().split('T')[0];
-        const presentCount = new Set((attendanceLogs || []).filter(log => log.date === todayStr).map(log => log.employeeId)).size;
+        const todayLogs = (attendanceLogs || []).filter(log => {
+          if (!log) return false;
+          const logDate = (log.date || '').split('T')[0];
+          const isToday = logDate === todayStr;
+          const isPresent = !log.status || 
+            log.status.toLowerCase() === 'present' || 
+            log.status.toLowerCase() === 'late' || 
+            log.status.toLowerCase() === 'half-day' ||
+            Boolean(log.checkIn || log.punchIn);
+          return isToday && isPresent;
+        });
+        const presentCount = new Set(todayLogs.map(log => String(log.employeeId || log.employeeName))).size;
         setPresentToday(presentCount);
 
         setBranchesCount(branchesData && branchesData.length > 0 ? branchesData.length : 1);
@@ -180,6 +191,16 @@ export default function DashboardOverview({ employeesList = [], notifications = 
       }
     };
     fetchDashboardData();
+
+    const handleLiveAttendance = () => {
+      fetchDashboardData();
+    };
+    window.addEventListener('hrms_attendance_updated', handleLiveAttendance);
+    window.addEventListener('storage', handleLiveAttendance);
+    return () => {
+      window.removeEventListener('hrms_attendance_updated', handleLiveAttendance);
+      window.removeEventListener('storage', handleLiveAttendance);
+    };
   }, []);
 
   const handleActionClick = (tabName) => {
@@ -239,35 +260,7 @@ export default function DashboardOverview({ employeesList = [], notifications = 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       
-      {/* 1-Click Connected Sales CRM Launcher Banner */}
-      {onSwitchToCRM && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-2xl p-4 md:p-5 border border-indigo-500/30 bg-gradient-to-r from-indigo-950/70 via-slate-900/80 to-blue-950/70 backdrop-blur-xl shadow-lg flex items-center justify-between gap-4 flex-wrap"
-        >
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-indigo-600 via-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/25 shrink-0">
-              <Briefcase className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm md:text-base font-extrabold text-white">ITLC Sales CRM Workspace</h3>
-                <span className="px-2 py-0.5 text-[9px] font-black uppercase tracking-wider bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 rounded-full">Connected Suite</span>
-              </div>
-              <p className="text-xs text-slate-300 mt-0.5">Switch directly to Sales CRM to manage leads pipeline, client invoicing, and sales performance.</p>
-            </div>
-          </div>
-          <button
-            onClick={onSwitchToCRM}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 via-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-700 text-white text-xs font-black tracking-wide shadow-md shadow-indigo-600/30 transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-          >
-            <Briefcase className="w-4 h-4" />
-            Launch Sales CRM
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </motion.div>
-      )}
+      
       
       {/* Subscription Limit Warning Alert Banner */}
       {company && totalEmployees >= company.maxEmployees && (

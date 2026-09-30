@@ -21,8 +21,7 @@ export default function Header({
   messages,
   userProfile,
   onToggleMobileSidebar,
-  onLogout,
-  onSwitchToCRM
+  onLogout
 }) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
@@ -147,33 +146,7 @@ export default function Header({
       {/* Header Actions Menu */}
       <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 14, flexShrink: 0 }}>
         
-        {/* Switch to CRM Button */}
-        {onSwitchToCRM && (
-          <motion.button
-            onClick={onSwitchToCRM}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
-              border: 'none',
-              padding: isMobile ? '6px 10px' : '8px 16px',
-              borderRadius: 12,
-              color: '#ffffff',
-              fontSize: isMobile ? '0.75rem' : '0.85rem',
-              fontWeight: 800,
-              cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(2, 132, 199, 0.35)',
-              letterSpacing: '0.2px'
-            }}
-            title="Open ITLC Sales CRM Workspace"
-          >
-            <Briefcase size={16} />
-            <span>Sales CRM</span>
-          </motion.button>
-        )}
+        
 
         {/* AI Assistant Button */}
         {!isMobile && (

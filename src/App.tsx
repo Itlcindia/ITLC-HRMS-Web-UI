@@ -565,17 +565,7 @@ function App() {
   // Cloud Backend Sync State
   const [cloudStatus, setCloudStatus] = useState<'connected' | 'syncing' | 'offline'>('offline');
   const [cloudPort] = useState<number>(5000);
-  const [activeSuite, setActiveSuite] = useState<'crm' | 'hrms'>(() => {
-    if (typeof window === 'undefined') return 'hrms';
-    const hash = window.location.hash.toLowerCase();
-    const pathname = window.location.pathname.toLowerCase();
-    if (hash === '#crm' || hash.startsWith('#crm') || pathname === '/crm') {
-      return 'crm';
-    }
-    const savedSuite = localStorage.getItem('itlc_active_suite');
-    if (savedSuite === 'hrms' || savedSuite === 'crm') return savedSuite;
-    return 'hrms';
-  });
+  const [activeSuite, setActiveSuite] = useState<'crm' | 'hrms'>('hrms');
 
   useEffect(() => {
     localStorage.setItem('itlc_active_suite', activeSuite);
@@ -2689,7 +2679,9 @@ function App() {
     } catch {}
 
     setShowSecureAuthModal(false);
-    setShowWorkspaceChoiceModal(true);
+    setShowWorkspaceChoiceModal(false);
+    setActiveSuite('hrms');
+    setShowIntroLaunchpad(false);
     addAuditLog("User Login", `${updatedUser.name} authenticated successfully (${updatedUser.role})`, 'system');
     triggerToast(`Welcome, ${updatedUser.name}! Please choose your workspace.`);
   };
@@ -3370,7 +3362,9 @@ function App() {
         }}
         onOpenSignIn={() => {
           if (isAuthenticated) {
-            setShowWorkspaceChoiceModal(true);
+            setShowWorkspaceChoiceModal(false);
+    setActiveSuite('hrms');
+    setShowIntroLaunchpad(false);
           } else {
             setShowSecureAuthModal(true);
           }
@@ -3400,7 +3394,9 @@ function App() {
         }}
         onOpenSignIn={() => {
           if (isAuthenticated) {
-            setShowWorkspaceChoiceModal(true);
+            setShowWorkspaceChoiceModal(false);
+    setActiveSuite('hrms');
+    setShowIntroLaunchpad(false);
           } else {
             setShowSecureAuthModal(true);
           }
@@ -3456,7 +3452,9 @@ function App() {
         }}
         onOpenSignIn={() => {
           if (isAuthenticated) {
-            setShowWorkspaceChoiceModal(true);
+            setShowWorkspaceChoiceModal(false);
+    setActiveSuite('hrms');
+    setShowIntroLaunchpad(false);
           } else {
             setShowSecureAuthModal(true);
           }
@@ -3486,7 +3484,9 @@ function App() {
         }}
         onOpenSignIn={() => {
           if (isAuthenticated) {
-            setShowWorkspaceChoiceModal(true);
+            setShowWorkspaceChoiceModal(false);
+    setActiveSuite('hrms');
+    setShowIntroLaunchpad(false);
           } else {
             setShowSecureAuthModal(true);
           }
@@ -3734,7 +3734,9 @@ function App() {
               onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(2, 132, 199, 0.08)'; e.currentTarget.style.color = '#0284c7'; }}
               onClick={() => {
                 if (isAuthenticated) {
-                  setShowWorkspaceChoiceModal(true);
+                  setShowWorkspaceChoiceModal(false);
+    setActiveSuite('hrms');
+    setShowIntroLaunchpad(false);
                 } else {
                   setActiveSuite('hrms');
                   setShowIntroLaunchpad(false);
@@ -3915,7 +3917,9 @@ function App() {
                   }}
                   onManageSubscription={() => {
                     if (isAuthenticated) {
-                      setShowWorkspaceChoiceModal(true);
+                      setShowWorkspaceChoiceModal(false);
+    setActiveSuite('hrms');
+    setShowIntroLaunchpad(false);
                     } else {
                       setShowSecureAuthModal(true);
                       triggerToast("🔒 Please sign in to manage your subscription");
@@ -3999,9 +4003,9 @@ function App() {
             <div>
               <h4 style={{ fontSize: '13px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#0f172a', margin: '0 0 16px 0' }}>Cloud Apps</h4>
               <ul className="itlc-footer-links" style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <li><button onClick={() => { if (isAuthenticated) { setActiveSuite('crm'); setShowIntroLaunchpad(false); } else { setShowSecureAuthModal(true); } }}>💼 ITLC Sales CRM Cloud</button></li>
                 <li><button onClick={() => { if (isAuthenticated) { setActiveSuite('hrms'); setShowIntroLaunchpad(false); } else { setShowSecureAuthModal(true); } }}>👥 OmniStaff Enterprise HRMS</button></li>
-                <li><button onClick={() => { if (isAuthenticated) { setActiveSuite('crm'); setActivePortal('rep'); setActiveView('dashboard'); setShowIntroLaunchpad(false); } else { setShowSecureAuthModal(true); } }}>📍 GPS Field Rep Tracker</button></li>
+                <li><button onClick={() => { if (isAuthenticated) { setActiveSuite('hrms'); setShowIntroLaunchpad(false); } else { setShowSecureAuthModal(true); } }}>👥 OmniStaff Enterprise HRMS</button></li>
+                <li><button onClick={() => { if (isAuthenticated) { setActiveSuite('hrms'); setShowIntroLaunchpad(false); } else { setShowSecureAuthModal(true); } }}>📍 GPS Attendance & Punch</button></li>
                 <li><button onClick={() => { if (isAuthenticated) { setActiveSuite('hrms'); setShowIntroLaunchpad(false); } else { setShowSecureAuthModal(true); } }}>🕒 Live Biometric Radar</button></li>
               </ul>
             </div>
@@ -4010,8 +4014,8 @@ function App() {
             <div>
               <h4 style={{ fontSize: '13px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#0f172a', margin: '0 0 16px 0' }}>Enterprise Tools</h4>
               <ul className="itlc-footer-links" style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <li><button onClick={() => { if (isAuthenticated) { setActiveSuite('crm'); setActiveView('invoices'); setShowIntroLaunchpad(false); } else { setShowSecureAuthModal(true); } }}>🧾 Automated GST Invoicing</button></li>
-                <li><button onClick={() => { if (isAuthenticated) { setActiveSuite('crm'); setActiveView('campaigns'); setShowIntroLaunchpad(false); } else { setShowSecureAuthModal(true); } }}>📢 WhatsApp Broadcast Engine</button></li>
+                <li><button onClick={() => { if (isAuthenticated) { setActiveSuite('hrms'); setShowIntroLaunchpad(false); } else { setShowSecureAuthModal(true); } }}>💳 1-Click Automated Payroll</button></li>
+                <li><button onClick={() => { if (isAuthenticated) { setActiveSuite('hrms'); setShowIntroLaunchpad(false); } else { setShowSecureAuthModal(true); } }}>🌴 Shift & Leave Manager</button></li>
                 <li><button onClick={() => { setSelectedOnboardingPlanId('growth'); setIsRegisteringCompany(true); window.location.hash = '#register'; }}>🏢 Instant Company Onboarding</button></li>
                 <li><button onClick={() => { if (isAuthenticated) { setShowTicketModal(true); } else { setShowSecureAuthModal(true); } }}>🎧 24/7 Priority Desk</button></li>
               </ul>
@@ -4223,45 +4227,12 @@ function App() {
   // ----------------------------------------------------
   if (activeSuite === 'hrms') {
     return (
-      <>
-        <OmniStaffApp 
-          onSwitchToCRM={() => {
-            setActiveSuite('crm');
-            setShowIntroLaunchpad(false);
-            triggerToast("Switched to ITLC Sales CRM Workspace");
-          }}
-          onOpenIntroHub={() => setShowIntroLaunchpad(true)}
-          onChooseWorkspace={(profile) => {
-            handleSuccessfulLogin(profile);
-          }}
-        />
-
-        {/* Global Workspace Choice Destination Modal */}
-        <WorkspaceChoiceModal 
-          isOpen={showWorkspaceChoiceModal}
-          user={{
-            name: currentUserContext.name,
-            email: currentUserContext.email,
-            role: currentUserContext.role,
-            companyName: activeTenant?.name || 'Enterprise Cloud Workspace',
-            avatar: currentUserContext.avatar
-          }}
-          onSelectCRM={() => {
-            setActiveSuite('crm');
-            setShowIntroLaunchpad(false);
-            setShowWorkspaceChoiceModal(false);
-            triggerToast("Welcome to ITLC Sales CRM!");
-          }}
-          onSelectHRMS={() => {
-            setActiveSuite('hrms');
-            setShowIntroLaunchpad(false);
-            setShowWorkspaceChoiceModal(false);
-            triggerToast("Welcome to OmniStaff HRMS!");
-          }}
-          onLogout={handleLogout}
-          lang={lang}
-        />
-      </>
+      <OmniStaffApp 
+        onOpenIntroHub={() => setShowIntroLaunchpad(true)}
+        onChooseWorkspace={(profile) => {
+          handleSuccessfulLogin(profile);
+        }}
+      />
     );
   }
 
@@ -4877,50 +4848,7 @@ function App() {
             </button>
 
             {/* Choose Destination / Switch Workspace Button */}
-            <button 
-              className="btn btn-secondary"
-              onClick={() => setShowWorkspaceChoiceModal(true)}
-              style={{ 
-                padding: '6px 14px', 
-                fontSize: '12px', 
-                gap: '6px', 
-                borderRadius: '20px', 
-                background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(37, 99, 235, 0.12))', 
-                color: '#4f46e5', 
-                borderColor: 'rgba(79, 70, 229, 0.3)',
-                fontWeight: 700,
-                cursor: 'pointer'
-              }}
-              title="Open Workspace Choice Hub (Switch CRM / HRMS)"
-            >
-              <Sparkles size={14} style={{ color: '#4f46e5' }} />
-              <span>{'Switch Workspace'}</span>
-            </button>
-
-            {/* Switch to OmniStaff HRMS Suite Button */}
-            <button 
-              className="btn btn-secondary"
-              onClick={() => {
-                setActiveSuite('hrms');
-                triggerToast("Switched to ITLC OmniStaff HRMS");
-              }}
-              style={{ padding: '6px 12px', fontSize: '12px', gap: '6px', borderRadius: '20px', background: 'rgba(99, 102, 241, 0.1)', color: '#818cf8', borderColor: 'rgba(99, 102, 241, 0.3)', cursor: 'pointer' }}
-              title="Switch to OmniStaff HRMS Workspace"
-            >
-              <Users size={14} style={{ color: '#818cf8' }} />
-              <span>HRMS Suite</span>
-            </button>
-
-            {/* ITLC Suite Intro Hub Button */}
-            <button 
-              className="btn btn-secondary"
-              onClick={() => setShowIntroLaunchpad(true)}
-              style={{ padding: '6px 12px', fontSize: '12px', gap: '6px', borderRadius: '20px', cursor: 'pointer' }}
-              title="Explore ITLC Software Portfolio & Plans"
-            >
-              <Globe size={14} style={{ color: 'var(--accent-color)' }} />
-              <span>ITLC Suite</span>
-            </button>
+            
 
             {/* Dark mode button */}
             <button 

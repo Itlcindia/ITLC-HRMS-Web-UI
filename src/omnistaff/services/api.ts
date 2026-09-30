@@ -419,7 +419,23 @@ export const api = {
       const res = await fetchWithTimeout(`${API_URL}/auth/register-company`, {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify(data)
+        body: JSON.stringify({
+          ...data,
+          id: randomId,
+          companyId: randomId,
+          tenantId: randomId,
+          companyName: compName,
+          name: compName,
+          email: adminMail,
+          companyEmail: adminMail,
+          adminEmail: adminMail,
+          ownerName: adminName,
+          adminName: adminName,
+          password: password,
+          adminPassword: password,
+          planId: planId,
+          subscriptionPlanId: planId
+        })
       }, 3000);
       return await handleResponse(res);
     } catch {
@@ -3948,47 +3964,70 @@ export const api = {
         method: 'GET',
         headers: getHeaders()
       }, 1500);
-      return await handleResponse(res);
-    } catch {
-      const stored = localStorage.getItem(`hrms_employees_${companyId}`);
-      if (stored) {
+      const data = await handleResponse(res);
+      if (Array.isArray(data) && data.length > 0) {
         try {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          localStorage.setItem(`hrms_employees_${companyId}`, JSON.stringify(data));
         } catch {}
+        return data;
       }
-
-      // Check user profile for active admin info
-      const prof = JSON.parse(localStorage.getItem('hrms_user_profile') || '{}');
-      const tenant = JSON.parse(localStorage.getItem('itlc_active_tenant') || '{}');
-      const adminName = prof.name || prof.fullName || tenant.adminName || 'Priyanshu Pushkar';
-      const adminEmail = prof.email || tenant.adminEmail || 'priyanshupushkar263@gmail.com';
-      const adminPhone = prof.phone || tenant.adminPhone || '+91 95323 41000';
-
-      const initialStaff = [
-        {
-          id: 1,
-          employeeId: 'EMP-001',
-          name: adminName,
-          email: adminEmail,
-          role: 'Company Administrator',
-          department: 'Administration',
-          designation: 'Managing Director',
-          status: 'Active',
-          phone: adminPhone,
-          salary: '₹1,50,000',
-          avatar: prof.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-          joiningDate: '2026-01-01',
-          employmentType: 'Full-Time Permanent',
-          companyId: companyId
-        }
-      ];
-
-      try {
-        localStorage.setItem(`hrms_employees_${companyId}`, JSON.stringify(initialStaff));
-      } catch {}
-      return initialStaff;
+    } catch (err) {
+      console.warn('Backend fetch employees error, checking local store:', err);
     }
+
+    const stored = localStorage.getItem(`hrms_employees_${companyId}`);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {}
+    }
+
+    const globalEmpRaw = localStorage.getItem('hrms_employees');
+    if (globalEmpRaw) {
+      try {
+        const parsedGlobal = JSON.parse(globalEmpRaw);
+        if (Array.isArray(parsedGlobal)) {
+          const matching = parsedGlobal.filter((e: any) => e.companyId === companyId || e.tenantId === companyId);
+          if (matching.length > 0) {
+            localStorage.setItem(`hrms_employees_${companyId}`, JSON.stringify(matching));
+            return matching;
+          }
+        }
+      } catch {}
+    }
+
+    // Check user profile for active admin info to construct EMP-001
+    const prof = JSON.parse(localStorage.getItem('hrms_user_profile') || '{}');
+    const tenant = JSON.parse(localStorage.getItem('itlc_active_tenant') || '{}');
+    const adminName = prof.name || prof.fullName || tenant.adminName || tenant.name || 'Company Admin';
+    const adminEmail = prof.email || tenant.adminEmail || tenant.email || 'admin@company.com';
+    const adminPhone = prof.phone || tenant.adminPhone || tenant.phone || '';
+
+    const initialStaff = [
+      {
+        id: 1,
+        employeeId: 'EMP-001',
+        name: adminName,
+        email: adminEmail,
+        role: 'Company Administrator',
+        department: 'Administration',
+        designation: 'Managing Director',
+        status: 'Active',
+        phone: adminPhone,
+        salary: '₹1,50,000',
+        avatar: prof.avatar || prof.companyLogo || '/itlc_logo.png',
+        joiningDate: new Date().toISOString().split('T')[0],
+        employmentType: 'Full-Time Permanent',
+        companyId: companyId,
+        tenantId: companyId
+      }
+    ];
+
+    try {
+      localStorage.setItem(`hrms_employees_${companyId}`, JSON.stringify(initialStaff));
+    } catch {}
+    return initialStaff;
   },
 
   async createEmployee(data: any) {
@@ -4979,6 +5018,10 @@ export const api = {
     } catch {
       return { success: true, ...payload };
     }
+  },
+
+  getAdminAttendanceLogs(employeeId?: string) {
+    return this.getAdminAttendance(employeeId);
   },
 
   async getAdminAttendance(employeeId?: string) {

@@ -47,7 +47,7 @@ export interface TenantCompany {
   adminEmail: string;
   adminPhone: string;
   planId: 'starter' | 'growth' | 'enterprise';
-  suites: ('crm' | 'hrms')[];
+  suites: ('hrms')[];
   status: 'active' | 'expiring_soon' | 'expired' | 'suspended' | 'trial';
   onboardDate: string;
   renewalDate: string;
@@ -71,7 +71,7 @@ export interface SubscriptionPlanDef {
   tagline: string;
   priceMonthly: number;
   priceAnnual: number;
-  defaultSuites: ('crm' | 'hrms')[];
+  defaultSuites: ('hrms')[];
   seatLimit: number;
   storageLimitGb?: number;
   badge?: string;
@@ -86,7 +86,7 @@ export const defaultSubscriptionPlans: SubscriptionPlanDef[] = [
     tagline: 'Ideal for small businesses and agile teams.',
     priceMonthly: 199,
     priceAnnual: 1990,
-    defaultSuites: ['crm', 'hrms'],
+    defaultSuites: ['hrms'],
     seatLimit: 10,
     storageLimitGb: 10,
     badge: 'STARTER TIER',
@@ -105,7 +105,7 @@ export const defaultSubscriptionPlans: SubscriptionPlanDef[] = [
     tagline: 'Ideal for small businesses and agile teams.',
     priceMonthly: 499,
     priceAnnual: 4990,
-    defaultSuites: ['crm', 'hrms'],
+    defaultSuites: ['hrms'],
     seatLimit: 50,
     storageLimitGb: 50,
     badge: 'MOST POPULAR',
@@ -124,7 +124,7 @@ export const defaultSubscriptionPlans: SubscriptionPlanDef[] = [
     tagline: 'Ideal for small businesses and agile teams.',
     priceMonthly: 999,
     priceAnnual: 9990,
-    defaultSuites: ['crm', 'hrms'],
+    defaultSuites: ['hrms'],
     seatLimit: 100,
     storageLimitGb: 100,
     badge: 'PREMIUM & SCALING',
@@ -387,8 +387,8 @@ export const defaultLandingPageConfig: LandingPageConfig = {
   companyTagline: 'Unified Business & Workforce Operating System',
   heroHeadlineEn: 'Build a Better Workplace with Unified HRMS & Intelligent Sales Cloud',
   heroHeadlineHi: 'Build a Better Workplace with Unified HRMS & Intelligent Sales Cloud',
-  heroSubtitleEn: 'People • Process • Growth — Streamline employee onboarding, live biometric attendance, 1-click automated payroll, and visual Sales CRM in one living 3D ecosystem.',
-  heroSubtitleHi: 'People • Process • Growth — Streamline employee onboarding, live biometric attendance, 1-click automated payroll, and visual Sales CRM in one living 3D ecosystem.',
+  heroSubtitleEn: 'People • Process • Growth — Streamline employee onboarding, live biometric attendance, 1-click automated payroll in one living 3D ecosystem.',
+  heroSubtitleHi: 'People • Process • Growth — Streamline employee onboarding, live biometric attendance, 1-click automated payroll in one living 3D ecosystem.',
   whatsappSalesNumber: '9532341000',
   supportEmail: 'support@itlc.in',
   customDomain: 'https://yourdomain.com',
@@ -499,7 +499,7 @@ export const DEFAULT_LANDING_SECTIONS: CustomLandingSection[] = [
   {
     id: 'ecosystem_orbit',
     name: 'Ecosystem Orbit',
-    description: 'Dynamic rotating orbit showcasing ITLC Sales CRM & OmniStaff HRMS with live metrics',
+    description: 'Dynamic rotating orbit showcasing OmniStaff Enterprise HRMS with live metrics',
     icon: 'Sparkles',
     color: '#7c3aed',
     previewNote: 'Interactive 360-degree orbital view of connected flagship apps with live feature checklists',
@@ -511,7 +511,7 @@ export const DEFAULT_LANDING_SECTIONS: CustomLandingSection[] = [
   {
     id: 'product_showcase',
     name: 'Product Screen Showcase',
-    description: 'Interactive live browser simulator exploring HRMS, Sales CRM and Super Admin screens',
+    description: 'Interactive live browser simulator exploring HRMS and Super Admin screens',
     icon: 'LayoutTemplate',
     color: '#0284c7',
     previewNote: 'Realistic interactive browser simulator with live telemetry metrics and animated gradient cards',
@@ -738,7 +738,7 @@ export const convertHrmsPlanToDef = (plan: any): SubscriptionPlanDef => {
     tagline: plan.tagline || `${plan.name} plan for seamless organization growth.`,
     priceMonthly: monthlyInr,
     priceAnnual: annualInr,
-    defaultSuites: ['crm', 'hrms'],
+    defaultSuites: ['hrms'],
     seatLimit: plan.employeeLimit || plan.seatLimit || 50,
     storageLimitGb: plan.storageLimit || plan.storageLimitGb || (plan.employeeLimit ? plan.employeeLimit : 20),
     badge: plan.badge,
@@ -859,7 +859,7 @@ export const syncCompanySubscriptionChange = (updateData: {
         adminEmail: updateData.email || 'admin@' + updateData.companyName.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com',
         adminPhone: '+91 98765 43210',
         planId: normalizedPlanId || 'growth',
-        suites: normalizedPlanId === 'starter' ? ['crm'] : ['crm', 'hrms'],
+        suites: ['hrms'],
         status: updateData.status || 'active',
         onboardDate: new Date().toISOString().split('T')[0],
         renewalDate: updateData.renewalDate || new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
@@ -1056,7 +1056,7 @@ export const initialSeedTenants: TenantCompany[] = [
     adminEmail: 'priyanshupushkar263@gmail.com',
     adminPhone: '+91 95323 41000',
     planId: 'growth',
-    suites: ['crm', 'hrms'],
+    suites: ['hrms'],
     status: 'active',
     onboardDate: '2026-09-01',
     renewalDate: '2026-10-01',

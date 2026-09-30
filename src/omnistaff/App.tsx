@@ -14,12 +14,11 @@ import './index.css';
 import './App.css';
 
 export interface OmniStaffAppProps {
-  onSwitchToCRM?: () => void;
   onOpenIntroHub?: () => void;
   onChooseWorkspace?: (profile: any) => void;
 }
 
-export default function App({ onSwitchToCRM, onOpenIntroHub, onChooseWorkspace }: OmniStaffAppProps) {
+export default function App({ onOpenIntroHub, onChooseWorkspace }: OmniStaffAppProps) {
   const [isRegisteringCompany, setIsRegisteringCompany] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return window.location.hash === '#register' || window.location.hash.includes('register');
@@ -105,10 +104,6 @@ export default function App({ onSwitchToCRM, onOpenIntroHub, onChooseWorkspace }
         if (profileData) {
           setProfile(profileData);
           setLoggedInEmail(profileData.email || '');
-
-          // Ensure CRM auth session is synced for Single Sign-On
-          localStorage.setItem('crm_auth_session', 'true');
-          sessionStorage.setItem('crm_auth_session', 'true');
 
           const path = window.location.pathname.toLowerCase();
           const search = window.location.search.toLowerCase();
@@ -320,7 +315,7 @@ export default function App({ onSwitchToCRM, onOpenIntroHub, onChooseWorkspace }
   if (view === 'employee') {
     return (
       <div className="dashboard-theme flex-grow min-h-screen flex flex-col">
-        <EmployeeApp loggedInEmail={loggedInEmail} onLogout={handleLogout} onSwitchToCRM={onSwitchToCRM} />
+        <EmployeeApp loggedInEmail={loggedInEmail} onLogout={handleLogout} />
       </div>
     );
   }
@@ -328,7 +323,7 @@ export default function App({ onSwitchToCRM, onOpenIntroHub, onChooseWorkspace }
   if (view === 'admin') {
     return (
       <div className="dashboard-theme flex-grow min-h-screen flex flex-col">
-        <AdminApp loggedInEmail={loggedInEmail} onLogout={handleLogout} onSwitchToCRM={onSwitchToCRM} />
+        <AdminApp loggedInEmail={loggedInEmail} onLogout={handleLogout} />
       </div>
     );
   }
@@ -336,7 +331,7 @@ export default function App({ onSwitchToCRM, onOpenIntroHub, onChooseWorkspace }
   if (view === 'manager') {
     return (
       <div className="dashboard-theme flex-grow min-h-screen flex flex-col">
-        <ManagerApp onLogout={handleLogout} onSwitchToCRM={onSwitchToCRM} />
+        <ManagerApp onLogout={handleLogout} />
       </div>
     );
   }
@@ -346,8 +341,7 @@ export default function App({ onSwitchToCRM, onOpenIntroHub, onChooseWorkspace }
       <DashboardProvider>
         <div className="dashboard-theme flex-grow min-h-screen flex flex-col">
           <SuperownerApp 
-            onLogout={handleLogout} 
-            onSwitchToCRM={onSwitchToCRM}
+            onLogout={handleLogout}
             onOpenIntroHub={onOpenIntroHub}
           />
         </div>

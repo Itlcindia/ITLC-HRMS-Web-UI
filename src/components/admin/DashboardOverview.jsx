@@ -127,7 +127,7 @@ export default function DashboardOverview({ employeesList = [], notifications = 
           api.getAdminAuditLogs().catch(() => []),
           api.getAttendanceTrends().catch(() => []),
           api.getPayrollTrends().catch(() => []),
-          api.getAdminAttendanceLogs().catch(() => []),
+          api.getAdminAttendance().catch(() => []),
           api.getAdminBranches().catch(() => []),
           api.getAdminJobs().catch(() => [])
         ]);
@@ -165,7 +165,18 @@ export default function DashboardOverview({ employeesList = [], notifications = 
 
         // Calculate dynamic counts
         const todayStr = new Date().toISOString().split('T')[0];
-        const presentCount = new Set((attendanceLogs || []).filter(log => log.date === todayStr).map(log => log.employeeId)).size;
+        const todayLogs = (attendanceLogs || []).filter(log => {
+          if (!log) return false;
+          const logDate = (log.date || '').split('T')[0];
+          const isToday = logDate === todayStr;
+          const isPresent = !log.status || 
+            log.status.toLowerCase() === 'present' || 
+            log.status.toLowerCase() === 'late' || 
+            log.status.toLowerCase() === 'half-day' ||
+            Boolean(log.checkIn || log.punchIn);
+          return isToday && isPresent;
+        });
+        const presentCount = new Set(todayLogs.map(log => String(log.employeeId || log.employeeName))).size;
         setPresentToday(presentCount);
 
         setBranchesCount(branchesData && branchesData.length > 0 ? branchesData.length : 1);
@@ -180,6 +191,16 @@ export default function DashboardOverview({ employeesList = [], notifications = 
       }
     };
     fetchDashboardData();
+
+    const handleLiveAttendance = () => {
+      fetchDashboardData();
+    };
+    window.addEventListener('hrms_attendance_updated', handleLiveAttendance);
+    window.addEventListener('storage', handleLiveAttendance);
+    return () => {
+      window.removeEventListener('hrms_attendance_updated', handleLiveAttendance);
+      window.removeEventListener('storage', handleLiveAttendance);
+    };
   }, []);
 
   const handleActionClick = (tabName) => {

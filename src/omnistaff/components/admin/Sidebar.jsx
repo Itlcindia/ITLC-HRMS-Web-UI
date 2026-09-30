@@ -126,7 +126,7 @@ const menuItems = [
   { id: 'support', label: 'Support', icon: HeartHandshake },
 ];
 
-export default function Sidebar({ activeTab, setActiveTab, collapsed, setCollapsed, handleLogout, mobileOpen, setMobileOpen, companyName, companyLogo, featureFlags = {}, subscriptionPlanId, onSwitchToCRM }) {
+export default function Sidebar({ activeTab, setActiveTab, collapsed, setCollapsed, handleLogout, mobileOpen, setMobileOpen, companyName, companyLogo, featureFlags = {}, subscriptionPlanId }) {
   const [expandedMenus, setExpandedMenus] = useState({});
   const [isMobile, setIsMobile] = useState(false);
 
@@ -320,42 +320,6 @@ export default function Sidebar({ activeTab, setActiveTab, collapsed, setCollaps
           {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
         </button>
       </div>
-
-      {/* Switch to Sales CRM Button */}
-      {onSwitchToCRM && (
-        <div style={{ padding: '12px 12px 0' }}>
-          <button
-            onClick={onSwitchToCRM}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: collapsed ? 'center' : 'space-between',
-              padding: '10px 14px',
-              borderRadius: 12,
-              background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
-              color: '#ffffff',
-              border: 'none',
-              fontWeight: 800,
-              fontSize: '13px',
-              cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(2, 132, 199, 0.35)',
-              transition: 'all 0.2s ease'
-            }}
-            title="Switch to ITLC Sales CRM Workspace"
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Briefcase size={18} />
-              {!collapsed && <span>Sales CRM</span>}
-            </div>
-            {!collapsed && (
-              <span style={{ fontSize: '10px', background: 'rgba(255, 255, 255, 0.25)', padding: '2px 6px', borderRadius: '6px', fontWeight: 700 }}>
-                WORKSPACE
-              </span>
-            )}
-          </button>
-        </div>
-      )}
 
       {/* Navigation Menu */}
       <div style={{ 

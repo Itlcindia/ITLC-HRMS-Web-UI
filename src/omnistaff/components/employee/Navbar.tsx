@@ -16,10 +16,9 @@ import { cn } from "./UI";
 interface NavbarProps {
   onToggleMobileSidebar: () => void;
   onLogout?: () => void;
-  onSwitchToCRM?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileSidebar, onLogout, onSwitchToCRM }) => {
+export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileSidebar, onLogout }) => {
   const {
     notifications,
     markNotificationRead,
@@ -73,17 +72,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileSidebar, onLogout,
       {/* Action Icons Panel */}
       <div className="flex items-center gap-3">
         
-        {/* Sales CRM Workspace Switcher */}
-        {onSwitchToCRM && (
-          <button
-            onClick={onSwitchToCRM}
-            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-500 via-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-700 text-white text-xs font-black tracking-wide shadow-md shadow-indigo-600/30 transition-all flex items-center gap-1.5 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-            title="Switch to ITLC Sales CRM Workspace"
-          >
-            <Briefcase className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Sales CRM</span>
-          </button>
-        )}
+        
 
         {/* Notification Bell Dropdown */}
         <div className="relative" ref={notificationRef}>
