@@ -737,7 +737,10 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
       const record = await api.punchIn({
         date: dateStr,
         checkIn: inTimeStr,
-        status: "Present"
+        status: "Present",
+        employeeId: profile.employeeId || profile.id,
+        employeeName: profile.name || profile.fullName,
+        companyId: profile.companyId || (profile.companyDetails as any)?.id
       });
       
       setAttendanceHistory(prev => [record, ...prev]);
@@ -801,7 +804,10 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
         checkOut: outTimeStr,
         breakDuration: breakStr,
         workHours: workStr,
-        status: calculatedStatus
+        status: calculatedStatus,
+        employeeId: profile.employeeId || profile.id,
+        employeeName: profile.name || profile.fullName,
+        companyId: profile.companyId || (profile.companyDetails as any)?.id
       });
 
       setAttendanceHistory(prev => prev.map(rec => rec.date === dateStr ? record : rec));

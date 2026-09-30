@@ -5,9 +5,17 @@ const isMobileApp = typeof window !== 'undefined' && (
   (window as any).Capacitor || 
   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 );
+const getBaseApiUrl = () => {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return 'http://localhost:5000/api';
+    }
+  }
+  return import.meta.env.VITE_API_URL || 'https://lemonchiffon-mink-999414.hostingersite.com/api';
+};
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://gold-stork-993357.hostingersite.com/api';
-
+const API_URL = getBaseApiUrl();
 // Helper to get request headers with secure token
 const getHeaders = (isMultipart = false) => {
   const token = secureStorage.getItem<string>('hrms_jwt_token') || localStorage.getItem('hrms_jwt_token');
@@ -94,15 +102,22 @@ export const api = {
       if (prof) {
         const p = JSON.parse(prof);
         if (p.companyId) return p.companyId;
+        if (p.tenantId) return p.tenantId;
         if (p.companyDetails?.id) return p.companyDetails.id;
+        if (p.user?.companyId) return p.user.companyId;
+        if (p.user?.tenantId) return p.user.tenantId;
+        if (p.company?.id) return p.company.id;
+        if (p.tenant?.id) return p.tenant.id;
       }
       const tenant = localStorage.getItem('itlc_active_tenant');
       if (tenant) {
         const t = JSON.parse(tenant);
         if (t.id) return t.id;
+        if (t.companyId) return t.companyId;
+        if (t.tenantId) return t.tenantId;
       }
     } catch {}
-    return 'TEN-485';
+    return 'TEN-ITLC-INDIA';
   },
 
   // Helper to find registered tenant/company across all storage stores
@@ -480,11 +495,23 @@ export const api = {
               status: 'Active',
               avatar: ((result.name || result.user?.name || 'AU') as string).slice(0, 2).toUpperCase()
             }));
+            const tenantObj = result.tenant || result.company || { id: result.companyId || result.tenantId, name: result.name };
+            if (tenantObj && (tenantObj.id || tenantObj.name)) {
+              localStorage.setItem('itlc_active_tenant', JSON.stringify(tenantObj));
+            }
           }
           return result;
         }
+      } else {
+        const errJson = await res.json().catch(() => ({}));
+        if (errJson && (errJson.message || errJson.error)) {
+          throw new Error(errJson.message || errJson.error);
+        }
       }
     } catch (backendErr: any) {
+      if (backendErr?.message && !backendErr.message.includes('Failed to fetch') && !backendErr.message.includes('AbortError')) {
+        throw backendErr;
+      }
       console.warn('Backend API login skipped/fallback to local verified auth:', backendErr?.message);
     }
 
@@ -2166,8 +2193,13 @@ export const api = {
       const res = await fetchWithTimeout(`${API_URL}/superowner/companies`, {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify(data)
-      }, 2500);
+        body: JSON.stringify({
+          ...data,
+          ...newCompany,
+          password: defaultAdminPassword,
+          adminPassword: defaultAdminPassword
+        })
+      }, 3500);
       const serverRes = await handleResponse(res);
       return { ...resultObj, ...serverRes };
     } catch {
@@ -4188,8 +4220,11 @@ export const api = {
       const res = await fetchWithTimeout(`${API_URL}/admin/employees`, {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify(newEmp)
-      }, 1500);
+        body: JSON.stringify({
+          ...newEmp,
+          password: finalPassword
+        })
+      }, 3500);
       const serverData = await handleResponse(res);
       return { ...returnResult, ...serverData };
     } catch {
