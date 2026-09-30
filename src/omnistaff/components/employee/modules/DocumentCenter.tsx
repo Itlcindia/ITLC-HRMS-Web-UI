@@ -11,13 +11,63 @@ import {
   FolderLock,
   Printer,
   ShieldAlert,
+  Upload,
 } from "lucide-react";
 
 export const DocumentCenter: React.FC = () => {
-  const { documents, profile } = useHRMS();
+  const { documents, profile, updateProfile, addNotification } = useHRMS();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [uploadName, setUploadName] = useState("");
+  const [uploadCategory, setUploadCategory] = useState<"Identity" | "Contract" | "Compensation">("Identity");
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleUploadDocument = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadFile) {
+      alert("Please select a file to upload.");
+      return;
+    }
+    setIsUploading(true);
+    try {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Data = reader.result as string;
+        const newDoc: Document = {
+          id: `doc-${Date.now()}`,
+          name: uploadName.trim() || uploadFile.name.replace(/\.[^/.]+$/, ""),
+          category: uploadCategory,
+          issueDate: new Date().toISOString().split("T")[0],
+          fileSize: `${Math.max(1, Math.round(uploadFile.size / 1024))} KB`,
+          fileName: uploadFile.name,
+          fileData: base64Data
+        };
+
+        const existing = profile.documents || [];
+        const updated = [...existing, newDoc];
+        await updateProfile({ documents: updated });
+        
+        if (addNotification) {
+          addNotification({
+            title: "Document Uploaded",
+            message: `${newDoc.name} has been securely uploaded to your vault.`,
+            category: "policy"
+          });
+        }
+        setIsUploading(false);
+        setIsUploadOpen(false);
+        setUploadName("");
+        setUploadFile(null);
+      };
+      reader.readAsDataURL(uploadFile);
+    } catch (err: any) {
+      setIsUploading(false);
+      alert("Failed to upload document: " + (err.message || err));
+    }
+  };
 
   const filteredDocs = documents.filter((doc) =>
     doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -50,15 +100,26 @@ export const DocumentCenter: React.FC = () => {
           <h3 className="text-sm font-bold text-foreground">Corporate Document Center</h3>
           <p className="text-[11px] text-muted-foreground mt-0.5">Secure repository for legal and employment verifications</p>
         </div>
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search documents by name..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-xs md:text-sm rounded-lg border border-border bg-secondary/50 text-foreground focus:outline-none focus:border-primary"
-          />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search documents by name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 text-xs md:text-sm rounded-lg border border-border bg-secondary/50 text-foreground focus:outline-none focus:border-primary"
+            />
+          </div>
+          <Button
+            variant="primary"
+            size="sm"
+            icon={<Upload className="h-4 w-4" />}
+            onClick={() => setIsUploadOpen(true)}
+            className="shrink-0 text-xs py-2 px-3 shadow-sm"
+          >
+            Upload Document
+          </Button>
         </div>
       </div>
 
@@ -253,6 +314,59 @@ export const DocumentCenter: React.FC = () => {
 
           </div>
         )}
+      </Modal>
+
+      {/* Upload Document Modal */}
+      <Modal
+        isOpen={isUploadOpen}
+        onClose={() => setIsUploadOpen(false)}
+        title="Upload Document"
+      >
+        <form onSubmit={handleUploadDocument} className="space-y-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-muted-foreground">Document Title</label>
+            <input
+              type="text"
+              placeholder="e.g. Degree Certificate, PAN Card, Previous Payslip"
+              value={uploadName}
+              onChange={(e) => setUploadName(e.target.value)}
+              className="px-3 py-2 text-xs md:text-sm rounded-lg border border-border bg-secondary/35 text-foreground focus:outline-none focus:border-primary"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-muted-foreground">Category</label>
+            <select
+              value={uploadCategory}
+              onChange={(e) => setUploadCategory(e.target.value as any)}
+              className="px-3 py-2 text-xs md:text-sm rounded-lg border border-border bg-secondary/35 text-foreground focus:outline-none focus:border-primary"
+            >
+              <option value="Identity">Identity (Aadhaar, PAN, Passport, Voter ID)</option>
+              <option value="Contract">Contract (Employment Agreement, NDA, Offer Letter)</option>
+              <option value="Compensation">Compensation (Salary Slip, Form 16, Bank Passbook)</option>
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-muted-foreground">Select File (PDF or Image, max 5MB)</label>
+            <input
+              type="file"
+              required
+              accept="image/*,application/pdf"
+              onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+              className="text-xs text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-primary-foreground hover:file:opacity-90 cursor-pointer"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-border mt-4">
+            <Button type="button" variant="outline" onClick={() => setIsUploadOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isUploading}>
+              {isUploading ? "Uploading..." : "Upload Document"}
+            </Button>
+          </div>
+        </form>
       </Modal>
 
     </div>

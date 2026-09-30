@@ -553,11 +553,11 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
     setNewJoiningDate(emp.joiningDate || new Date().toISOString().split('T')[0]);
     setNewGender(emp.gender || 'Male');
     setNewAddress(emp.address || '482 Silver Lake Blvd, Los Angeles, CA 90026');
-    setNewPrimaryContact(emp.primaryContact || 'Jane Wright (Spouse) - +1 (555) 382-9029');
-    setNewSecondaryContact(emp.secondaryContact || 'Robert Wright (Father) - +1 (555) 492-0210');
-    setNewBankName(emp.bankName || 'ITLC Silicon Bank, NA');
-    setNewAccountNumber(emp.accountNumber || '30234928430');
-    setNewIfsc(emp.ifsc || 'ISB000492');
+    setNewPrimaryContact(emp.primaryContact || emp.emergencyContact || '');
+    setNewSecondaryContact(emp.secondaryContact || '');
+    setNewBankName(emp.bankName || '');
+    setNewAccountNumber(emp.accountNumber || '');
+    setNewIfsc(emp.ifsc || '');
     setNewManager(emp.reportingManager || 'None');
     setNewPermissions(emp.permissions || {
       viewDirectory: true,
@@ -586,6 +586,7 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
         address: newAddress,
         primaryContact: newPrimaryContact,
         secondaryContact: newSecondaryContact,
+        emergencyContact: newPrimaryContact,
         bankName: newBankName,
         accountNumber: newAccountNumber,
         ifsc: newIfsc,
@@ -2115,11 +2116,11 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, fontSize: '0.85rem' }}>
                           <div>
                             <span className="premium-label" style={{ fontSize: '0.65rem' }}>Primary Contact Details</span>
-                            <div style={{ fontWeight: 600, marginTop: 4, lineHeight: 1.4 }}>{selectedProfile.primaryContact || 'Jane Wright (Spouse) - +1 (555) 382-9029'}</div>
+                            <div style={{ fontWeight: 600, marginTop: 4, lineHeight: 1.4 }}>{selectedProfile.primaryContact || selectedProfile.emergencyContact || 'Not Specified'}</div>
                           </div>
                           <div>
                             <span className="premium-label" style={{ fontSize: '0.65rem' }}>Secondary Contact Details</span>
-                            <div style={{ fontWeight: 600, marginTop: 4, lineHeight: 1.4 }}>{selectedProfile.secondaryContact || 'Robert Wright (Father) - +1 (555) 492-0210'}</div>
+                            <div style={{ fontWeight: 600, marginTop: 4, lineHeight: 1.4 }}>{selectedProfile.secondaryContact || 'Not Specified'}</div>
                           </div>
                         </div>
                       </div>
@@ -2315,19 +2316,17 @@ export default function EmployeeManagement({ employees = [], setEmployees, searc
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, fontSize: '0.85rem', marginTop: 10 }}>
                           <div>
                             <span className="premium-label" style={{ fontSize: '0.65rem' }}>Bank Name</span>
-                            <div style={{ fontWeight: 600, marginTop: 4 }}>{selectedProfile.bankName || 'ITLC Silicon Bank, NA'}</div>
+                            <div style={{ fontWeight: 600, marginTop: 4 }}>{selectedProfile.bankName || 'Not Configured'}</div>
                           </div>
                           <div>
                             <span className="premium-label" style={{ fontSize: '0.65rem' }}>Account Number</span>
                             <div className="number-font" style={{ fontWeight: 600, marginTop: 4 }}>
-                              {selectedProfile.accountNumber && !selectedProfile.accountNumber.includes('*') 
-                                ? selectedProfile.accountNumber 
-                                : '30234928430'}
+                              {selectedProfile.accountNumber || 'Not Configured'}
                             </div>
                           </div>
                           <div>
                             <span className="premium-label" style={{ fontSize: '0.65rem' }}>IFSC / Routing Code</span>
-                            <div className="number-font" style={{ fontWeight: 600, marginTop: 4 }}>{selectedProfile.ifsc || 'ISB000492'}</div>
+                            <div className="number-font" style={{ fontWeight: 600, marginTop: 4 }}>{selectedProfile.ifsc || 'Not Configured'}</div>
                           </div>
                           <div>
                             <span className="premium-label" style={{ fontSize: '0.65rem' }}>Account Type</span>

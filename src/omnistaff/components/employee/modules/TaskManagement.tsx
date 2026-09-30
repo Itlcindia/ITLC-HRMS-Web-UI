@@ -6,7 +6,7 @@ import {
   ClipboardList, CheckCircle2, Play, AlertCircle, XCircle, Search, 
   Calendar, User, Clock
 } from "lucide-react";
-import { api } from "../../../services/api";
+import { api, subscribeToSync } from "../../../services/api";
 
 const compressImage = (base64Str: string, maxWidth = 800, maxHeight = 800): Promise<string> => {
   return new Promise((resolve) => {
@@ -69,7 +69,15 @@ export const TaskManagement: React.FC = () => {
   useEffect(() => {
     loadTasks();
     const interval = setInterval(loadTasks, 8000);
-    return () => clearInterval(interval);
+    const unsubscribe = subscribeToSync((action) => {
+      if (action === 'TASK_UPDATED') {
+        loadTasks();
+      }
+    });
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+    };
   }, []);
 
   const handleStatusChange = async (taskId: string, newStatus: string) => {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LifeBuoy, AlertCircle, CheckCircle, Clock, Send, MessageSquare, ChevronRight, RefreshCw, User, Plus, X } from 'lucide-react';
-import { api } from '../../services/api';
+import { api, subscribeToSync } from '../../services/api';
 
 export default function SupportTickets({ loggedInEmail }) {
   const [tickets, setTickets] = useState([]);
@@ -51,6 +51,16 @@ export default function SupportTickets({ loggedInEmail }) {
 
   useEffect(() => {
     loadTickets();
+    const interval = setInterval(loadTickets, 5000);
+    const unsubscribe = subscribeToSync((action) => {
+      if (action === 'TICKET_UPDATED') {
+        loadTickets();
+      }
+    });
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+    };
   }, [supportView]);
 
   const selectedTicket = tickets.find(t => t.id === selectedTicketId);

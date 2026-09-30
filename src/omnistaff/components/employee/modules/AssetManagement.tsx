@@ -11,7 +11,7 @@ import {
   Plus,
   X
 } from "lucide-react";
-import { api } from "../../../services/api";
+import { api, subscribeToSync } from "../../../services/api";
 
 export const AssetManagement: React.FC = () => {
   const [assets, setAssets] = useState<any[]>([]);
@@ -38,6 +38,16 @@ export const AssetManagement: React.FC = () => {
 
   useEffect(() => {
     fetchAssets();
+    const interval = setInterval(fetchAssets, 5000);
+    const unsubscribe = subscribeToSync((action) => {
+      if (action === 'ASSET_UPDATED') {
+        fetchAssets();
+      }
+    });
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+    };
   }, []);
 
   const handleRequestAsset = async (e: React.FormEvent) => {

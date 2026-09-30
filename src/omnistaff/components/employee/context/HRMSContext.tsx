@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { api } from "../../../services/api";
+import { api, subscribeToSync } from "../../../services/api";
 import { applyThemeColor } from "../../../utils/theme";
 
 // Types
@@ -22,6 +22,15 @@ export interface EmployeeProfile {
   companyName?: string;
   companyLogo?: string;
   documents?: any[];
+  primaryContact?: string;
+  secondaryContact?: string;
+  emergencyContact?: string;
+  bankName?: string;
+  accountNumber?: string;
+  ifsc?: string;
+  accountType?: string;
+  branchLocation?: string;
+  paymentMethod?: string;
   companyDetails?: {
     lat?: number | null;
     lng?: number | null;
@@ -263,6 +272,15 @@ const defaultProfile: EmployeeProfile = {
   reportingManager: "Sarah Jenkins (Director of Engineering)",
   employmentType: "Full-Time Permanent",
   documents: [],
+  primaryContact: "",
+  secondaryContact: "",
+  emergencyContact: "",
+  bankName: "",
+  accountNumber: "",
+  ifsc: "",
+  accountType: "Corporate Salary Account",
+  branchLocation: "",
+  paymentMethod: "Direct Bank Wire (ACH)",
 };
 
 const defaultAttendanceHistory: AttendanceRecord[] = [];
@@ -347,16 +365,41 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
           department: prof.department,
           designation: prof.role,
           reportingManager: prof.reportingManager || "None",
-          employmentType: "Full-Time Permanent",
+          employmentType: prof.employmentType || "Full-Time Permanent",
           companyName: prof.companyName || "ITLC HRMS",
           companyLogo: prof.companyLogo || "",
           documents: prof.documents || [],
-          companyDetails: prof.companyDetails || null
+          companyDetails: prof.companyDetails || null,
+          primaryContact: prof.primaryContact || prof.emergencyContact || "",
+          secondaryContact: prof.secondaryContact || "",
+          emergencyContact: prof.emergencyContact || prof.primaryContact || "",
+          bankName: prof.bankName || "",
+          accountNumber: prof.accountNumber || "",
+          ifsc: prof.ifsc || prof.ifscCode || "",
+          accountType: prof.accountType || "Corporate Salary Account",
+          branchLocation: prof.branchLocation || "",
+          paymentMethod: prof.paymentMethod || "Direct Bank Wire (ACH)",
         });
 
         if (prof.companyDetails && prof.companyDetails.themeColor) {
           applyThemeColor(prof.companyDetails.themeColor);
         }
+
+        // Map Corporate and Employee Documents
+        const standardDocs: Document[] = [
+          { id: "doc-1", name: "Employment Agreement & NDA", category: "Contract", issueDate: prof.joiningDate || "2026-01-15", fileSize: "1.4 MB" },
+          { id: "doc-2", name: "Digital Employee ID Card", category: "Identity", issueDate: prof.joiningDate || "2026-01-15", fileSize: "420 KB" },
+          { id: "doc-3", name: "Corporate Code of Conduct & IT Policy", category: "Contract", issueDate: "2026-01-01", fileSize: "850 KB" },
+          { id: "doc-4", name: "Compensation & Benefits Summary", category: "Compensation", issueDate: prof.joiningDate || "2026-01-15", fileSize: "620 KB" }
+        ];
+        const uploadedDocs: Document[] = (prof.documents || []).map((d: any, idx: number) => ({
+          id: d.id || `upl-doc-${idx}`,
+          name: d.name || d.fileName || d.type || "Uploaded Document",
+          category: (d.type === "aadhaar" || d.type === "pan") ? "Identity" : "Reference",
+          issueDate: d.uploadedDate || new Date().toISOString().split("T")[0],
+          fileSize: "500 KB"
+        }));
+        setDocuments([...standardDocs, ...uploadedDocs]);
 
         // Load Leaves
         const leavesList = await api.getEmployeeLeaves();
@@ -494,6 +537,23 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
           console.error("Failed to load holidays from DB:", e);
         }
 
+        // Load Assets from DB
+        try {
+          const assetList = await api.getEmployeeAssets();
+          if (Array.isArray(assetList) && assetList.length > 0) {
+            const mappedAssets = assetList.map((a: any) => ({
+              id: a.id.toString(),
+              name: a.name || a.assetName || "Company Hardware",
+              code: a.code || a.serialNumber || `AST-${a.id}`,
+              issueDate: a.issueDate || a.date || "Active",
+              status: (a.status === "Assigned" || a.status === "Allocated") ? "Assigned" : (a.status === "Return Requested" || a.status === "Return Pending") ? "Return Requested" : (a.status === "Returned" ? "Returned" : "Assigned")
+            }));
+            setAssets(mappedAssets);
+          }
+        } catch (e) {
+          console.error("Failed to load assets from DB:", e);
+        }
+
         // Dynamically build notifications from leaves, expenses, and tickets
         const readIds = JSON.parse(localStorage.getItem("hrms_read_notification_ids") || "[]");
         const generatedNotifs: NotificationItem[] = [];
@@ -600,8 +660,27 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
       }
     };
     loadEmployeeData();
-    const interval = setInterval(loadEmployeeData, 10000);
-    return () => clearInterval(interval);
+    const interval = setInterval(loadEmployeeData, 8000);
+    const handleProfileUpdate = () => {
+      loadEmployeeData();
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("profile_updated", handleProfileUpdate);
+      window.addEventListener("hrms_employee_updated", handleProfileUpdate);
+      window.addEventListener("itlc_hrms_realtime_event", handleProfileUpdate);
+    }
+    const unsubscribe = subscribeToSync(() => {
+      loadEmployeeData();
+    });
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+      if (typeof window !== "undefined") {
+        window.removeEventListener("profile_updated", handleProfileUpdate);
+        window.removeEventListener("hrms_employee_updated", handleProfileUpdate);
+        window.removeEventListener("itlc_hrms_realtime_event", handleProfileUpdate);
+      }
+    };
   }, [loggedInEmail]);
 
   // Hydrate states from localStorage (only local UI configurations)
@@ -935,7 +1014,12 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
     }
   };
 
-  const cancelLeave = (id: string) => {
+  const cancelLeave = async (id: string) => {
+    try {
+      await api.updateAdminLeave(id, "Cancelled");
+    } catch (e) {
+      console.warn("Backend cancel leave failed:", e);
+    }
     const request = leaveRequests.find((r) => r.id === id);
     if (!request) return;
 
@@ -972,6 +1056,15 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
       if (updatedFields.address !== undefined) payload.address = updatedFields.address;
       if (updatedFields.photo !== undefined) payload.avatar = updatedFields.photo;
       if (updatedFields.documents !== undefined) payload.documents = updatedFields.documents;
+      if (updatedFields.primaryContact !== undefined) payload.primaryContact = updatedFields.primaryContact;
+      if (updatedFields.secondaryContact !== undefined) payload.secondaryContact = updatedFields.secondaryContact;
+      if (updatedFields.emergencyContact !== undefined) payload.emergencyContact = updatedFields.emergencyContact;
+      if (updatedFields.bankName !== undefined) payload.bankName = updatedFields.bankName;
+      if (updatedFields.accountNumber !== undefined) payload.accountNumber = updatedFields.accountNumber;
+      if (updatedFields.ifsc !== undefined) payload.ifsc = updatedFields.ifsc;
+      if (updatedFields.accountType !== undefined) payload.accountType = updatedFields.accountType;
+      if (updatedFields.branchLocation !== undefined) payload.branchLocation = updatedFields.branchLocation;
+      if (updatedFields.paymentMethod !== undefined) payload.paymentMethod = updatedFields.paymentMethod;
 
       await api.updateProfile(payload);
       setProfile((prev) => ({ ...prev, ...updatedFields }));
@@ -1033,7 +1126,12 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
     }
   };
 
-  const requestAssetReturn = (id: string) => {
+  const requestAssetReturn = async (id: string) => {
+    try {
+      await api.returnEmployeeAsset(id);
+    } catch (e) {
+      console.warn("Backend asset return request failed:", e);
+    }
     setAssets((prev) =>
       prev.map((asset) => {
         if (asset.id === id) {
@@ -1074,39 +1172,6 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
         message: `Ticket #${newTicket.id} has been created. IT support will review shortly.`,
         category: "helpdesk",
       });
-
-      // Auto-update ticket status sequence for demo interactivity
-      setTimeout(() => {
-        setTickets((prev) =>
-          prev.map((t) => {
-            if (t.id === newTicket.id) {
-              addNotification({
-                title: `Ticket #${t.id} Assigned`,
-                message: `Ticket "${t.title}" has been assigned to support technician Mark Davis.`,
-                category: "helpdesk",
-              });
-              return { ...t, status: "Assigned" };
-            }
-            return t;
-          })
-        );
-
-        setTimeout(() => {
-          setTickets((prev) =>
-            prev.map((t) => {
-              if (t.id === newTicket.id) {
-                addNotification({
-                  title: `Ticket #${t.id} in Progress`,
-                  message: `Work has started on ticket "${t.title}".`,
-                  category: "helpdesk",
-                });
-                return { ...t, status: "In Progress" };
-              }
-              return t;
-            })
-          );
-        }, 5000);
-      }, 4000);
     } catch (err) {
       console.error(err);
     }
@@ -1227,7 +1292,16 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
           companyName: prof.companyName || "ITLC HRMS",
           companyLogo: prof.companyLogo || "",
           documents: prof.documents || [],
-          companyDetails: prof.companyDetails || null
+          companyDetails: prof.companyDetails || null,
+          primaryContact: prof.primaryContact || prof.emergencyContact || "",
+          secondaryContact: prof.secondaryContact || "",
+          emergencyContact: prof.emergencyContact || prof.primaryContact || "",
+          bankName: prof.bankName || "",
+          accountNumber: prof.accountNumber || "",
+          ifsc: prof.ifsc || prof.ifscCode || "",
+          accountType: prof.accountType || "Corporate Salary Account",
+          branchLocation: prof.branchLocation || "",
+          paymentMethod: prof.paymentMethod || "Direct Bank Wire (ACH)",
         });
 
         if (prof.companyDetails && prof.companyDetails.themeColor) {

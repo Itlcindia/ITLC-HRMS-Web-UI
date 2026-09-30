@@ -15,7 +15,7 @@ const mockCalendarDays = [];
 
 const mockDailyLogs = [];
 
-import { api } from '../../services/api';
+import { api, subscribeToSync } from '../../services/api';
 
 export default function Attendance({ subTab = 'dashboard' }) {
   const attendanceFileInputRef = React.useRef(null);
@@ -75,7 +75,15 @@ export default function Attendance({ subTab = 'dashboard' }) {
   useEffect(() => {
     fetchLogs(false);
     const interval = setInterval(() => fetchLogs(true), 5000);
-    return () => clearInterval(interval);
+    const unsubscribe = subscribeToSync((action) => {
+      if (['ATTENDANCE_UPDATED', 'CORRECTION_UPDATED'].includes(action)) {
+        fetchLogs(true);
+      }
+    });
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+    };
   }, [subTab]);
 
   useEffect(() => {

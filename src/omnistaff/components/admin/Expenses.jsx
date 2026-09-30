@@ -4,7 +4,7 @@ import { CreditCard, Plus, FileText, CheckCircle, XCircle, Search, PieChart } fr
 
 
 
-import { api } from '../../services/api';
+import { api, subscribeToSync } from '../../services/api';
 import { useEffect } from 'react';
 
 export default function Expenses({ subTab = 'dashboard', currency = 'USD' }) {
@@ -39,6 +39,16 @@ export default function Expenses({ subTab = 'dashboard', currency = 'USD' }) {
       }
     };
     fetchExpenses();
+    const interval = setInterval(fetchExpenses, 5000);
+    const unsubscribe = subscribeToSync((action) => {
+      if (action === 'EXPENSE_UPDATED') {
+        fetchExpenses();
+      }
+    });
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+    };
   }, []);
 
   // Form states

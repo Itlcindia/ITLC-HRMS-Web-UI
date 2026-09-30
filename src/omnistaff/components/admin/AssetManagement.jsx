@@ -8,7 +8,7 @@ const mockRequests = [];
 
 const mockMaintenance = [];
 
-import { api } from '../../services/api';
+import { api, subscribeToSync } from '../../services/api';
 import { useEffect } from 'react';
 
 export default function AssetManagement({ subTab = 'inventory' }) {
@@ -46,7 +46,15 @@ export default function AssetManagement({ subTab = 'inventory' }) {
     };
     fetchAssets();
     const interval = setInterval(fetchAssets, 5000);
-    return () => clearInterval(interval);
+    const unsubscribe = subscribeToSync((action) => {
+      if (action === 'ASSET_UPDATED') {
+        fetchAssets();
+      }
+    });
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+    };
   }, []);
 
   // Allocate form state

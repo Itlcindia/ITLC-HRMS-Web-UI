@@ -55,6 +55,47 @@ const fetchWithTimeout = async (resource: string, options: any = {}, timeout = 3
   }
 };
 
+// Real-time synchronization bus across tabs and windows
+const syncChannel = typeof window !== 'undefined' && 'BroadcastChannel' in window
+  ? new BroadcastChannel('itlc_hrms_realtime_sync')
+  : null;
+
+export function broadcastSync(action: string, payload?: any) {
+  if (typeof window !== 'undefined') {
+    try {
+      syncChannel?.postMessage({ action, payload, timestamp: Date.now() });
+      window.dispatchEvent(new CustomEvent('itlc_hrms_realtime_event', { detail: { action, payload } }));
+      window.dispatchEvent(new CustomEvent('hrms_attendance_updated', { detail: payload }));
+      window.dispatchEvent(new Event('storage'));
+    } catch (e) {
+      console.warn('Realtime broadcast failed:', e);
+    }
+  }
+}
+
+export function subscribeToSync(callback: (action: string, payload?: any) => void) {
+  if (typeof window === 'undefined') return () => {};
+  const handleMessage = (event: MessageEvent) => {
+    if (event.data && event.data.action) {
+      callback(event.data.action, event.data.payload);
+    }
+  };
+  const handleCustomEvent = (event: Event) => {
+    const custom = event as CustomEvent;
+    if (custom.detail && custom.detail.action) {
+      callback(custom.detail.action, custom.detail.payload);
+    }
+  };
+
+  syncChannel?.addEventListener('message', handleMessage);
+  window.addEventListener('itlc_hrms_realtime_event', handleCustomEvent);
+
+  return () => {
+    syncChannel?.removeEventListener('message', handleMessage);
+    window.removeEventListener('itlc_hrms_realtime_event', handleCustomEvent);
+  };
+}
+
 export const api = {
   // ========================================================
   // AUTHENTICATION APIs
@@ -985,7 +1026,16 @@ export const api = {
                   address: data.address !== undefined ? data.address : emp.address,
                   dob: data.dob !== undefined ? data.dob : emp.dob,
                   gender: data.gender !== undefined ? data.gender : emp.gender,
-                  documents: data.documents !== undefined ? data.documents : emp.documents
+                  documents: data.documents !== undefined ? data.documents : emp.documents,
+                  primaryContact: data.primaryContact !== undefined ? data.primaryContact : emp.primaryContact,
+                  secondaryContact: data.secondaryContact !== undefined ? data.secondaryContact : emp.secondaryContact,
+                  emergencyContact: data.emergencyContact !== undefined ? data.emergencyContact : emp.emergencyContact,
+                  bankName: data.bankName !== undefined ? data.bankName : emp.bankName,
+                  accountNumber: data.accountNumber !== undefined ? data.accountNumber : emp.accountNumber,
+                  ifsc: data.ifsc !== undefined ? data.ifsc : emp.ifsc,
+                  accountType: data.accountType !== undefined ? data.accountType : emp.accountType,
+                  branchLocation: data.branchLocation !== undefined ? data.branchLocation : emp.branchLocation,
+                  paymentMethod: data.paymentMethod !== undefined ? data.paymentMethod : emp.paymentMethod
                 };
               }
               return emp;
@@ -1127,8 +1177,11 @@ export const api = {
         } catch {}
       }
 
+      broadcastSync('PROFILE_UPDATED', updated);
+      broadcastSync('EMPLOYEE_UPDATED', updated);
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('profile_updated', { detail: updated }));
+        window.dispatchEvent(new CustomEvent('hrms_employee_updated', { detail: updated }));
         window.dispatchEvent(new CustomEvent('multi_tenant_updated'));
       }
     } catch (e) {
@@ -1322,14 +1375,36 @@ export const api = {
 
   async createAdminExpense(data: any) {
     const companyId = this.getActiveCompanyId();
-    const newExpense = { id: `exp_${Date.now()}`, ...data, companyId, status: data.status || 'Pending', date: data.date || new Date().toISOString().split('T')[0] };
+    const prof = JSON.parse(localStorage.getItem('hrms_user_profile') || '{}');
+    const newExpense = { 
+      id: `exp_${Date.now()}`, 
+      ...data, 
+      employeeName: data.employeeName || prof.name || prof.fullName || 'Authorized Employee',
+      employeeEmail: data.employeeEmail || prof.email || '',
+      companyId, 
+      status: data.status || 'Pending', 
+      date: data.date || new Date().toISOString().split('T')[0] 
+    };
     try {
       const stored = localStorage.getItem(`hrms_expenses_${companyId}`);
       const list = stored ? JSON.parse(stored) : [];
       list.unshift(newExpense);
       localStorage.setItem(`hrms_expenses_${companyId}`, JSON.stringify(list));
     } catch {}
-    return newExpense;
+
+    try {
+      const res = await fetchWithTimeout(`${API_URL}/employee/expenses`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(newExpense)
+      }, 2500);
+      const saved = await handleResponse(res);
+      broadcastSync('EXPENSE_UPDATED', saved);
+      return saved;
+    } catch {
+      broadcastSync('EXPENSE_UPDATED', newExpense);
+      return newExpense;
+    }
   },
 
   async updateAdminExpense(id: string | number, status: string) {
@@ -1342,7 +1417,20 @@ export const api = {
         localStorage.setItem(`hrms_expenses_${companyId}`, JSON.stringify(list));
       }
     } catch {}
-    return { success: true, id, status };
+
+    try {
+      const res = await fetchWithTimeout(`${API_URL}/admin/expenses/${id}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({ status })
+      }, 2500);
+      const resJson = await handleResponse(res);
+      broadcastSync('EXPENSE_UPDATED', { id, status });
+      return resJson;
+    } catch {
+      broadcastSync('EXPENSE_UPDATED', { id, status });
+      return { success: true, id, status };
+    }
   },
 
   async deleteAdminExpense(id: string | number) {
@@ -1355,7 +1443,19 @@ export const api = {
         localStorage.setItem(`hrms_expenses_${companyId}`, JSON.stringify(list));
       }
     } catch {}
-    return { success: true };
+
+    try {
+      const res = await fetchWithTimeout(`${API_URL}/admin/expenses/${id}`, {
+        method: 'DELETE',
+        headers: getHeaders()
+      }, 2500);
+      const resJson = await handleResponse(res);
+      broadcastSync('EXPENSE_UPDATED', { id, deleted: true });
+      return resJson;
+    } catch {
+      broadcastSync('EXPENSE_UPDATED', { id, deleted: true });
+      return { success: true };
+    }
   },
 
   // ===== ASSETS =====
@@ -1385,7 +1485,20 @@ export const api = {
       list.unshift(newAsset);
       localStorage.setItem(`hrms_assets_${companyId}`, JSON.stringify(list));
     } catch {}
-    return newAsset;
+
+    try {
+      const res = await fetchWithTimeout(`${API_URL}/admin/assets`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(newAsset)
+      }, 2500);
+      const saved = await handleResponse(res);
+      broadcastSync('ASSET_UPDATED', saved);
+      return saved;
+    } catch {
+      broadcastSync('ASSET_UPDATED', newAsset);
+      return newAsset;
+    }
   },
 
   async updateAdminAsset(id: string | number, data: any) {
@@ -1398,7 +1511,20 @@ export const api = {
         localStorage.setItem(`hrms_assets_${companyId}`, JSON.stringify(list));
       }
     } catch {}
-    return { success: true, id, ...data };
+
+    try {
+      const res = await fetchWithTimeout(`${API_URL}/admin/assets/${id}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(data)
+      }, 2500);
+      const saved = await handleResponse(res);
+      broadcastSync('ASSET_UPDATED', { id, ...data });
+      return saved;
+    } catch {
+      broadcastSync('ASSET_UPDATED', { id, ...data });
+      return { success: true, id, ...data };
+    }
   },
 
   async deleteAdminAsset(id: string | number) {
@@ -1411,7 +1537,19 @@ export const api = {
         localStorage.setItem(`hrms_assets_${companyId}`, JSON.stringify(list));
       }
     } catch {}
-    return { success: true };
+
+    try {
+      const res = await fetchWithTimeout(`${API_URL}/admin/assets/${id}`, {
+        method: 'DELETE',
+        headers: getHeaders()
+      }, 2500);
+      const saved = await handleResponse(res);
+      broadcastSync('ASSET_UPDATED', { id, deleted: true });
+      return saved;
+    } catch {
+      broadcastSync('ASSET_UPDATED', { id, deleted: true });
+      return { success: true };
+    }
   },
 
   // ===== PERFORMANCE =====
@@ -2033,7 +2171,7 @@ export const api = {
   },
 
   async createCompany(data: any) {
-    const defaultAdminPassword = (data.customPassword || data.password || `Admin@${Math.floor(1000 + Math.random() * 9000)}`).trim();
+    const defaultAdminPassword = (data.customPassword || data.password || data.adminPassword || 'Admin@123').trim();
     const newCompanyId = data.id || `comp_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
     const compName = (data.name || 'New Enterprise Client').trim();
     const ownerName = (data.ownerName || compName + ' Admin').trim();
@@ -4289,8 +4427,21 @@ export const api = {
         headers: getHeaders(),
         body: JSON.stringify(data)
       }, 1500);
-      return await handleResponse(res);
+      const resData = await handleResponse(res);
+      broadcastSync('EMPLOYEE_UPDATED', { id, ...data });
+      broadcastSync('PROFILE_UPDATED', { id, ...data });
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('profile_updated', { detail: { id, ...data } }));
+        window.dispatchEvent(new CustomEvent('hrms_employee_updated', { detail: { id, ...data } }));
+      }
+      return resData;
     } catch {
+      broadcastSync('EMPLOYEE_UPDATED', { id, ...data });
+      broadcastSync('PROFILE_UPDATED', { id, ...data });
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('profile_updated', { detail: { id, ...data } }));
+        window.dispatchEvent(new CustomEvent('hrms_employee_updated', { detail: { id, ...data } }));
+      }
       return { success: true, id, ...data };
     }
   },
@@ -4380,8 +4531,11 @@ export const api = {
         headers: getHeaders(),
         body: JSON.stringify({ status })
       }, 1500);
-      return await handleResponse(res);
+      const resJson = await handleResponse(res);
+      broadcastSync('LEAVE_UPDATED', { id, status });
+      return resJson;
     } catch {
+      broadcastSync('LEAVE_UPDATED', { id, status });
       return { success: true, id, status };
     }
   },
@@ -4403,8 +4557,11 @@ export const api = {
         headers: getHeaders(),
         body: JSON.stringify(data)
       }, 1500);
-      return await handleResponse(res);
+      const resJson = await handleResponse(res);
+      broadcastSync('LEAVE_UPDATED', { id, ...data });
+      return resJson;
     } catch {
+      broadcastSync('LEAVE_UPDATED', { id, ...data });
       return { success: true, id, ...data };
     }
   },
@@ -4425,8 +4582,11 @@ export const api = {
         method: 'DELETE',
         headers: getHeaders()
       }, 1500);
-      return await handleResponse(res);
+      const resJson = await handleResponse(res);
+      broadcastSync('LEAVE_UPDATED', { id, deleted: true });
+      return resJson;
     } catch {
+      broadcastSync('LEAVE_UPDATED', { id, deleted: true });
       return { success: true };
     }
   },
@@ -4445,6 +4605,7 @@ export const api = {
         localStorage.setItem(`hrms_leaves_${companyId}`, JSON.stringify(list));
       }
     } catch {}
+    broadcastSync('LEAVE_UPDATED', { id, managerStatus: status, managerComment: comment });
     return { success: true, id, status, comment };
   },
 
@@ -4482,25 +4643,68 @@ export const api = {
         localStorage.setItem(`hrms_corrections_${companyId}`, JSON.stringify(list));
       }
     } catch {}
-    return { success: true, id, status, managerComment };
+
+    try {
+      const res = await fetchWithTimeout(`${API_URL}/manager/corrections/${id}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({ status, managerComment })
+      }, 2000);
+      const saved = await handleResponse(res);
+      broadcastSync('CORRECTION_UPDATED', { id, status, managerComment });
+      broadcastSync('ATTENDANCE_UPDATED');
+      return saved;
+    } catch {
+      broadcastSync('CORRECTION_UPDATED', { id, status, managerComment });
+      broadcastSync('ATTENDANCE_UPDATED');
+      return { success: true, id, status, managerComment };
+    }
   },
 
   async getManagerTasks() {
     const companyId = this.getActiveCompanyId();
-    const stored = localStorage.getItem(`hrms_tasks_${companyId}`);
-    return stored ? JSON.parse(stored) : [];
+    try {
+      const res = await fetchWithTimeout(`${API_URL}/tasks?companyId=${companyId}&t=${Date.now()}`, {
+        method: 'GET',
+        headers: getHeaders()
+      }, 2000);
+      return await handleResponse(res);
+    } catch {
+      const stored = localStorage.getItem(`hrms_tasks_${companyId}`);
+      return stored ? JSON.parse(stored) : [];
+    }
   },
 
   async createManagerTask(taskData: any) {
     const companyId = this.getActiveCompanyId();
-    const newTask = { id: Date.now(), status: 'Pending', ...taskData, companyId };
+    const prof = JSON.parse(localStorage.getItem('hrms_user_profile') || '{}');
+    const newTask = { 
+      id: `TSK-${Date.now()}`, 
+      status: taskData.status || 'Todo', 
+      assignedBy: prof.name || prof.fullName || 'Management',
+      ...taskData, 
+      companyId 
+    };
     try {
       const stored = localStorage.getItem(`hrms_tasks_${companyId}`);
       const list = stored ? JSON.parse(stored) : [];
       list.push(newTask);
       localStorage.setItem(`hrms_tasks_${companyId}`, JSON.stringify(list));
     } catch {}
-    return newTask;
+
+    try {
+      const res = await fetchWithTimeout(`${API_URL}/tasks`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(newTask)
+      }, 2500);
+      const saved = await handleResponse(res);
+      broadcastSync('TASK_UPDATED', saved);
+      return saved;
+    } catch {
+      broadcastSync('TASK_UPDATED', newTask);
+      return newTask;
+    }
   },
 
   async updateManagerTask(id: string | number, taskData: any) {
@@ -4513,7 +4717,20 @@ export const api = {
         localStorage.setItem(`hrms_tasks_${companyId}`, JSON.stringify(list));
       }
     } catch {}
-    return { success: true, id, ...taskData };
+
+    try {
+      const res = await fetchWithTimeout(`${API_URL}/tasks/${id}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(taskData)
+      }, 2500);
+      const saved = await handleResponse(res);
+      broadcastSync('TASK_UPDATED', { id, ...taskData });
+      return saved?.task || { success: true, id, ...taskData };
+    } catch {
+      broadcastSync('TASK_UPDATED', { id, ...taskData });
+      return { success: true, id, ...taskData };
+    }
   },
 
   async deleteManagerTask(id: string | number) {
@@ -4526,7 +4743,19 @@ export const api = {
         localStorage.setItem(`hrms_tasks_${companyId}`, JSON.stringify(list));
       }
     } catch {}
-    return { success: true };
+
+    try {
+      const res = await fetchWithTimeout(`${API_URL}/tasks/${id}`, {
+        method: 'DELETE',
+        headers: getHeaders()
+      }, 2500);
+      const saved = await handleResponse(res);
+      broadcastSync('TASK_UPDATED', { id, deleted: true });
+      return saved;
+    } catch {
+      broadcastSync('TASK_UPDATED', { id, deleted: true });
+      return { success: true };
+    }
   },
 
   async getManagerPerformance() {
@@ -4635,19 +4864,54 @@ export const api = {
         localStorage.setItem(`hrms_tickets_${companyId}`, JSON.stringify(list));
       }
     } catch {}
-    return { success: true, id, ...data };
+
+    try {
+      const res = await fetchWithTimeout(`${API_URL}/admin/tickets/${id}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(data)
+      }, 2500);
+      const saved = await handleResponse(res);
+      broadcastSync('TICKET_UPDATED', { id, ...data });
+      return saved?.ticket || { success: true, id, ...data };
+    } catch {
+      broadcastSync('TICKET_UPDATED', { id, ...data });
+      return { success: true, id, ...data };
+    }
   },
 
   async createAdminTicket(data: any) {
     const companyId = this.getActiveCompanyId();
-    const newT = { id: `TKT-${Math.floor(100 + Math.random() * 900)}`, status: 'open', createdDate: new Date().toISOString().split('T')[0], ...data, companyId };
+    const prof = JSON.parse(localStorage.getItem('hrms_user_profile') || '{}');
+    const newT = { 
+      id: `TCK-${Math.floor(1000 + Math.random() * 9000)}`, 
+      status: data.status || 'open', 
+      createdDate: new Date().toISOString().split('T')[0], 
+      requesterName: data.requesterName || prof.name || prof.fullName || 'Authorized Employee',
+      requesterEmail: data.requesterEmail || prof.email || '',
+      ...data, 
+      companyId 
+    };
     try {
       const stored = localStorage.getItem(`hrms_tickets_${companyId}`);
       const list = stored ? JSON.parse(stored) : [];
       list.unshift(newT);
       localStorage.setItem(`hrms_tickets_${companyId}`, JSON.stringify(list));
     } catch {}
-    return newT;
+
+    try {
+      const res = await fetchWithTimeout(`${API_URL}/employee/tickets`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(newT)
+      }, 2500);
+      const saved = await handleResponse(res);
+      broadcastSync('TICKET_UPDATED', saved);
+      return saved;
+    } catch {
+      broadcastSync('TICKET_UPDATED', newT);
+      return newT;
+    }
   },
 
   async getAdminCandidates() {
@@ -4758,7 +5022,20 @@ export const api = {
   // EMPLOYEE INDIVIDUAL PROFILE APIs
   // ========================================================
   async getEmployeeLeaves() {
-    return this.getAdminLeaves();
+    const companyId = this.getActiveCompanyId();
+    const prof = JSON.parse(localStorage.getItem('hrms_user_profile') || '{}');
+    const empEmail = prof.email || '';
+    const empId = prof.employeeId || prof.id || '';
+    try {
+      const url = `${API_URL}/employee/leaves?companyId=${companyId}&employeeEmail=${encodeURIComponent(empEmail)}&employeeId=${encodeURIComponent(empId)}&t=${Date.now()}`;
+      const res = await fetchWithTimeout(url, {
+        method: 'GET',
+        headers: getHeaders()
+      }, 2000);
+      return await handleResponse(res);
+    } catch {
+      return this.getAdminLeaves();
+    }
   },
 
   async createLeaveRequest(data: any) {
@@ -4766,12 +5043,23 @@ export const api = {
     const prof = JSON.parse(localStorage.getItem('hrms_user_profile') || '{}');
     const newLeave = {
       id: Date.now(),
+      type: data.type || 'Casual Leave',
+      fromDate: data.fromDate || '',
+      toDate: data.toDate || '',
+      totalDays: Number(data.totalDays) || 1,
+      reason: data.reason || '',
+      attachment: data.attachment || '',
+      attachmentName: data.attachmentName || '',
+      isHalfDay: Boolean(data.isHalfDay),
       employeeName: prof.name || prof.fullName || 'Authorized Employee',
       employeeEmail: prof.email || '',
+      employeeId: prof.employeeId || prof.id || 'EMP-001',
       status: 'Pending',
+      managerStatus: 'Pending',
+      appliedDate: new Date().toISOString().split('T')[0],
       appliedOn: new Date().toISOString().split('T')[0],
-      ...data,
-      companyId
+      companyId,
+      ...data
     };
     try {
       const stored = localStorage.getItem(`hrms_leaves_${companyId}`);
@@ -4779,7 +5067,20 @@ export const api = {
       list.unshift(newLeave);
       localStorage.setItem(`hrms_leaves_${companyId}`, JSON.stringify(list));
     } catch {}
-    return newLeave;
+
+    try {
+      const res = await fetchWithTimeout(`${API_URL}/employee/leaves`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(newLeave)
+      }, 2500);
+      const saved = await handleResponse(res);
+      broadcastSync('LEAVE_UPDATED', saved);
+      return saved;
+    } catch {
+      broadcastSync('LEAVE_UPDATED', newLeave);
+      return newLeave;
+    }
   },
 
   async getEmployeeExpenses() {
@@ -5158,8 +5459,24 @@ export const api = {
 
   async getEmployeeTasks() {
     const companyId = this.getActiveCompanyId();
-    const stored = localStorage.getItem(`hrms_tasks_${companyId}`);
-    return stored ? JSON.parse(stored) : [];
+    const prof = JSON.parse(localStorage.getItem('hrms_user_profile') || '{}');
+    const empEmail = prof.email || '';
+    const empId = prof.employeeId || prof.id || '';
+    const empName = prof.fullName || prof.name || '';
+    try {
+      const url = `${API_URL}/employee/tasks?companyId=${companyId}&employeeEmail=${encodeURIComponent(empEmail)}&employeeId=${encodeURIComponent(empId)}&employeeName=${encodeURIComponent(empName)}&t=${Date.now()}`;
+      const res = await fetchWithTimeout(url, {
+        method: 'GET',
+        headers: getHeaders()
+      }, 2000);
+      const data = await handleResponse(res);
+      if (Array.isArray(data) && data.length > 0) return data;
+      const allTasks = await this.getManagerTasks();
+      return allTasks;
+    } catch {
+      const stored = localStorage.getItem(`hrms_tasks_${companyId}`);
+      return stored ? JSON.parse(stored) : [];
+    }
   },
 
   async updateEmployeeTaskStatus(id: string | number, status: string) {
@@ -5172,26 +5489,38 @@ export const api = {
         localStorage.setItem(`hrms_tasks_${companyId}`, JSON.stringify(list));
       }
     } catch {}
-    return { success: true, id, status };
+
+    try {
+      const res = await fetchWithTimeout(`${API_URL}/tasks/${id}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({ status })
+      }, 2500);
+      const saved = await handleResponse(res);
+      broadcastSync('TASK_UPDATED', { id, status });
+      return saved?.task || { success: true, id, status };
+    } catch {
+      broadcastSync('TASK_UPDATED', { id, status });
+      return { success: true, id, status };
+    }
   },
 
   async updateEmployeeTask(id: string | number, data: any) {
-    const companyId = this.getActiveCompanyId();
-    try {
-      const stored = localStorage.getItem(`hrms_tasks_${companyId}`);
-      if (stored) {
-        let list = JSON.parse(stored);
-        list = list.map((t: any) => String(t.id) === String(id) ? { ...t, ...data } : t);
-        localStorage.setItem(`hrms_tasks_${companyId}`, JSON.stringify(list));
-      }
-    } catch {}
-    return { success: true, id, ...data };
+    return this.updateManagerTask(id, data);
   },
 
   async getEmployeeCorrections() {
     const companyId = this.getActiveCompanyId();
-    const stored = localStorage.getItem(`hrms_corrections_${companyId}`);
-    return stored ? JSON.parse(stored) : [];
+    try {
+      const res = await fetchWithTimeout(`${API_URL}/employee/corrections?companyId=${companyId}&t=${Date.now()}`, {
+        method: 'GET',
+        headers: getHeaders()
+      }, 2000);
+      return await handleResponse(res);
+    } catch {
+      const stored = localStorage.getItem(`hrms_corrections_${companyId}`);
+      return stored ? JSON.parse(stored) : [];
+    }
   },
 
   async createEmployeeCorrection(data: any) {
@@ -5200,6 +5529,7 @@ export const api = {
     const newC = {
       id: Date.now(),
       employeeName: prof.name || prof.fullName || 'Authorized Employee',
+      employeeId: prof.employeeId || prof.id || 'EMP-001',
       status: 'Pending',
       submittedAt: new Date().toISOString(),
       ...data,
@@ -5211,7 +5541,22 @@ export const api = {
       list.unshift(newC);
       localStorage.setItem(`hrms_corrections_${companyId}`, JSON.stringify(list));
     } catch {}
-    return newC;
+
+    try {
+      const res = await fetchWithTimeout(`${API_URL}/employee/corrections`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(newC)
+      }, 2500);
+      const saved = await handleResponse(res);
+      broadcastSync('CORRECTION_UPDATED', saved);
+      broadcastSync('ATTENDANCE_UPDATED');
+      return saved;
+    } catch {
+      broadcastSync('CORRECTION_UPDATED', newC);
+      broadcastSync('ATTENDANCE_UPDATED');
+      return newC;
+    }
   },
 
   async getEmployeeMeetings() {
@@ -5227,15 +5572,73 @@ export const api = {
   },
 
   async getEmployeeAssets() {
-    return this.getAdminAssets();
+    const companyId = this.getActiveCompanyId();
+    const prof = JSON.parse(localStorage.getItem('hrms_user_profile') || '{}');
+    const empId = String(prof.employeeId || prof.id || '').trim();
+    const empName = String(prof.fullName || prof.name || '').trim().toLowerCase();
+
+    try {
+      const [allAssets, allRequests] = await Promise.all([
+        this.getAdminAssets().catch(() => []),
+        fetchWithTimeout(`${API_URL}/admin/asset-requests?companyId=${companyId}&t=${Date.now()}`, {
+          method: 'GET',
+          headers: getHeaders()
+        }, 2000).then(r => r.json()).catch(() => [])
+      ]);
+
+      const myAssets: any[] = [];
+      const seenIds = new Set();
+
+      // Filter assigned assets
+      (allAssets || []).forEach((a: any) => {
+        const assignedMatch = (empId && String(a.assignedTo) === empId) ||
+                              (empId && String(a.employeeId) === empId) ||
+                              (empName && a.assignedName && a.assignedName.toLowerCase() === empName) ||
+                              (empName && a.employeeName && a.employeeName.toLowerCase() === empName);
+        if (assignedMatch) {
+          seenIds.add(String(a.id));
+          myAssets.push({
+            id: a.id,
+            name: a.assetName || a.name || 'Company Hardware',
+            code: a.serialNumber || a.code || `AST-${a.id}`,
+            issueDate: a.date || a.issueDate || 'Active',
+            status: a.status || 'Assigned',
+            ...a
+          });
+        }
+      });
+
+      // Include pending or approved requests from this employee
+      (allRequests || []).forEach((r: any) => {
+        const reqMatch = (empName && r.requestedBy && r.requestedBy.toLowerCase() === empName) ||
+                         (empId && String(r.employeeId) === empId);
+        if (reqMatch && !seenIds.has(String(r.id))) {
+          seenIds.add(String(r.id));
+          myAssets.push({
+            id: r.id,
+            name: r.assetName || r.assetType || 'Requested Hardware',
+            code: `REQ-${r.id}`,
+            issueDate: r.requestedDate || new Date().toISOString().split('T')[0],
+            status: r.status === 'Approved' ? 'Assigned' : (r.status === 'Rejected' ? 'Rejected' : 'Requested'),
+            ...r
+          });
+        }
+      });
+
+      return myAssets.length > 0 ? myAssets : (allAssets || []);
+    } catch {
+      const stored = localStorage.getItem(`hrms_assets_${companyId}`);
+      return stored ? JSON.parse(stored) : [];
+    }
   },
 
   async requestEmployeeAsset(data: any) {
     const companyId = this.getActiveCompanyId();
     const prof = JSON.parse(localStorage.getItem('hrms_user_profile') || '{}');
     const req = {
-      id: Date.now(),
+      id: `ast_req_${Date.now()}`,
       requestedBy: prof.name || prof.fullName || 'Authorized Employee',
+      employeeId: prof.employeeId || prof.id || 'EMP-001',
       status: 'Pending',
       requestedDate: new Date().toISOString().split('T')[0],
       ...data,
@@ -5247,11 +5650,30 @@ export const api = {
       list.unshift(req);
       localStorage.setItem(`hrms_asset_requests_${companyId}`, JSON.stringify(list));
     } catch {}
-    return req;
+
+    try {
+      const res = await fetchWithTimeout(`${API_URL}/employee/assets/request`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(req)
+      }, 2500);
+      const saved = await handleResponse(res);
+      broadcastSync('ASSET_UPDATED', saved);
+      return saved;
+    } catch {
+      broadcastSync('ASSET_UPDATED', req);
+      return req;
+    }
   },
 
   async returnEmployeeAsset(id: string | number) {
     const companyId = this.getActiveCompanyId();
-    return this.updateAdminAsset(id, { status: 'Returned', assignedTo: 'None', assignedName: '' });
+    try {
+      const res = await this.updateAdminAsset(id, { status: 'Return Requested' });
+      broadcastSync('ASSET_UPDATED', { id, status: 'Return Requested' });
+      return res;
+    } catch {
+      return { success: true, id, status: 'Return Requested' };
+    }
   }
 };

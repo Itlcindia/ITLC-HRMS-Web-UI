@@ -46,6 +46,12 @@ interface ProfileDoc {
   canReplace: boolean;
 }
 
+const extractPhone = (str?: string): string | null => {
+  if (!str) return null;
+  const match = str.match(/(\+?\d[\d\s\-()]{6,}\d)/);
+  return match ? match[1].trim() : null;
+};
+
 const DEFAULT_DOCUMENTS: ProfileDoc[] = [
   {
     id: "profile-photo",
@@ -229,6 +235,8 @@ export const MyProfile: React.FC = () => {
   const [editAddress, setEditAddress] = useState(profile.address);
   const [editDob, setEditDob] = useState(profile.dob);
   const [editGender, setEditGender] = useState(profile.gender);
+  const [editPrimaryContact, setEditPrimaryContact] = useState(profile.primaryContact || profile.emergencyContact || "");
+  const [editSecondaryContact, setEditSecondaryContact] = useState(profile.secondaryContact || "");
 
   // Password fields
   const [oldPass, setOldPass] = useState("");
@@ -240,12 +248,12 @@ export const MyProfile: React.FC = () => {
 
   // Bank Details State
   const [bankDetails, setBankDetails] = useState({
-    bankName: "ITLC Silicon Bank, NA",
-    accountNumber: "982930293023",
-    ifscCode: "ISB000492",
-    accountType: "Corporate Salary Account",
-    branchLocation: "Silicon Valley Corporate Hub, CA",
-    paymentMethod: "Direct Bank Wire (ACH)"
+    bankName: profile.bankName || "ITLC Silicon Bank, NA",
+    accountNumber: profile.accountNumber || "982930293023",
+    ifscCode: profile.ifsc || "ISB000492",
+    accountType: profile.accountType || "Corporate Salary Account",
+    branchLocation: profile.branchLocation || "Silicon Valley Corporate Hub, CA",
+    paymentMethod: profile.paymentMethod || "Direct Bank Wire (ACH)"
   });
 
   const [isBankEditOpen, setIsBankEditOpen] = useState(false);
@@ -265,10 +273,31 @@ export const MyProfile: React.FC = () => {
   const [editBankPaymentMethod, setEditBankPaymentMethod] = useState("");
   const [bankReason, setBankReason] = useState("");
 
-  // Load bank details and edit request on mount
+  // Load bank details and edit request on mount or profile change
   useEffect(() => {
+    if (profile) {
+      setEditName(profile.fullName || "");
+      setEditEmail(profile.email || "");
+      setEditMobile(profile.mobile || "");
+      setEditAddress(profile.address || "");
+      setEditDob(profile.dob || "1992-08-24");
+      setEditGender(profile.gender || "Male");
+      setEditPrimaryContact(profile.primaryContact || profile.emergencyContact || "");
+      setEditSecondaryContact(profile.secondaryContact || "");
+      if (profile.bankName || profile.accountNumber || profile.ifsc) {
+        setBankDetails(prev => ({
+          ...prev,
+          bankName: profile.bankName || prev.bankName,
+          accountNumber: profile.accountNumber || prev.accountNumber,
+          ifscCode: profile.ifsc || prev.ifscCode,
+          accountType: profile.accountType || prev.accountType,
+          branchLocation: profile.branchLocation || prev.branchLocation,
+          paymentMethod: profile.paymentMethod || prev.paymentMethod
+        }));
+      }
+    }
     const savedDetails = localStorage.getItem("hrms_bank_details");
-    if (savedDetails) {
+    if (savedDetails && !profile.bankName) {
       try {
         setBankDetails(JSON.parse(savedDetails));
       } catch (e) {}
@@ -279,7 +308,7 @@ export const MyProfile: React.FC = () => {
         setBankEditRequest(JSON.parse(savedRequest));
       } catch (e) {}
     }
-  }, []);
+  }, [profile]);
 
   // Simulated auto-approval for bank details edit requests
   useEffect(() => {
@@ -522,12 +551,15 @@ export const MyProfile: React.FC = () => {
       address: editAddress,
       dob: editDob,
       gender: editGender,
+      primaryContact: editPrimaryContact,
+      secondaryContact: editSecondaryContact,
+      emergencyContact: editPrimaryContact,
     });
     setIsEditOpen(false);
   };
 
   // Submit Bank Details Change Request
-  const handleSaveBankRequest = (e: React.FormEvent) => {
+  const handleSaveBankRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     const requested = {
       bankName: editBankName,
@@ -538,23 +570,28 @@ export const MyProfile: React.FC = () => {
       paymentMethod: editBankPaymentMethod
     };
 
-    const newRequest = {
-      status: "Pending" as const,
-      requestedDetails: requested,
-      reason: bankReason,
-      requestedDate: new Date().toISOString().split("T")[0]
-    };
-
-    setBankEditRequest(newRequest);
-    localStorage.setItem("hrms_bank_edit_request", JSON.stringify(newRequest));
+    setBankDetails(requested);
+    localStorage.setItem("hrms_bank_details", JSON.stringify(requested));
     setIsBankEditOpen(false);
 
-    if (addNotification) {
-      addNotification({
-        title: "Bank Update Request Submitted",
-        message: `Your request to update payroll bank details has been submitted for HR approval.`,
-        category: "payroll"
+    try {
+      await updateProfile({
+        bankName: editBankName,
+        accountNumber: editBankAccountNumber,
+        ifsc: editBankIfscCode,
+        accountType: editBankAccountType,
+        branchLocation: editBankBranchLocation,
+        paymentMethod: editBankPaymentMethod
       });
+      if (addNotification) {
+        addNotification({
+          title: "Bank Details Updated",
+          message: `Your payroll bank details have been saved to the database.`,
+          category: "payroll"
+        });
+      }
+    } catch (err: any) {
+      console.error("Failed to save bank details:", err);
     }
   };
 
@@ -900,17 +937,29 @@ export const MyProfile: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="p-3 border border-border rounded-xl bg-secondary/15 space-y-1">
                 <span className="text-[9px] text-muted-foreground uppercase font-bold">Primary Contact</span>
-                <p className="text-xs font-bold text-foreground">Jane Wright (Spouse)</p>
-                <p className="text-[11px] font-bold text-primary font-mono mt-0.5">
-                  <a href="tel:+15553829029" className="hover:underline text-indigo-600 dark:text-indigo-400">+1 (555) 382-9029</a>
+                <p className="text-xs font-bold text-foreground">
+                  {profile.primaryContact || profile.emergencyContact || "Not Configured"}
                 </p>
+                {extractPhone(profile.primaryContact || profile.emergencyContact) && (
+                  <p className="text-[11px] font-bold text-primary font-mono mt-0.5">
+                    <a href={`tel:${extractPhone(profile.primaryContact || profile.emergencyContact)}`} className="hover:underline text-indigo-600 dark:text-indigo-400">
+                      {extractPhone(profile.primaryContact || profile.emergencyContact)}
+                    </a>
+                  </p>
+                )}
               </div>
               <div className="p-3 border border-border rounded-xl bg-secondary/15 space-y-1">
                 <span className="text-[9px] text-muted-foreground uppercase font-bold">Secondary Contact</span>
-                <p className="text-xs font-bold text-foreground">Robert Wright (Father)</p>
-                <p className="text-[11px] font-bold text-primary font-mono mt-0.5">
-                  <a href="tel:+15554920210" className="hover:underline text-indigo-600 dark:text-indigo-400">+1 (555) 492-0210</a>
+                <p className="text-xs font-bold text-foreground">
+                  {profile.secondaryContact || "Not Configured"}
                 </p>
+                {extractPhone(profile.secondaryContact) && (
+                  <p className="text-[11px] font-bold text-primary font-mono mt-0.5">
+                    <a href={`tel:${extractPhone(profile.secondaryContact)}`} className="hover:underline text-indigo-600 dark:text-indigo-400">
+                      {extractPhone(profile.secondaryContact)}
+                    </a>
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -1520,6 +1569,30 @@ export const MyProfile: React.FC = () => {
               rows={3}
               className="px-3 py-2 text-xs md:text-sm rounded-lg border border-border bg-secondary/35 text-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
             />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-muted-foreground">Primary Contact (Emergency)</label>
+              <input
+                type="text"
+                value={editPrimaryContact}
+                onChange={(e) => setEditPrimaryContact(e.target.value)}
+                placeholder="e.g. Spouse - +91 98765 43210"
+                className="px-3 py-2 text-xs md:text-sm rounded-lg border border-border bg-secondary/35 text-foreground focus:outline-none focus:border-primary"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-muted-foreground">Secondary Contact (Emergency)</label>
+              <input
+                type="text"
+                value={editSecondaryContact}
+                onChange={(e) => setEditSecondaryContact(e.target.value)}
+                placeholder="e.g. Father - +91 98765 43211"
+                className="px-3 py-2 text-xs md:text-sm rounded-lg border border-border bg-secondary/35 text-foreground focus:outline-none focus:border-primary"
+              />
+            </div>
           </div>
 
           <div className="flex justify-end gap-2 pt-2 border-t border-border mt-6">

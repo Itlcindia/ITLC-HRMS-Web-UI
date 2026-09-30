@@ -17,7 +17,7 @@ const initialRequests = [
 const initialHolidays = [];
 const initialLeavePolicies = [];
 
-import { api } from '../../services/api';
+import { api, subscribeToSync } from '../../services/api';
 import { useEffect } from 'react';
 
 export default function LeaveManagement({ subTab = 'dashboard', setActiveTab }) {
@@ -93,7 +93,15 @@ export default function LeaveManagement({ subTab = 'dashboard', setActiveTab }) 
     };
     fetchLeaves();
     const interval = setInterval(fetchLeaves, 5000);
-    return () => clearInterval(interval);
+    const unsubscribe = subscribeToSync((action) => {
+      if (action === 'LEAVE_UPDATED') {
+        fetchLeaves();
+      }
+    });
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+    };
   }, []);
 
   // Form states

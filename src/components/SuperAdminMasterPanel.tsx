@@ -58,6 +58,7 @@ import {
   type TenantFeatureFlags, 
   type SubscriptionPlanDef 
 } from '../types/multiTenant';
+import { api } from '../services/api';
 
 interface SuperAdminMasterPanelProps {
   tenants: TenantCompany[];
@@ -344,6 +345,7 @@ export const SuperAdminMasterPanel: React.FC<SuperAdminMasterPanelProps> = ({
   const [formSuites, setFormSuites] = useState<('crm' | 'hrms')[]>(['crm', 'hrms']);
   const [formSeatLimit, setFormSeatLimit] = useState(50);
   const [formBillingCycle, setFormBillingCycle] = useState<'monthly' | 'annual'>('monthly');
+  const [formAdminPassword, setFormAdminPassword] = useState('Admin@123');
 
   // Selected tenant object for Feature Gatekeeper
   const activeFeatureTenant = useMemo(() => {
@@ -429,11 +431,12 @@ export const SuperAdminMasterPanel: React.FC<SuperAdminMasterPanelProps> = ({
   };
 
   // Handle Save or Edit Tenant
-  const handleSaveTenant = (e: React.FormEvent) => {
+  const handleSaveTenant = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName || !formAdminEmail) return;
 
     const plan = plans.find(p => p.id === formPlanId) || plans[0] || defaultSubscriptionPlans[1];
+    const credPass = (formAdminPassword || 'Admin@123').trim();
 
     if (editingTenant) {
       const updatedList = tenants.map(t => {
@@ -450,15 +453,32 @@ export const SuperAdminMasterPanel: React.FC<SuperAdminMasterPanelProps> = ({
             suites: formSuites,
             userSeatLimit: formSeatLimit,
             billingCycle: formBillingCycle,
-            mrrAmount: plan.priceMonthly
+            mrrAmount: plan.priceMonthly,
+            password: credPass,
+            adminPassword: credPass
           };
         }
         return t;
       });
+
+      api.updateCompany(editingTenant.id, {
+        name: formName,
+        companyName: formName,
+        ownerName: formAdminName,
+        adminName: formAdminName,
+        email: formAdminEmail,
+        adminEmail: formAdminEmail,
+        phone: formAdminPhone,
+        employeesCount: formSeatLimit,
+        subscriptionPlanId: formPlanId,
+        password: credPass,
+        adminPassword: credPass
+      }).catch(err => console.warn('Backend updateCompany error:', err));
+
       onUpdateTenants(updatedList);
       triggerToast(`Tenant "${formName}" updated.`);
     } else {
-      const newId = `TEN-${Math.floor(100 + Math.random() * 900)}`;
+      const newId = `comp_${Date.now()}`;
       const cleanDomain = formName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'client';
       const isEnt = formPlanId === 'enterprise';
       const isGrow = formPlanId === 'growth';
@@ -501,11 +521,34 @@ export const SuperAdminMasterPanel: React.FC<SuperAdminMasterPanelProps> = ({
         userSeatLimit: formSeatLimit,
         activeUsersCount: 1,
         features: defaultFeatures,
-        notes: 'Manually provisioned by Master Super Admin.'
-      };
+        notes: 'Manually provisioned by Master Super Admin.',
+        password: credPass,
+        adminPassword: credPass
+      } as any;
+
+      // Real-time backend sync so the company and credentials immediately work for login!
+      api.createCompany({
+        id: newId,
+        name: formName,
+        companyName: formName,
+        ownerName: formAdminName,
+        adminName: formAdminName,
+        email: formAdminEmail,
+        adminEmail: formAdminEmail,
+        phone: formAdminPhone,
+        employeesCount: formSeatLimit,
+        subscriptionPlanId: formPlanId,
+        status: 'active',
+        billingCycle: formBillingCycle,
+        password: credPass,
+        adminPassword: credPass,
+        customPassword: credPass,
+        gstin: formGstin || '',
+        industry: formIndustry
+      }).catch(err => console.warn('Failed syncing new tenant to backend:', err));
 
       onUpdateTenants([newRecord, ...tenants]);
-      triggerToast(`🎉 New Tenant "${formName}" provisioned successfully!`);
+      triggerToast(`🎉 New Tenant "${formName}" provisioned! Admin Password: ${credPass}`);
     }
 
     setShowAddTenantModal(false);
@@ -524,6 +567,7 @@ export const SuperAdminMasterPanel: React.FC<SuperAdminMasterPanelProps> = ({
     setFormSuites(t.suites);
     setFormSeatLimit(t.userSeatLimit);
     setFormBillingCycle(t.billingCycle);
+    setFormAdminPassword((t as any).password || (t as any).adminPassword || 'Admin@123');
     setShowAddTenantModal(true);
   };
 
@@ -539,6 +583,7 @@ export const SuperAdminMasterPanel: React.FC<SuperAdminMasterPanelProps> = ({
     setFormSuites(['crm', 'hrms']);
     setFormSeatLimit(50);
     setFormBillingCycle('monthly');
+    setFormAdminPassword('Admin@123');
     setShowAddTenantModal(true);
   };
 
@@ -2805,6 +2850,23 @@ export const SuperAdminMasterPanel: React.FC<SuperAdminMasterPanelProps> = ({
                     <option value="annual">Annual (20% Discount)</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="form-group" style={{ marginTop: '12px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 700, color: '#94a3b8' }}>
+                  Company Admin Login Password *
+                </label>
+                <input 
+                  type="text" 
+                  className="super-admin-input" 
+                  required 
+                  value={formAdminPassword} 
+                  onChange={(e) => setFormAdminPassword(e.target.value)} 
+                  placeholder="e.g. Admin@123"
+                />
+                <span style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                  This password will be used by the Company Admin to log into the Workspace.
+                </span>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>

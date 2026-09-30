@@ -38,6 +38,11 @@ export default function SuperownerLogin({ onSuccessLogin }: { onSuccessLogin: ()
       const res = await api.login({ email, password });
       if (res && res.role === 'Super Owner') {
         onSuccessLogin();
+      } else if (res && (res.role === 'Company Admin' || res.role === 'HR' || res.role === 'Admin' || res.role === 'Manager' || res.role === 'Employee')) {
+        if (typeof window !== 'undefined') {
+          window.location.hash = '';
+        }
+        onSuccessLogin();
       } else {
         setError('Unauthorized access: This portal is reserved for the Super Owner only.');
         await api.logout();
@@ -260,6 +265,22 @@ export default function SuperownerLogin({ onSuccessLogin }: { onSuccessLogin: ()
                 <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
                 <span>⚡ 1-Click Super Owner Instant Demo Login</span>
               </button>
+
+              <div className="mt-4 pt-3 border-t border-white/10 text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      window.location.hash = '';
+                      window.location.reload();
+                    }
+                  }}
+                  className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors flex items-center justify-center gap-1.5 mx-auto font-medium cursor-pointer"
+                >
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>Are you a Company or Employee? Click for Workspace Login &rarr;</span>
+                </button>
+              </div>
             </motion.form>
           )}
         </AnimatePresence>

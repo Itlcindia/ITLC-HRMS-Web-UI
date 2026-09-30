@@ -180,6 +180,9 @@ export default function App({ onOpenIntroHub, onChooseWorkspace }: OmniStaffAppP
     await api.logout();
     setLoggedInEmail('');
     setProfile(null);
+    if (typeof window !== 'undefined') {
+      window.location.hash = '';
+    }
     setView('login');
     loadProfile();
   };

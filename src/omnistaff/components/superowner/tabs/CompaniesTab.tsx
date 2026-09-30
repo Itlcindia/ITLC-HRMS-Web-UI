@@ -117,7 +117,7 @@ export const CompaniesTab: React.FC = () => {
     subscriptionPlanId: 'starter',
     storageUsed: 5.0,
     status: 'trial' as Company['status'],
-    customPassword: '',
+    customPassword: 'Admin@123',
     lat: '',
     lng: '',
     radius: 500
@@ -152,7 +152,7 @@ export const CompaniesTab: React.FC = () => {
       subscriptionPlanId: 'free_trial',
       storageUsed: 1.0,
       status: 'trial',
-      customPassword: '',
+      customPassword: 'Admin@123',
       lat: '',
       lng: '',
       radius: 500
@@ -1209,14 +1209,20 @@ export const CompaniesTab: React.FC = () => {
                     {/* Section 4: Initial Password (for new tenants only) */}
                     {!selectedCompany && (
                       <div className="space-y-1.5 border-t border-slate-100 dark:border-slate-800/80 pt-5">
-                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Custom Admin Password (Optional)</label>
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                          Company Admin Login Password *
+                        </label>
                         <input
-                          type="password"
+                          type="text"
+                          required
                           value={formData.customPassword}
                           onChange={(e) => updateForm({ customPassword: e.target.value })}
-                          placeholder="Leave blank to automatically generate secure credentials"
+                          placeholder="e.g. Admin@123 (used to log into Company Admin Panel)"
                           className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/90 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none transition"
                         />
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
+                          This password will be used by the company administrator to log into their HRMS workspace.
+                        </span>
                       </div>
                     )}
                   </div>
