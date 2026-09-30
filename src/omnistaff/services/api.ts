@@ -755,11 +755,50 @@ export const api = {
       const result = await handleResponse(res);
       if (result.token) {
         localStorage.setItem('hrms_jwt_token', result.token);
+        secureStorage.setItem('hrms_jwt_token', result.token);
+
+        const email = (data.email || '').toLowerCase().trim();
+        const userObj = {
+          id: result.id || (result.user && result.user.id) || `usr_${Date.now()}`,
+          name: result.name || (result.user && result.user.name) || 'User',
+          fullName: result.name || (result.user && result.user.name) || 'User',
+          email: result.email || email,
+          role: result.role || (result.user && result.user.role) || 'Employee',
+          companyId: result.companyId || (result.user && result.user.companyId),
+          companyName: result.companyName || (result.user && result.user.companyName) || 'Company Workspace',
+          avatar: result.avatar || (result.user && result.user.avatar),
+          subscriptionStatus: 'active'
+        };
+
+        const existingRaw = localStorage.getItem('hrms_user_profile');
+        let merged = userObj;
+        if (existingRaw) {
+          try {
+            const existing = JSON.parse(existingRaw);
+            merged = { ...existing, ...userObj };
+          } catch {}
+        }
+        localStorage.setItem('hrms_user_profile', JSON.stringify(merged));
+        secureStorage.setItem('hrms_user_profile', merged);
+
+        if (userObj.companyId) {
+          const tenantObj = {
+            id: userObj.companyId,
+            name: userObj.companyName,
+            status: 'active'
+          };
+          localStorage.setItem('itlc_active_tenant', JSON.stringify(tenantObj));
+        }
+
+        localStorage.setItem('crm_auth_session', 'true');
+        sessionStorage.setItem('crm_auth_session', 'true');
+        secureStorage.setItem('crm_auth_session', 'true');
       }
       return result;
     } catch {
       const token = `mock-token-otp-${Date.now()}`;
       localStorage.setItem('hrms_jwt_token', token);
+      secureStorage.setItem('hrms_jwt_token', token);
       return { token, message: 'OTP verified successfully' };
     }
   },
@@ -3584,62 +3623,110 @@ export const api = {
   // ========================================================
   async getAdminCompany() {
     const compId = this.getActiveCompanyId();
+    let serverComp: any = null;
     try {
       const res = await fetchWithTimeout(`${API_URL}/admin/company?companyId=${compId}&t=${new Date().getTime()}`, {
         method: 'GET',
         headers: getHeaders()
-      }, 1500);
-      return await handleResponse(res);
-    } catch {
-      // 0. Check company-scoped saved data
-      const savedComp = localStorage.getItem(`hrms_company_${compId}`);
-      let companyScoped: any = null;
-      if (savedComp) {
-        try { companyScoped = JSON.parse(savedComp); } catch {}
-      }
+      }, 2500);
+      serverComp = await handleResponse(res);
+    } catch {}
 
-      // 1. Check active user profile
-      const prof = localStorage.getItem('hrms_user_profile');
-      let profileData: any = null;
-      if (prof) {
-        try { profileData = JSON.parse(prof); } catch {}
-      }
+    // 0. Check company-scoped saved data
+    const savedComp = localStorage.getItem(`hrms_company_${compId}`);
+    let companyScoped: any = null;
+    if (savedComp) {
+      try { companyScoped = JSON.parse(savedComp); } catch {}
+    }
 
-      // 2. Check active tenant
-      const activeTenant = localStorage.getItem('itlc_active_tenant');
-      let tenantData: any = null;
-      if (activeTenant) {
-        try { tenantData = JSON.parse(activeTenant); } catch {}
-      }
+    // 1. Check active user profile
+    const prof = localStorage.getItem('hrms_user_profile');
+    let profileData: any = null;
+    if (prof) {
+      try { profileData = JSON.parse(prof); } catch {}
+    }
 
-      const compName = companyScoped?.name || profileData?.companyName || profileData?.companyDetails?.name || tenantData?.name || 'Pushkar Enterprises & Solutions';
-      const compEmail = companyScoped?.email || profileData?.email || tenantData?.adminEmail || 'priyanshupushkar263@gmail.com';
-      const compLogo = companyScoped?.logo || profileData?.companyLogo || tenantData?.logo || '/itlc_logo.png';
-      const planId = companyScoped?.subscriptionPlanId || profileData?.subscriptionPlanId || tenantData?.planId || 'growth';
-      const status = companyScoped?.status || profileData?.subscriptionStatus || tenantData?.status || 'active';
-      const themeColor = companyScoped?.themeColor || profileData?.companyDetails?.themeColor || '#4f46e5';
+    // 2. Check active tenant
+    const activeTenant = localStorage.getItem('itlc_active_tenant');
+    let tenantData: any = null;
+    if (activeTenant) {
+      try { tenantData = JSON.parse(activeTenant); } catch {}
+    }
+
+    // Check multi-tenant registry for bypass and plan
+    let multiTenantMatch: any = null;
+    try {
+      const allTenants = JSON.parse(localStorage.getItem('itlc_multi_tenants') || '[]');
+      if (Array.isArray(allTenants)) {
+        multiTenantMatch = allTenants.find((t: any) => t.id === compId || t.name === compId);
+      }
+    } catch {}
+
+    const isBypass = Boolean(
+      serverComp?.bypassSubscription ||
+      companyScoped?.bypassSubscription ||
+      profileData?.bypassSubscription ||
+      profileData?.companyDetails?.bypassSubscription ||
+      tenantData?.bypassSubscription ||
+      multiTenantMatch?.bypassSubscription
+    );
+
+    const localPlan = companyScoped?.subscriptionPlanId || profileData?.subscriptionPlanId || tenantData?.planId || multiTenantMatch?.planId;
+    const localStatus = companyScoped?.status || profileData?.subscriptionStatus || tenantData?.status || multiTenantMatch?.status;
+    const isLocallyActive = isBypass || localStatus === 'active' || (localPlan && localPlan !== 'none' && localPlan !== 'unselected');
+
+    if (serverComp && serverComp.id) {
+      const resolvedPlan = isBypass
+        ? 'enterprise_unlimited'
+        : ((isLocallyActive && (!serverComp.subscriptionPlanId || serverComp.subscriptionPlanId === 'starter' || serverComp.subscriptionPlanId === 'none' || serverComp.subscriptionPlanId === 'unselected'))
+          ? (localPlan || serverComp.subscriptionPlanId || 'growth')
+          : (serverComp.subscriptionPlanId || localPlan || 'growth'));
+
+      const resolvedStatus = (isBypass || isLocallyActive) ? 'active' : (serverComp.status || localStatus || 'active');
 
       return {
-        id: compId,
-        name: compName,
-        email: compEmail,
-        logo: compLogo,
-        phone: companyScoped?.phone || profileData?.phone || tenantData?.phone || '+91 95323 41000',
-        address: companyScoped?.address || tenantData?.address || '',
-        gst: companyScoped?.gst || tenantData?.gst || '',
-        lat: companyScoped?.lat,
-        lng: companyScoped?.lng,
-        radius: companyScoped?.radius || 500,
-        workdayStart: companyScoped?.workdayStart || '09:00',
-        workdayEnd: companyScoped?.workdayEnd || '17:00',
-        branchHQCoordinates: companyScoped?.branchHQCoordinates || 'San Francisco, CA',
-        razorpayKeyId: companyScoped?.razorpayKeyId || '',
-        razorpaySecret: companyScoped?.razorpaySecret || '',
-        stripeSecretKey: companyScoped?.stripeSecretKey || '',
-        subscriptionPlanId: planId,
-        status: status,
-        currency: companyScoped?.currency || 'INR',
-        themeColor: themeColor,
+        ...serverComp,
+        bypassSubscription: isBypass,
+        subscriptionPlanId: resolvedPlan,
+        planId: resolvedPlan,
+        status: resolvedStatus,
+        subscriptionStatus: resolvedStatus,
+        modulesEnabled: serverComp.modulesEnabled || companyScoped?.modulesEnabled || profileData?.companyDetails?.modulesEnabled || tenantData?.features || {
+          dashboard: true, attendance: true, leave: true, payroll: true, recruitment: true,
+          performance: true, training: true, assets: true, expenses: true, reports: true, settings: true, security: true
+        }
+      };
+    }
+
+    const compName = companyScoped?.name || profileData?.companyName || profileData?.companyDetails?.name || tenantData?.name || multiTenantMatch?.name || 'Pushkar Enterprises & Solutions';
+    const compEmail = companyScoped?.email || profileData?.email || tenantData?.adminEmail || multiTenantMatch?.adminEmail || 'priyanshupushkar263@gmail.com';
+    const compLogo = companyScoped?.logo || profileData?.companyLogo || tenantData?.logo || multiTenantMatch?.logo || '/itlc_logo.png';
+    const planId = isBypass ? 'enterprise_unlimited' : (companyScoped?.subscriptionPlanId || profileData?.subscriptionPlanId || tenantData?.planId || multiTenantMatch?.planId || 'growth');
+    const status = (isBypass || isLocallyActive) ? 'active' : (companyScoped?.status || profileData?.subscriptionStatus || tenantData?.status || 'active');
+    const themeColor = companyScoped?.themeColor || profileData?.companyDetails?.themeColor || '#4f46e5';
+
+    return {
+      id: compId,
+      name: compName,
+      email: compEmail,
+      logo: compLogo,
+      phone: companyScoped?.phone || profileData?.phone || tenantData?.phone || '+91 95323 41000',
+      address: companyScoped?.address || tenantData?.address || '',
+      gst: companyScoped?.gst || tenantData?.gst || '',
+      lat: companyScoped?.lat,
+      lng: companyScoped?.lng,
+      radius: companyScoped?.radius || 500,
+      workdayStart: companyScoped?.workdayStart || '09:00',
+      workdayEnd: companyScoped?.workdayEnd || '17:00',
+      branchHQCoordinates: companyScoped?.branchHQCoordinates || 'San Francisco, CA',
+      razorpayKeyId: companyScoped?.razorpayKeyId || '',
+      razorpaySecret: companyScoped?.razorpaySecret || '',
+      stripeSecretKey: companyScoped?.stripeSecretKey || '',
+      subscriptionPlanId: planId,
+      status: status,
+      bypassSubscription: isBypass,
+      currency: companyScoped?.currency || 'INR',
+      themeColor: themeColor,
         modulesEnabled: companyScoped?.modulesEnabled || profileData?.companyDetails?.modulesEnabled || tenantData?.features || {
           dashboard: true,
           attendance: true,
@@ -3655,7 +3742,6 @@ export const api = {
           security: true
         }
       };
-    }
   },
 
   async getAdminPlans() {
@@ -4791,33 +4877,49 @@ export const api = {
     }
   },
 
-  async punchIn(data: { date: string; checkIn: string; status?: string }) {
-    const companyId = this.getActiveCompanyId();
+  async punchIn(data: { date: string; checkIn: string; status?: string; employeeId?: string; employeeName?: string; companyId?: string }) {
     const prof = JSON.parse(localStorage.getItem('hrms_user_profile') || '{}');
+    const companyId = data.companyId || prof.companyId || prof.companyDetails?.id || this.getActiveCompanyId();
+    const targetEmpId = data.employeeId || prof.employeeId || prof.id || 'EMP-001';
+    const targetEmpName = data.employeeName || prof.fullName || prof.name || 'Authorized Employee';
+    const todayDate = data.date || new Date().toISOString().split('T')[0];
+    const checkInTime = data.checkIn || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
     const newAtt = {
       id: Date.now(),
-      date: data.date || new Date().toISOString().split('T')[0],
-      checkIn: data.checkIn || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      date: todayDate,
+      checkIn: checkInTime,
+      punchIn: checkInTime,
       checkOut: '',
+      punchOut: '',
       workHours: '0 hrs',
       breakDuration: '0 mins',
       status: data.status || 'Present',
-      employeeName: prof.name || prof.fullName || 'Authorized Employee',
-      employeeId: 'EMP-001',
-      companyId
+      employeeName: targetEmpName,
+      employeeId: targetEmpId,
+      companyId: companyId,
+      tenantId: companyId
     };
 
     try {
       const stored = localStorage.getItem(`hrms_attendance_${companyId}`);
       const list = stored ? JSON.parse(stored) : [];
-      // Replace today's log if exists or unshift
-      const existingIdx = list.findIndex((r: any) => r.date === newAtt.date);
+      // Replace today's log if exists for this specific employee or unshift
+      const existingIdx = list.findIndex((r: any) => 
+        r.date === newAtt.date && 
+        (String(r.employeeId) === String(targetEmpId) || r.employeeName === targetEmpName)
+      );
       if (existingIdx >= 0) {
         list[existingIdx] = { ...list[existingIdx], ...newAtt };
       } else {
         list.unshift(newAtt);
       }
       localStorage.setItem(`hrms_attendance_${companyId}`, JSON.stringify(list));
+      localStorage.setItem('hrms_attendance', JSON.stringify(list));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('hrms_attendance_updated', { detail: newAtt }));
+        window.dispatchEvent(new Event('storage'));
+      }
     } catch {}
 
     try {
@@ -4825,21 +4927,45 @@ export const api = {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(newAtt)
-      }, 1500);
+      }, 3500);
       return await handleResponse(res);
     } catch {
       return newAtt;
     }
   },
 
-  async punchOut(data: { date: string; checkOut: string; breakDuration: string; workHours: string; status: string }) {
-    const companyId = this.getActiveCompanyId();
+  async punchOut(data: { date: string; checkOut: string; breakDuration: string; workHours: string; status: string; employeeId?: string; employeeName?: string; companyId?: string }) {
+    const prof = JSON.parse(localStorage.getItem('hrms_user_profile') || '{}');
+    const companyId = data.companyId || prof.companyId || prof.companyDetails?.id || this.getActiveCompanyId();
+    const targetEmpId = data.employeeId || prof.employeeId || prof.id;
+    const targetEmpName = data.employeeName || prof.fullName || prof.name;
+    const checkOutTime = data.checkOut || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const payload = {
+      ...data,
+      checkOut: checkOutTime,
+      punchOut: checkOutTime,
+      employeeId: targetEmpId,
+      employeeName: targetEmpName,
+      companyId: companyId,
+      tenantId: companyId
+    };
+
     try {
       const stored = localStorage.getItem(`hrms_attendance_${companyId}`);
       if (stored) {
         let list = JSON.parse(stored);
-        list = list.map((r: any) => r.date === data.date ? { ...r, ...data } : r);
+        list = list.map((r: any) => {
+          const matchDate = r.date === data.date;
+          const matchEmp = targetEmpId ? (String(r.employeeId) === String(targetEmpId) || r.employeeName === targetEmpName) : true;
+          return (matchDate && matchEmp) ? { ...r, ...payload } : r;
+        });
         localStorage.setItem(`hrms_attendance_${companyId}`, JSON.stringify(list));
+        localStorage.setItem('hrms_attendance', JSON.stringify(list));
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('hrms_attendance_updated', { detail: payload }));
+          window.dispatchEvent(new Event('storage'));
+        }
       }
     } catch {}
 
@@ -4847,16 +4973,17 @@ export const api = {
       const res = await fetchWithTimeout(`${API_URL}/employee/attendance/punch-out`, {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify(data)
-      }, 1500);
+        body: JSON.stringify(payload)
+      }, 3500);
       return await handleResponse(res);
     } catch {
-      return { success: true, ...data };
+      return { success: true, ...payload };
     }
   },
 
   async getAdminAttendance(employeeId?: string) {
     const companyId = this.getActiveCompanyId();
+    let serverList: any[] = [];
     try {
       const url = employeeId 
         ? `${API_URL}/admin/attendance/${employeeId}?companyId=${companyId}` 
@@ -4864,12 +4991,34 @@ export const api = {
       const res = await fetchWithTimeout(url, {
         method: 'GET',
         headers: getHeaders()
-      }, 1500);
-      return await handleResponse(res);
-    } catch {
-      const stored = localStorage.getItem(`hrms_attendance_${companyId}`);
-      return stored ? JSON.parse(stored) : [];
-    }
+      }, 3500);
+      const resData = await handleResponse(res);
+      if (Array.isArray(resData)) serverList = resData;
+    } catch {}
+
+    const stored = localStorage.getItem(`hrms_attendance_${companyId}`);
+    const localList = stored ? JSON.parse(stored) : [];
+    const globalStored = localStorage.getItem('hrms_attendance');
+    const globalList = globalStored ? JSON.parse(globalStored) : [];
+
+    const combined = [...serverList];
+    [...localList, ...globalList].forEach((localRec: any) => {
+      if (!localRec) return;
+      const compMatch = !localRec.companyId || localRec.companyId === companyId || localRec.tenantId === companyId || (!companyId || companyId === 'TEN-485');
+      if (compMatch) {
+        const existingIdx = combined.findIndex((s: any) => 
+          s.date === localRec.date && 
+          (String(s.employeeId) === String(localRec.employeeId) || s.employeeName === localRec.employeeName)
+        );
+        if (existingIdx === -1) {
+          combined.unshift(localRec);
+        } else {
+          combined[existingIdx] = { ...combined[existingIdx], ...localRec };
+        }
+      }
+    });
+
+    return combined;
   },
 
   async updateAdminAttendance(id: string | number, data: any) {

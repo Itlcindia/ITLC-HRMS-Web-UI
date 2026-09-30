@@ -125,7 +125,7 @@ export default function App({ onLogout, loggedInEmail }) {
         const prof = await api.getProfile();
         const comp = await api.getAdminCompany();
         setCompany(comp);
-        if (comp && (comp.subscriptionPlanId === 'unselected' || comp.subscriptionPlanId === 'none')) {
+        if (comp && !comp.bypassSubscription && (comp.subscriptionPlanId === 'unselected' || comp.subscriptionPlanId === 'none')) {
           try {
             const fetchedPlans = await api.getAdminPlans();
             setPlans(fetchedPlans || []);
@@ -594,7 +594,7 @@ export default function App({ onLogout, loggedInEmail }) {
     }
   };
 
-  if (company && (company.subscriptionPlanId === 'unselected' || company.subscriptionPlanId === 'none')) {
+  if (company && !company.bypassSubscription && (company.subscriptionPlanId === 'unselected' || company.subscriptionPlanId === 'none')) {
     return (
       <div className={`flex flex-col items-center justify-center min-h-screen w-screen p-6 ${darkMode ? 'dark bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`} style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ maxWidth: '1100px', width: '100%', display: 'flex', flexDirection: 'column', gap: 32, textAlign: 'center' }}>
@@ -801,6 +801,7 @@ export default function App({ onLogout, loggedInEmail }) {
         companyLogo={profile.companyLogo}
         featureFlags={featureFlags}
         subscriptionPlanId={company?.subscriptionPlanId}
+        bypassSubscription={Boolean(company?.bypassSubscription)}
       />
 
       {/* Main Panel Wrapper */}

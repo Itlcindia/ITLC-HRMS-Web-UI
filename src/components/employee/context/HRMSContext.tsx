@@ -19,6 +19,7 @@ export interface EmployeeProfile {
   designation: string;
   reportingManager: string;
   employmentType: string;
+  companyId?: string;
   companyName?: string;
   companyLogo?: string;
   documents?: any[];
@@ -348,6 +349,7 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
           designation: prof.role,
           reportingManager: prof.reportingManager || "None",
           employmentType: "Full-Time Permanent",
+          companyId: prof.companyId || (prof.companyDetails && prof.companyDetails.id),
           companyName: prof.companyName || "ITLC HRMS",
           companyLogo: prof.companyLogo || "",
           documents: prof.documents || [],
@@ -733,11 +735,16 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
     const dateStr = now.toISOString().split("T")[0];
     const inTimeStr = now.toLocaleTimeString("en-US", { hour12: false });
     
+    const targetCompanyId = profile.companyId || (profile.companyDetails as any)?.id || api.getActiveCompanyId();
     try {
       const record = await api.punchIn({
         date: dateStr,
         checkIn: inTimeStr,
-        status: "Present"
+        status: "Present",
+        companyId: targetCompanyId,
+        employeeId: profile.id,
+        employeeName: profile.fullName || profile.id,
+        department: profile.department
       });
       
       setAttendanceHistory(prev => [record, ...prev]);
@@ -795,13 +802,17 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
     const workStr = formatSeconds(finalWorkSecs);
     const calculatedStatus = finalWorkSecs >= 28800 ? "Present" : "Half-day";
 
+    const targetCompanyId = profile.companyId || (profile.companyDetails as any)?.id || api.getActiveCompanyId();
     try {
       const record = await api.punchOut({
         date: dateStr,
         checkOut: outTimeStr,
         breakDuration: breakStr,
         workHours: workStr,
-        status: calculatedStatus
+        status: calculatedStatus,
+        companyId: targetCompanyId,
+        employeeId: profile.id,
+        employeeName: profile.fullName || profile.id
       });
 
       setAttendanceHistory(prev => prev.map(rec => rec.date === dateStr ? record : rec));
@@ -849,12 +860,16 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
 
   const requestCorrection = async (correction: Omit<AttendanceCorrection, "id" | "status">) => {
     try {
+      const targetCompanyId = profile.companyId || (profile.companyDetails as any)?.id || api.getActiveCompanyId();
       const result = await api.createEmployeeCorrection({
         date: correction.date,
         type: correction.type || 'Correction',
         requestedCheckIn: correction.requestedCheckIn,
         requestedCheckOut: correction.requestedCheckOut,
-        reason: correction.reason
+        reason: correction.reason,
+        companyId: targetCompanyId,
+        employeeId: profile.id,
+        employeeName: profile.fullName || profile.id
       });
 
       const newCorrection: AttendanceCorrection = {
@@ -883,13 +898,17 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
 
   const applyLeave = async (leave: Omit<LeaveRequest, "id" | "status" | "currentStep">) => {
     try {
+      const targetCompanyId = profile.companyId || (profile.companyDetails as any)?.id || api.getActiveCompanyId();
       const result = await api.createLeaveRequest({
         type: leave.type,
         fromDate: leave.fromDate,
         toDate: leave.toDate,
         reason: leave.reason,
         totalDays: leave.totalDays,
-        attachment: leave.attachment || ''
+        attachment: leave.attachment || '',
+        companyId: targetCompanyId,
+        employeeId: profile.id,
+        employeeName: profile.fullName || profile.id
       });
 
       const mappedRequest: LeaveRequest = {
@@ -998,11 +1017,15 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
 
   const addExpense = async (claim: Omit<ExpenseClaim, "id" | "status">) => {
     try {
+      const targetCompanyId = profile.companyId || (profile.companyDetails as any)?.id || api.getActiveCompanyId();
       const result = await api.createExpenseClaim({
         date: claim.date,
         category: claim.category,
         amount: claim.amount,
-        reason: claim.reason
+        reason: claim.reason,
+        companyId: targetCompanyId,
+        employeeId: profile.id,
+        employeeName: profile.fullName || profile.id
       });
 
       const newClaim: ExpenseClaim = {
@@ -1045,10 +1068,14 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
 
   const createTicket = async (ticket: Omit<HelpdeskTicket, "id" | "status" | "createdAt">) => {
     try {
+      const targetCompanyId = profile.companyId || (profile.companyDetails as any)?.id || api.getActiveCompanyId();
       const result = await api.createSupportTicket({
         subject: ticket.title,
         priority: ticket.priority.toLowerCase(),
-        description: ticket.description
+        description: ticket.description,
+        companyId: targetCompanyId,
+        employeeId: profile.id,
+        employeeName: profile.fullName || profile.id
       });
 
       const newTicket: HelpdeskTicket = {
@@ -1218,6 +1245,7 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode; loggedInEmail?:
           designation: prof.designation || prof.role || "Staff",
           reportingManager: prof.reportingManager || "None",
           employmentType: "Full-Time Permanent",
+          companyId: prof.companyId || (prof.companyDetails && prof.companyDetails.id),
           companyName: prof.companyName || "ITLC HRMS",
           companyLogo: prof.companyLogo || "",
           documents: prof.documents || [],

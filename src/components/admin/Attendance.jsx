@@ -90,7 +90,12 @@ export default function Attendance({ subTab = 'dashboard' }) {
   useEffect(() => {
     fetchLogs(false);
     const interval = setInterval(() => fetchLogs(true), 5000);
-    return () => clearInterval(interval);
+    const handleAttendanceUpdate = () => fetchLogs(true);
+    window.addEventListener('hrms_attendance_updated', handleAttendanceUpdate);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('hrms_attendance_updated', handleAttendanceUpdate);
+    };
   }, [subTab]);
 
   useEffect(() => {
@@ -188,6 +193,7 @@ export default function Attendance({ subTab = 'dashboard' }) {
           status: 'Present'
         });
         setOwnLogs(prev => [record, ...prev]);
+        fetchLogs(true);
         alert("Attendance Marked Successfully");
       } catch (err) {
         alert("Failed to punch in: " + err.message);
@@ -208,6 +214,7 @@ export default function Attendance({ subTab = 'dashboard' }) {
           status: 'Present'
         });
         setOwnLogs(prev => prev.map(r => r.date === dateStr ? record : r));
+        fetchLogs(true);
         alert("Punch Out Successful");
       } catch (err) {
         alert("Failed to punch out: " + err.message);

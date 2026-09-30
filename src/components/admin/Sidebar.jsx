@@ -126,31 +126,33 @@ const menuItems = [
   { id: 'support', label: 'Support', icon: HeartHandshake },
 ];
 
-export default function Sidebar({ activeTab, setActiveTab, collapsed, setCollapsed, handleLogout, mobileOpen, setMobileOpen, companyName, companyLogo, featureFlags = {}, subscriptionPlanId }) {
+export default function Sidebar({ activeTab, setActiveTab, collapsed, setCollapsed, handleLogout, mobileOpen, setMobileOpen, companyName, companyLogo, featureFlags = {}, subscriptionPlanId, bypassSubscription = false }) {
   const [expandedMenus, setExpandedMenus] = useState({});
   const [isMobile, setIsMobile] = useState(false);
 
   const isLocked = (itemId) => {
+    if (bypassSubscription) return false;
     if (!subscriptionPlanId) return false;
     const plan = subscriptionPlanId.toLowerCase();
-    if (plan === 'enterprise' || plan === 'business') return false;
+    if (plan === 'enterprise' || plan === 'business' || plan === 'growth' || plan === 'professional') return false;
 
-    if (plan === 'free_trial' || plan === 'trial' || plan === 'starter' || plan === 'none' || plan === 'unselected') {
-      if (['recruitment', 'performance', 'training'].includes(itemId)) return true;
+    if (plan === 'none' || plan === 'unselected') {
+      if (['recruitment', 'performance', 'training', 'payroll', 'expenses'].includes(itemId)) return true;
     }
-    if (plan === 'free_trial' || plan === 'trial' || plan === 'none' || plan === 'unselected') {
+    if (plan === 'free_trial' || plan === 'trial') {
       if (['payroll', 'expenses'].includes(itemId)) return true;
     }
     return false;
   };
 
   const isSubItemLocked = (itemId, subItemId) => {
+    if (bypassSubscription) return false;
     if (!subscriptionPlanId) return false;
     const plan = subscriptionPlanId.toLowerCase();
-    if (plan === 'enterprise' || plan === 'business') return false;
+    if (plan === 'enterprise' || plan === 'business' || plan === 'growth' || plan === 'professional') return false;
 
     if (itemId === 'payroll') {
-      if (plan === 'starter' || plan === 'free_trial' || plan === 'trial' || plan === 'unselected') {
+      if (plan === 'free_trial' || plan === 'trial' || plan === 'unselected' || plan === 'none') {
         return ['payroll-structures', 'payroll-compliance'].includes(subItemId);
       }
     }
