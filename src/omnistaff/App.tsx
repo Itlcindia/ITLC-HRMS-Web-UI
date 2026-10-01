@@ -391,7 +391,7 @@ export default function App({ onOpenIntroHub, onChooseWorkspace, onLogout, onSwi
           <div className="hidden md:block absolute top-1/3 right-1/3 w-64 h-64 rounded-full bg-gradient-to-tr from-violet-300/8 to-indigo-300/10 blur-[80px] animate-blob-3" />
         </div>
 
-        <div className="w-full max-w-[480px] sm:max-w-[540px] md:max-w-3xl lg:max-w-[960px] h-auto relative z-10 flex items-center justify-center mx-auto">
+        <div className="w-full max-w-[500px] sm:max-w-[560px] md:max-w-3xl lg:max-w-[1020px] h-auto relative z-10 flex items-center justify-center mx-auto">
           {view === 'superowner-login' ? (
             <SuperownerLogin onSuccessLogin={handleSuccessLogin} />
           ) : (
