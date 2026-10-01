@@ -60,11 +60,19 @@ export default function Attendance({ subTab = 'dashboard' }) {
         api.getManagerCorrections().catch(() => []),
         api.getAdminHolidays().catch(() => [])
       ]);
-      setLogs(data || []);
-      setOwnLogs(personalData || []);
-      setCompanyDetails(company || null);
-      setCorrections(corrData || []);
-      setHolidays(holidayList || []);
+      if (Array.isArray(data) && data.length > 0) {
+        setLogs(data);
+      } else if (Array.isArray(data)) {
+        setLogs(prev => (isSilent && prev.length > 0 ? prev : data));
+      }
+      if (Array.isArray(personalData) && personalData.length > 0) {
+        setOwnLogs(personalData);
+      } else if (Array.isArray(personalData)) {
+        setOwnLogs(prev => (isSilent && prev.length > 0 ? prev : personalData));
+      }
+      if (company) setCompanyDetails(company);
+      if (corrData) setCorrections(corrData);
+      if (holidayList) setHolidays(holidayList);
     } catch (err) {
       console.error("Failed to fetch admin attendance logs:", err);
     } finally {
@@ -552,8 +560,47 @@ export default function Attendance({ subTab = 'dashboard' }) {
               </div>
             </div>
 
+            {/* Monthly Employee Breakdown Cards */}
+            {(() => {
+              const currentMonthPrefix = new Date().toISOString().slice(0, 7);
+              const currentMonthLogs = logs.filter(l => (l.date || '').startsWith(currentMonthPrefix));
+              const empMap = {};
+              currentMonthLogs.forEach(l => {
+                const key = l.employeeName || l.employeeId || 'Staff';
+                if (!empMap[key]) {
+                  empMap[key] = { name: l.employeeName || 'Staff Member', empId: l.employeeId || '', present: 0, late: 0, total: 0 };
+                }
+                empMap[key].total++;
+                if (l.status === 'Present' || l.status === 'On Time') empMap[key].present++;
+                else if (l.status === 'Late') empMap[key].late++;
+              });
+              const empList = Object.values(empMap);
+              if (empList.length === 0) return null;
+
+              return (
+                <div style={{ background: 'var(--color-bg-secondary, rgba(255,255,255,0.03))', borderRadius: 12, padding: '14px 18px', border: '1px solid var(--color-border)' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 800, marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>📅 Current Month Attendance Summary ({new Date().toLocaleString('default', { month: 'long', year: 'numeric' })})</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--color-text-tertiary)' }}>{empList.length} Active Employee(s)</span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10 }}>
+                    {empList.map((emp, i) => (
+                      <div key={i} style={{ padding: '10px 14px', borderRadius: 8, background: 'var(--color-card, rgba(255,255,255,0.05))', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>{emp.name}</div>
+                        <div style={{ display: 'flex', gap: 8, fontSize: '0.75rem' }}>
+                          <span style={{ color: 'var(--color-success)', fontWeight: 600 }}>✅ {emp.present} Present</span>
+                          {emp.late > 0 && <span style={{ color: 'var(--color-warning)', fontWeight: 600 }}>⏰ {emp.late} Late</span>}
+                          <span style={{ color: 'var(--color-text-tertiary)' }}>Total: {emp.total} Days</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
             <div className="premium-table-container">
-              {loading ? (
+              {loading && logs.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: 24, fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
                   Loading logs from database...
                 </div>

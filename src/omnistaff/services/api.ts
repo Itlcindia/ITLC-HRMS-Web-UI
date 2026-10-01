@@ -5276,12 +5276,19 @@ export const api = {
       const res = await fetchWithTimeout(`${API_URL}/employee/attendance?companyId=${companyId}&t=${new Date().getTime()}`, {
         method: 'GET',
         headers: getHeaders()
-      }, 1500);
-      return await handleResponse(res);
-    } catch {
-      const stored = localStorage.getItem(`hrms_attendance_${companyId}`);
-      return stored ? JSON.parse(stored) : [];
-    }
+      }, 3500);
+      const resData = await handleResponse(res);
+      if (Array.isArray(resData)) {
+        try {
+          localStorage.setItem(`hrms_attendance_${companyId}`, JSON.stringify(resData));
+        } catch {}
+        return resData;
+      }
+    } catch {}
+    const stored = localStorage.getItem(`hrms_attendance_${companyId}`);
+    const globalStored = localStorage.getItem('hrms_attendance');
+    const list = stored ? JSON.parse(stored) : (globalStored ? JSON.parse(globalStored) : []);
+    return list;
   },
 
   async punchIn(data: { date: string; checkIn: string; status?: string; employeeId?: string; employeeName?: string; companyId?: string }) {
@@ -5415,7 +5422,7 @@ export const api = {
     const combined = [...serverList];
     [...localList, ...globalList].forEach((localRec: any) => {
       if (!localRec) return;
-      const compMatch = !localRec.companyId || localRec.companyId === companyId || localRec.tenantId === companyId || (!companyId || companyId === 'TEN-485');
+      const compMatch = !localRec.companyId || localRec.companyId === companyId || localRec.tenantId === companyId || (!companyId || companyId === 'TEN-485' || companyId === 'TEN-365' || companyId === 'TEN-ITLC-INDIA' || companyId === 'comp_1');
       if (compMatch) {
         const existingIdx = combined.findIndex((s: any) => 
           s.date === localRec.date && 
@@ -5424,10 +5431,17 @@ export const api = {
         if (existingIdx === -1) {
           combined.unshift(localRec);
         } else {
-          combined[existingIdx] = { ...combined[existingIdx], ...localRec };
+          combined[existingIdx] = { ...localRec, ...combined[existingIdx] };
         }
       }
     });
+
+    if (combined.length > 0) {
+      try {
+        localStorage.setItem(`hrms_attendance_${companyId}`, JSON.stringify(combined));
+        localStorage.setItem('hrms_attendance', JSON.stringify(combined));
+      } catch {}
+    }
 
     return combined;
   },
