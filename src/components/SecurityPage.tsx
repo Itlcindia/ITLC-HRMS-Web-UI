@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { LandingHeader } from './LandingHeader';
+import { LandingFooter } from './LandingFooter';
 import { 
   ShieldCheck, 
   Lock, 
@@ -6,10 +8,8 @@ import {
   Database, 
   MapPin, 
   FileCheck, 
-  ArrowLeft, 
   ArrowRight, 
   Sparkles, 
-  Search, 
   CheckCircle2, 
   Briefcase, 
   Layers, 
@@ -52,108 +52,14 @@ export const SecurityPage: React.FC<SecurityPageProps> = ({
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', color: '#0f172a', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       
-      {/* Top Sticky Header */}
-      <header 
-        style={{
-          position: 'sticky',
-          top: '12px',
-          zIndex: 50,
-          maxWidth: '1280px',
-          margin: '12px auto 0',
-          padding: '10px 20px',
-          borderRadius: '16px',
-          background: 'rgba(255, 255, 255, 0.92)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          border: '1px solid rgba(226, 232, 240, 0.9)',
-          boxShadow: '0 10px 30px -5px rgba(15, 23, 42, 0.05)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button 
-            onClick={onBackToHome}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 12px',
-              borderRadius: '9px',
-              border: '1px solid #e2e8f0',
-              background: '#ffffff',
-              color: '#334155',
-              fontSize: '12px',
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
-          >
-            <ArrowLeft size={14} />
-            <span>Back to Home</span>
-          </button>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a' }}>ITLC Security</span>
-            <span style={{ fontSize: '10px', background: 'rgba(79, 70, 229, 0.08)', color: '#4f46e5', padding: '2px 7px', borderRadius: '12px', border: '1px solid rgba(79, 70, 229, 0.2)', fontWeight: 700 }}>
-              Zero-Trust Architecture
-            </span>
-          </div>
-        </div>
-
-        {/* Center Nav Links */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(241, 245, 249, 0.8)', padding: '3px', borderRadius: '11px', border: '1px solid rgba(226, 232, 240, 0.8)' }}>
-          
-          <button 
-            onClick={() => onNavigateTo('security')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 700, color: '#4f46e5', padding: '5px 12px', borderRadius: '8px', background: '#ffffff', border: 'none', boxShadow: '0 2px 5px rgba(0,0,0,0.05)', cursor: 'pointer' }}
-          >
-            <ShieldCheck size={13} />
-            <span>Security</span>
-          </button>
-          <button 
-            onClick={() => onNavigateTo('modules')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 600, color: '#475569', padding: '5px 12px', borderRadius: '8px', background: 'transparent', border: 'none', cursor: 'pointer' }}
-          >
-            <Layers size={13} style={{ color: '#d97706' }} />
-            <span>Modules</span>
-          </button>
-          <button 
-            onClick={() => onNavigateTo('pricing')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 600, color: '#475569', padding: '5px 12px', borderRadius: '8px', background: 'transparent', border: 'none', cursor: 'pointer' }}
-          >
-            <Sparkles size={13} style={{ color: '#9333ea' }} />
-            <span>Pricing</span>
-          </button>
-        </div>
-
-        {/* Right Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button 
-            onClick={onOpenSearch}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 10px', borderRadius: '9px', fontSize: '12px', background: 'rgba(241, 245, 249, 0.9)', border: '1px solid #e2e8f0', color: '#64748b', cursor: 'pointer' }}
-          >
-            <Search size={13} />
-            <kbd style={{ fontSize: '10px', fontWeight: 700, padding: '1px 4px', background: '#fff', borderRadius: '4px', border: '1px solid #cbd5e1' }}>Ctrl K</kbd>
-          </button>
-
-          <button 
-            onClick={onOpenSignIn}
-            style={{ padding: '7px 14px', fontSize: '12px', borderRadius: '9px', background: 'rgba(79, 70, 229, 0.08)', color: '#4f46e5', border: '1px solid rgba(79, 70, 229, 0.3)', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
-          >
-            <Lock size={13} />
-            <span>Login</span>
-          </button>
-
-          <button 
-            onClick={onGetStarted}
-            style={{ padding: '7px 15px', fontSize: '12px', borderRadius: '9px', display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', color: '#fff', border: 'none', fontWeight: 700, boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)', cursor: 'pointer' }}
-          >
-            <Sparkles size={13} />
-            <span>Get Started</span>
-          </button>
-        </div>
-      </header>
+      <LandingHeader
+        onHome={onBackToHome}
+        onFeatures={() => onNavigateTo('modules')}
+        onPricing={() => onNavigateTo('pricing')}
+        onSolutions={() => onNavigateTo('workspaces')}
+        onLogin={onOpenSignIn}
+        onGetStarted={onGetStarted}
+      />
 
       {/* Hero Header */}
       <section style={{ maxWidth: '1100px', margin: '0 auto', padding: '60px 24px 40px', textAlign: 'center' }}>
@@ -318,6 +224,7 @@ export const SecurityPage: React.FC<SecurityPageProps> = ({
         </div>
       </section>
 
+      <LandingFooter />
     </div>
   );
 };

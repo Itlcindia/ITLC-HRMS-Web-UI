@@ -890,14 +890,6 @@ export const api = {
   },
 
   async logout() {
-    try {
-      await fetchWithTimeout(`${API_URL}/auth/logout`, {
-        method: 'POST',
-        headers: getHeaders()
-      }, 1500);
-    } catch (e) {
-      console.error('Logout request failed', e);
-    }
     localStorage.removeItem('hrms_jwt_token');
     localStorage.removeItem('hrms_user_profile');
     localStorage.removeItem('hrms_mock_profile');
@@ -909,6 +901,15 @@ export const api = {
     secureStorage.removeItem('crm_current_user');
     secureStorage.removeItem('hrms_jwt_token');
     secureStorage.removeItem('hrms_user_profile');
+
+    try {
+      await fetchWithTimeout(`${API_URL}/auth/logout`, {
+        method: 'POST',
+        headers: getHeaders()
+      }, 500);
+    } catch (e) {
+      // Ignore network errors during logout
+    }
   },
 
   async getProfile() {

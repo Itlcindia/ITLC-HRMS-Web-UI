@@ -14,12 +14,12 @@ export interface HeroHeadlineSectionProps {
 
 export const HeroHeadlineSection: React.FC<HeroHeadlineSectionProps> = ({
   badgeText = '✨ Unified Enterprise OS • 100% Real-Time Cloud Sync',
-  headline = 'Build a Better Workplace with Unified HRMS & Intelligent Sales Cloud',
-  subtitle = 'People • Process • Growth — Streamline employee onboarding, live biometric attendance, 1-click automated payroll, and visual Sales CRM in one living 3D ecosystem.',
+  headline = 'Build a Better Workplace with Unified OmniStaff HRMS Cloud',
+  subtitle = 'People • Process • Growth — Streamline employee onboarding, live biometric attendance, 1-click automated payroll, and workforce intelligence in one living 3D ecosystem (Sales CRM Coming Soon).',
   primaryButtonText = 'Start Free Enterprise Trial',
   onOpenOnboarding,
   whatsAppNumber = '9532341000',
-  whatsAppMessage = 'Hello ITLC Team, I want to connect with sales for Enterprise CRM & HRMS.',
+  whatsAppMessage = 'Hello ITLC Team, I want to connect with sales for OmniStaff HRMS.',
   onScrollToEcosystem
 }) => {
   return (

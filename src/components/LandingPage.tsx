@@ -548,12 +548,11 @@ export default function LandingPage({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const openRegister = (planId: string = 'starter') => {
-    setSelectedOnboardingPlanId(planId);
+  const openRegister = (_planId: string = 'starter') => {
     if (onOpenLogin) {
-      onOpenLogin(planId, true);
+      onOpenLogin();
     } else {
-      setShowSecureAuthModal(true);
+      window.location.hash = '#login';
     }
   };
 
@@ -706,17 +705,20 @@ export default function LandingPage({
             </p>
 
             <div className="itlc-reference-cta-row">
-              <button className="itlc-reference-primary" onClick={() => openRegister('starter')}>
+              <button 
+                type="button"
+                className="itlc-reference-primary" 
+                onClick={() => onOpenLogin ? onOpenLogin() : setShowSecureAuthModal(true)}
+              >
                 Sign up for free trial <ArrowRight size={30} />
               </button>
-              <a
+              <button
+                type="button"
                 className="itlc-reference-secondary"
-                href={`https://wa.me/${cmsConfig.whatsappSalesNumber || '919532341000'}?text=Hello%20ITLC%20Team%2C%20I%20want%20a%20demo%20of%20ITLC%20HRMS`}
-                target="_blank"
-                rel="noreferrer"
+                onClick={() => onOpenLogin ? onOpenLogin() : setShowSecureAuthModal(true)}
               >
                 Request Demo <ArrowRight size={30} />
-              </a>
+              </button>
             </div>
           </div>
         </div>

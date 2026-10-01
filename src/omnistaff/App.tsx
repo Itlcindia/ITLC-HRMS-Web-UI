@@ -16,9 +16,11 @@ import './App.css';
 export interface OmniStaffAppProps {
   onOpenIntroHub?: () => void;
   onChooseWorkspace?: (profile: any) => void;
+  onLogout?: () => void;
+  onSwitchToCRM?: () => void;
 }
 
-export default function App({ onOpenIntroHub, onChooseWorkspace }: OmniStaffAppProps) {
+export default function App({ onOpenIntroHub, onChooseWorkspace, onLogout, onSwitchToCRM }: OmniStaffAppProps) {
   const [isRegisteringCompany, setIsRegisteringCompany] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return window.location.hash === '#register' || window.location.hash.includes('register');
@@ -184,7 +186,11 @@ export default function App({ onOpenIntroHub, onChooseWorkspace }: OmniStaffAppP
       window.location.hash = '';
     }
     setView('login');
-    loadProfile();
+    if (onLogout) {
+      onLogout();
+    } else if (onOpenIntroHub) {
+      onOpenIntroHub();
+    }
   };
 
   const renderLoginNavbar = () => (
